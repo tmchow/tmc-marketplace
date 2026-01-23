@@ -2,6 +2,8 @@
 
 Claude Code plugins by Trevin Chow.
 
+[trev.in](https://trev.in) · [LinkedIn](https://linkedin.com/in/trevin)
+
 ## Installation
 
 ### 1. Add the marketplace
