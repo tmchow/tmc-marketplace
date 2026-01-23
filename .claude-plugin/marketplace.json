@@ -14,6 +14,12 @@
       "source": "./plugins/productpowers",
       "description": "ProductPowers agent and skills library",
       "version": "0.1.0"
+    },
+    {
+      "name": "agent-browser",
+      "source": "./plugins/agent-browser",
+      "description": "Browser automation using Vercel's agent-browser CLI",
+      "version": "0.1.0"
     }
   ]
 }
