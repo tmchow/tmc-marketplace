@@ -1,7 +1,0 @@
-{
-  "name": "agent-browser",
-  "version": "0.1.0",
-  "description": "Browser automation using Vercel's agent-browser CLI with ref-based element selection",
-  "author": { "name": "Trevin Chow" },
-  "skills": "./skills/"
-}
