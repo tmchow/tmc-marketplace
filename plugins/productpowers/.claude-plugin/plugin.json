@@ -5,6 +5,5 @@
   "author": {
     "name": "Trevin Chow"
   },
-  "skills": "./skills/",
-  "agents": "./agents/"
+  "skills": "./skills/"
 }
