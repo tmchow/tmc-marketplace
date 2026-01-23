@@ -1,0 +1,19 @@
+{
+  "name": "tmc-marketplace",
+  "owner": {
+    "name": "Trevin Chow"
+  },
+  "metadata": {
+    "description": "Claude Code plugins by Trevin Chow",
+    "version": "0.1.0",
+    "pluginRoot": "./plugins"
+  },
+  "plugins": [
+    {
+      "name": "productpowers",
+      "source": "./plugins/productpowers",
+      "description": "ProductPowers agent and skills library",
+      "version": "0.1.0"
+    }
+  ]
+}

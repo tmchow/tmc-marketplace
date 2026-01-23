@@ -1,0 +1,10 @@
+{
+  "name": "productpowers",
+  "version": "0.1.0",
+  "description": "ProductPowers agent and skills library",
+  "author": {
+    "name": "Trevin Chow"
+  },
+  "skills": "./skills/",
+  "agents": "./agents/"
+}
