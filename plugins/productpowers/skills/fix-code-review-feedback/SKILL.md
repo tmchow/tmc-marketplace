@@ -1,6 +1,8 @@
 ---
 name: fix-code-review-feedback
 description: "FIX existing feedback, not generate reviews. Use AFTER a code review agent provides feedback (auto-invoke), OR manually invoke to address GitHub PR comments. Defaults to current branch's PR, or provide specific feedback URL for targeted mode. Evaluates validity (reviewers can be wrong), fixes everything valid."
+user-invocable: true
+context: fork
 ---
 
 # fix-code-review-feedback
