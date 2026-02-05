@@ -15,7 +15,7 @@ Claude Code plugins by Trevin Chow.
 ### 2. Install a plugin
 
 ```
-/plugin install productpowers@tmc-marketplace
+/plugin install iterative-engineering@tmc-marketplace
 ```
 
 ### 3. Verify installation
@@ -28,7 +28,7 @@ Claude Code plugins by Trevin Chow.
 
 | Plugin | Description |
 |--------|-------------|
-| [productpowers](./plugins/productpowers) | ProductPowers agent and skills library |
+| [iterative-engineering](./plugins/iterative-engineering) | Iterative development workflow - brainstorming, planning, multi-agent reviews, TDD execution |
 
 ## License
 
