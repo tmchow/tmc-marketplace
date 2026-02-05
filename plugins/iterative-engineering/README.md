@@ -26,7 +26,6 @@ Iterative development workflow skills for Claude Code - brainstorming, planning,
 | `fix-code-review-feedback` | Resolve PR review comments systematically |
 | `git-worktree` | Isolated development using git worktrees |
 | `agent-browser` | Browser automation using Vercel's agent-browser CLI |
-| `hzl` | HZL task tracking integration (optional) |
 
 ## Agents
 
@@ -64,10 +63,7 @@ Iterative development workflow skills for Claude Code - brainstorming, planning,
 
 This plugin supports [HZL](https://github.com/tmchow/hzl) for persistent task tracking, but it's not required. Without HZL, the workflow skills use in-session task management.
 
-To install HZL:
-```bash
-curl -fsSL https://raw.githubusercontent.com/tmchow/hzl/main/scripts/install.sh | bash
-```
+See the [HZL repository](https://github.com/tmchow/hzl) for installation instructions.
 
 ## License
 
