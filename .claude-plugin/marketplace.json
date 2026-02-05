@@ -10,10 +10,10 @@
   },
   "plugins": [
     {
-      "name": "productpowers",
-      "source": "./plugins/productpowers",
-      "description": "ProductPowers agent and skills library",
-      "version": "0.2.0"
+      "name": "iterative-engineering",
+      "source": "./plugins/iterative-engineering",
+      "description": "Iterative development workflow - brainstorming, planning, multi-agent reviews, TDD execution, and PR feedback resolution",
+      "version": "1.0.0"
     }
   ]
 }
