@@ -26,6 +26,23 @@ Turns design into a structured implementation plan with TDD emphasis.
 ## Workflow
 
 ```
+Phase 0: Detect Resume Intent
+├── Check if user indicates continuation:
+│   ├── References an existing plan document
+│   ├── Mentions "continue", "resume", "pick up"
+│   └── References a topic matching prior plan in session
+├── If resuming:
+│   ├── Load the referenced document
+│   ├── Summarize current state briefly
+│   └── Offer options:
+│       ├── "What would you like to change or add?" (user directs)
+│       └── "Want me to identify gaps and suggest improvements?" (Claude proposes)
+├── If Claude proposes:
+│   ├── Review plan for incomplete sections, missing tests, unclear dependencies
+│   ├── Suggest 2-3 areas to develop further
+│   └── User picks direction, then continue from appropriate phase
+└── If starting fresh: proceed to Phase 1
+
 Phase 1: Gather Context
 ├── Read brainstorm document (if exists)
 ├── Understand requirements and constraints
