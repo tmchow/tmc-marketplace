@@ -92,27 +92,16 @@ When agent teams are not available:
 5. Present to user
 ```
 
-## Output Format
+## Output Formatting
 
-```markdown
-## Plan Review Results
+**Readability is critical** — review output can be long. Follow these principles:
 
-### Clarity (N issues)
-- [Issue description]
+1. **Use markdown tables** for each reviewer section — one row per issue, not bullet lists
+2. **`###` headers** for each section — never plain text headers
+3. **Summary in blockquotes** — call out high-confidence items, tensions between reviewers, and quick wins
+4. **`---` horizontal rule** separates issues from summary
 
-### Completeness (N gaps)
-- [Gap description]
-
-### Specificity (N issues)
-- [Issue description]
-
-### YAGNI (N suggestions)
-- [Suggestion to cut/simplify]
-
----
-**Summary:** [X] issues found across [Y] categories.
-**Mode:** Agent Team / Parallel Subagents
-```
+See `references/review-output-template.md` for a full example.
 
 ## Multiple Rounds
 

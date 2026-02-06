@@ -111,30 +111,18 @@ When agent teams are not available:
 6. Present to user
 ```
 
-## Output Format
+## Output Formatting
 
-```markdown
-## Code Review Results (Full/Quick)
+**Readability is critical** — review output can be long. Follow these principles:
 
-### Correctness (N issues)
-- **[file:line]** [Issue description]
+1. **Use markdown tables** for each reviewer section — one row per issue, not bullet lists
+2. **Always include `file:line` location** in code review tables
+3. **Include severity** (Critical/High/Medium/Low) for correctness and security issues
+4. **`###` headers** for each section — never plain text headers
+5. **Summary in blockquotes** — call out cross-domain insights and fix order
+6. **`---` horizontal rule** separates issues from summary
 
-### Security (N issues)
-- **[file:line]** [Issue description]
-
-### Performance (N issues)
-- **[file:line]** [Issue description]
-
-### Simplicity (N suggestions)
-- **[file:line]** [Suggestion]
-
-### Testing (N issues)
-- **[file:line]** [Issue description]
-
----
-**Summary:** [X] issues found. [Severity breakdown]
-**Mode:** Agent Team / Parallel Subagents
-```
+See `references/review-output-template.md` for a full example.
 
 ## Language-Agnostic
 
