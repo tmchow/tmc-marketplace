@@ -68,13 +68,13 @@ Phase 3: Write Technical Plan
 └── Save to docs/plans/YYYY-MM-DD-<topic>-plan.md (ensure directory exists)
 
 Phase 4: Review Cycle
-├── Offer: "Plan-review: 4 agents analyze for issues and improve (recommended)"
+├── Use AskUserQuestion to offer plan-review (recommended) or skip
 ├── If review: invoke `plan-review` skill
 ├── Fix issues identified
-└── Offer another round or continue
+└── Use AskUserQuestion to offer another round or continue
 
 Phase 5: Convert to Tasks
-├── Offer: "Convert to HZL/TodoWrite tasks" or "Start execution"
+├── Use AskUserQuestion to offer: convert to tasks, or exit
 ├── If convert: invoke `plan-to-tasks` skill
 └── Handoff to `iterative:implement` skill
 ```
@@ -92,26 +92,17 @@ Phase 5: Convert to Tasks
 
 ## Transition Points
 
-After technical plan is written:
+**Always use AskUserQuestion for transition points** — never just print options as text.
 
-*If project uses HZL for task tracking:*
-```
-Technical plan created. What next?
-├── A) Plan-review: 4 agents analyze for issues and improve (recommended)
-├── B) Convert to HZL tasks
-├── C) I'll take it from here (exit)
-```
+After technical plan is written, use AskUserQuestion with options:
+- Plan-review: 4 agents analyze for issues and improve (recommended)
+- Convert to HZL/TodoWrite tasks
+- I'll take it from here (exit)
 
-*If project does not use HZL:*
-```
-Technical plan created. What next?
-├── A) Plan-review: 4 agents analyze for issues and improve (recommended)
-├── B) Convert to TodoWrite tasks
-├── C) I'll take it from here (exit)
-```
-
-After review + fixes:
-Same options as above, with "Another round of `plan-review` skill" as option A.
+After review + fixes, use AskUserQuestion with options:
+- Another round of `plan-review` skill (recommended if significant changes)
+- Convert to tasks
+- I'll take it from here (exit)
 
 ## Additional Resources
 

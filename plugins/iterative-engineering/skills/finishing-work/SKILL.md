@@ -1,7 +1,7 @@
 ---
 name: finishing-work
 description: Complete a feature branch with test verification and PR creation. This skill should be used when the user says "finish up", "create a PR", or "wrap up the feature".
-allowed-tools: Glob, Grep, Read, Bash(git status), Bash(git diff *), Bash(git add *), Bash(git commit *), Bash(gh pr create *), Bash(gh pr view *), Task
+allowed-tools: Glob, Grep, Read, Bash(git status), Bash(git diff *), Bash(git add *), Bash(git commit *), Bash(gh pr create *), Bash(gh pr view *), AskUserQuestion, Task
 ---
 
 # Finishing Work
@@ -24,7 +24,7 @@ Phase 1: Final Verification
 └── Check for uncommitted changes → commit or stash
 
 Phase 2: Optional Code Review
-├── Ask: "Run full code review before finishing?"
+├── Use AskUserQuestion: "Run full code review before finishing?"
 │   ├── A) Yes, full review (recommended)
 │   ├── B) Quick review
 │   └── C) Skip review
@@ -36,7 +36,7 @@ Phase 3: Context Summary
 ├── Check if in worktree
 └── Report: N commits, files changed, branch info
 
-Phase 4: Present Options
+Phase 4: Present Options (use AskUserQuestion)
 ├── A) Push + PR (recommended)
 │   └── Creates new PR, or shows existing if one exists
 ├── B) Push only

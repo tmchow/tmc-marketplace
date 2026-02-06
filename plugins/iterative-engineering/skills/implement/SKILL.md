@@ -38,7 +38,7 @@ Phase 1: Setup
 │   ├── Files and modules referenced in the plan
 │   ├── Test patterns and frameworks in use
 │   └── Existing conventions to follow
-├── Ask execution preference:
+├── Use AskUserQuestion for execution preference:
 │   ├── A) Execute all tasks, report when done (default)
 │   ├── B) Pause after each parent task for feedback
 │   └── C) Pause after each subtask for feedback
@@ -165,12 +165,11 @@ If a subtask fails:
 
 ## Transition Points
 
-After all tasks complete:
-```
-Implementation complete, tests passing. What next?
-├── A) Continue to `finishing-work` skill (recommended)
-├── B) I'll handle PR/merge myself (exit)
-```
+**Always use AskUserQuestion for transition points** — never just print options as text.
+
+After all tasks complete, use AskUserQuestion with options:
+- Continue to `finishing-work` skill (recommended)
+- I'll handle PR/merge myself (exit)
 
 ## Additional Resources
 
