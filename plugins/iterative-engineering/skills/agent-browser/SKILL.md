@@ -1,6 +1,6 @@
 ---
 name: agent-browser
-description: Browser automation using Vercel's agent-browser CLI. Use when you need to interact with web pages, fill forms, take screenshots, extract data, or test web applications. Uses ref-based element selection from accessibility snapshots. Alternative to Playwright MCP for Bash-based workflows.
+description: Browser automation using Vercel's agent-browser CLI. This skill should be used when the user says "browse a website", "fill a form", "take a screenshot", or "test a web page". Uses ref-based element selection.
 user-invocable: true
 ---
 

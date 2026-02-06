@@ -1,6 +1,6 @@
 ---
 name: plan-to-tasks
-description: Use when converting a technical plan into trackable tasks. Automatically uses HZL if project uses HZL for task tracking, otherwise uses TodoWrite. Parses plan structure, presents for approval, creates tasks with dependencies.
+description: Convert a technical plan into trackable tasks with dependencies. This skill should be used when the user says "break down the plan", "create tasks", or "convert to tasks". Supports HZL and TodoWrite.
 allowed-tools: Glob, Grep, Read, Bash(hzl *), TodoWrite, Task
 ---
 
@@ -12,7 +12,7 @@ Converts technical plans into trackable tasks using HZL or TodoWrite.
 
 - After completing a technical plan
 - When you have a structured document to break into tasks
-- Called by `tech-design` skill at handoff
+- Called by `iterative:tech-design` skill at handoff
 - Can be invoked standalone
 
 ## Task System Detection
@@ -31,7 +31,7 @@ Step 1: Identify Plan + Task System
 └── Report which system will be used
 
 Step 2: Parse Plan → Proposed Structure
-├── Spawn plan-to-tasks-worker agent
+├── Spawn `plan-to-tasks-worker` agent
 ├── Extract parents, subtasks, dependencies
 ├── Infer granularity from plan structure (ask if unclear)
 └── Include descriptions from plan + link to doc
@@ -62,7 +62,7 @@ Step 6: Sanity Check
 ├── Verify counts match expected
 └── Report: "Created [N] parents, [M] subtasks"
 
-Step 7: Handoff → implement
+Step 7: Handoff → `iterative:implement` skill
 ```
 
 ## Task Descriptions

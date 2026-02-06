@@ -1,6 +1,6 @@
 ---
-name: brainstorm
-description: Use before implementing features or making changes. Explores user intent, presents 2-3 approaches with pros/cons BEFORE deep research, iterates with plan-review. Produces brainstorm document for handoff to tech-design.
+name: iterative:brainstorm
+description: Explore ideas and approaches before building. This skill should be used when the user says "brainstorm", "explore approaches", "think through options", or is starting a new feature with unclear direction.
 allowed-tools: Glob, Grep, Read, WebSearch, WebFetch, AskUserQuestion, Task
 ---
 
@@ -73,12 +73,12 @@ Phase 5: Document Findings
 
 Phase 6: Review Cycle
 ├── Offer: "Plan-review: 4 agents analyze for issues and improve (recommended)"
-├── If review: invoke plan-review skill
+├── If review: invoke `plan-review` skill
 ├── Fix issues identified
 └── Offer another round or continue
 
 Phase 7: Handoff
-└── Continue to tech-design when ready
+└── Continue to `iterative:tech-design` skill when ready
 ```
 
 ## Output Format
@@ -138,7 +138,7 @@ Brainstorm document created. What next?
 After review + fixes:
 ```
 Review issues addressed. What next?
-├── A) Another round of plan-review (recommended if significant changes)
+├── A) Another round of `plan-review` skill (recommended if significant changes)
 ├── B) Continue to technical plan
 ├── C) I'll take it from here (exit)
 ```

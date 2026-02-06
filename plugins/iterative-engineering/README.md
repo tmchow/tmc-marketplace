@@ -30,7 +30,7 @@ brainstorm ──────► tech-design ──────► implement
 
 Each stage: produce artifact → review → fix → repeat until satisfied.
 
-Re-entry is supported - run `/brainstorm` again after seeing the design, or `/code-review` multiple times.
+Re-entry is supported - run `/iterative:brainstorm` again after seeing the design, or `/code-review` multiple times.
 
 ## Skills
 
@@ -38,10 +38,10 @@ Re-entry is supported - run `/brainstorm` again after seeing the design, or `/co
 
 | Skill | Description |
 |-------|-------------|
-| `brainstorm` | Explore requirements and approaches before planning |
-| `tech-design` | Transform brainstorms into structured technical plans |
+| `iterative:brainstorm` | Explore requirements and approaches before planning |
+| `iterative:tech-design` | Transform brainstorms into structured technical plans |
 | `plan-review` | Multi-agent review of plans (4 reviewers) |
-| `implement` | TDD-driven task execution with progress tracking |
+| `iterative:implement` | TDD-driven task execution with progress tracking |
 | `code-review` | Multi-agent code review (5 reviewers, full or quick mode) |
 | `finishing-work` | Complete work with final review and PR creation |
 
@@ -49,7 +49,7 @@ Re-entry is supported - run `/brainstorm` again after seeing the design, or `/co
 
 | Skill | Description |
 |-------|-------------|
-| `plan-to-tasks` | Convert plans into task hierarchies (auto-runs after `tech-design`) |
+| `plan-to-tasks` | Convert plans into task hierarchies (auto-runs after `iterative:tech-design`) |
 | `fix-code-review-feedback` | Resolve PR review comments systematically |
 | `git-worktree` | Isolated development using git worktrees |
 | `agent-browser` | Browser automation using Vercel's agent-browser CLI |

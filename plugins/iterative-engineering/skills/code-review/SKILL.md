@@ -1,6 +1,6 @@
 ---
 name: code-review
-description: Use when reviewing code changes for quality. Supports Full mode (5 reviewers) or Quick mode (2-3 reviewers). Uses agent teams when available for cross-domain validation, falls back to parallel subagents. Language-agnostic, adapts to project context.
+description: Multi-agent code review with 5 specialized reviewers. This skill should be used when the user says "review my code", "check these changes", or wants feedback before a PR. Supports full and quick modes, language-agnostic.
 allowed-tools: Glob, Grep, Read, Task
 ---
 
@@ -10,7 +10,7 @@ Reviews code changes using specialized reviewers. Uses agent teams when availabl
 
 ## When to Use
 
-- After completing a parent task (during `implement`)
+- After completing a parent task (during `iterative:implement` skill)
 - Before finishing work and creating a PR
 - When you want feedback on any code changes
 - Can be invoked standalone

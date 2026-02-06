@@ -1,6 +1,6 @@
 ---
-name: implement
-description: Use when executing an implementation plan. Handles workspace isolation, spawns task-workers sequentially for TDD cycle, runs code review after parent tasks, and hands off to finishing-work. Works with HZL or TodoWrite tasks.
+name: iterative:implement
+description: Execute an implementation plan with TDD and code review. This skill should be used when the user says "implement the plan", "start building", or has tasks ready to execute.
 allowed-tools: Glob, Grep, Read, Bash(hzl *), Bash(git status), Bash(git diff *), Bash(git add *), Bash(git commit *), TodoWrite, AskUserQuestion, Task
 ---
 
@@ -10,7 +10,7 @@ Executes implementation plans with TDD cycle, code review, and task tracking.
 
 ## When to Use
 
-- After `plan-to-tasks` creates tasks
+- After `plan-to-tasks` skill creates tasks
 - When you have tasks ready to execute
 - Can work with HZL tasks or TodoWrite tasks
 
@@ -36,14 +36,14 @@ Phase 1: Setup
 │   ├── In worktree already? → proceed (isolated)
 │   ├── On default branch? → offer: worktree (recommended), branch, or consent for main
 │   └── On feature branch? → offer: worktree (if human also working), or continue here
-├── Invoke git-worktree skill if needed
+├── Invoke `git-worktree` skill if needed
 └── Identify task source:
     ├── HZL (if project uses HZL for task tracking)
     └── TodoWrite (otherwise)
 
 Phase 2: Execute (repeat per parent)
 ├── For each subtask SEQUENTIALLY:
-│   ├── Spawn task-worker agent
+│   ├── Spawn `task-worker` agent
 │   ├── Worker executes TDD cycle:
 │   │   ├── RED: Write failing test
 │   │   ├── GREEN: Implement to pass
@@ -51,17 +51,17 @@ Phase 2: Execute (repeat per parent)
 │   │   └── Commit: "feat(scope): [subtask]"
 │   └── Wait for completion before next subtask
 ├── Mark parent complete
-└── Invoke code-review (1+ rounds)
+└── Invoke `code-review` skill (1+ rounds)
 
 Phase 3: Finish
 ├── Run full test suite
-├── Invoke finishing-work skill
+├── Invoke `finishing-work` skill
 └── Report completion
 ```
 
 ## Sequential Execution
 
-**One task-worker at a time** to avoid file conflicts.
+**One `task-worker` agent at a time** to avoid file conflicts.
 
 This is safer and simpler than parallel execution:
 - No merge conflicts between workers
@@ -91,7 +91,7 @@ Stop and ask for help when:
 
 After completing all subtasks in a parent:
 1. Mark parent complete in task system
-2. Invoke code-review skill
+2. Invoke `code-review` skill
 3. Fix any issues found
 4. Continue to next parent (or finish if done)
 
@@ -124,7 +124,7 @@ After completing all subtasks in a parent:
 After all tasks complete:
 ```
 Implementation complete, tests passing. What next?
-├── A) Continue to finishing-work (recommended)
+├── A) Continue to `finishing-work` skill (recommended)
 ├── B) I'll handle PR/merge myself (exit)
 ```
 

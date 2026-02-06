@@ -1,6 +1,6 @@
 ---
-name: tech-design
-description: Use when turning a brainstorm or requirements into an implementation plan. Emphasizes TDD approach, creates structured plan with tasks and subtasks, iterates with plan-review, hands off to plan-to-tasks then implement.
+name: iterative:tech-design
+description: Turn requirements into a structured implementation plan. This skill should be used when the user says "create a plan", "design the implementation", or has a brainstorm document ready to formalize.
 allowed-tools: Glob, Grep, Read, Write, Edit, AskUserQuestion, Task
 ---
 
@@ -10,7 +10,7 @@ Turns design into a structured implementation plan with TDD emphasis.
 
 ## When to Use
 
-- After `brainstorm` is complete
+- After `iterative:brainstorm` skill is complete
 - When you have clear requirements to implement
 - When you need a structured implementation approach
 - Can be invoked standalone with existing requirements
@@ -57,14 +57,14 @@ Phase 3: Write Technical Plan
 
 Phase 4: Review Cycle
 ├── Offer: "Plan-review: 4 agents analyze for issues and improve (recommended)"
-├── If review: invoke plan-review skill
+├── If review: invoke `plan-review` skill
 ├── Fix issues identified
 └── Offer another round or continue
 
 Phase 5: Convert to Tasks
 ├── Offer: "Convert to HZL/TodoWrite tasks" or "Start execution"
-├── If convert: invoke plan-to-tasks skill
-└── Handoff to implement
+├── If convert: invoke `plan-to-tasks` skill
+└── Handoff to `iterative:implement` skill
 ```
 
 ## Plan Document Format
@@ -143,7 +143,7 @@ Technical plan created. What next?
 ```
 
 After review + fixes:
-Same options as above, with "Another round of plan-review" as option A.
+Same options as above, with "Another round of `plan-review` skill" as option A.
 
 ## TDD Emphasis
 

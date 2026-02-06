@@ -1,6 +1,6 @@
 ---
 name: finishing-work
-description: Use when completing development work. Runs final test verification, offers optional code review, then presents options for push/PR/keep/discard. Handles PR creation following repo conventions.
+description: Complete a feature branch with test verification and PR creation. This skill should be used when the user says "finish up", "create a PR", or "wrap up the feature".
 allowed-tools: Glob, Grep, Read, Bash(git status), Bash(git diff *), Bash(git add *), Bash(git commit *), Bash(gh pr create *), Bash(gh pr view *), Task
 ---
 
@@ -10,7 +10,7 @@ Completes development with verification, optional review, and PR creation.
 
 ## When to Use
 
-- After `implement` completes all tasks
+- After `iterative:implement` skill completes all tasks
 - When you're ready to create a PR
 - When you want to finish a feature branch
 - Can be invoked standalone on any branch
@@ -28,7 +28,7 @@ Phase 2: Optional Code Review
 │   ├── A) Yes, full review (recommended)
 │   ├── B) Quick review
 │   └── C) Skip review
-├── If review: invoke code-review skill (1+ rounds)
+├── If review: invoke `code-review` skill (1+ rounds)
 └── Continue when review complete or skipped
 
 Phase 3: Context Summary
