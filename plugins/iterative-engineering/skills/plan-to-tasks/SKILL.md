@@ -68,6 +68,7 @@ Step 7: Handoff → `iterative:implement` skill
 ## Task Descriptions
 
 - Copy relevant plan prose into description (default)
+- Include file paths from the plan's `**Files:**` fields in each subtask description
 - If very complex: summarize, reference section by name
 - HZL: link to plan file via `-l docs/plans/[plan].md`
 - TodoWrite: reference plan file path in description

@@ -64,8 +64,8 @@ You receive:
 
 ### Descriptions
 - Copy relevant plan prose into task description
+- Include file paths from the plan's `**Files:**` fields in each subtask description
 - Reference plan section for details
-- Include file paths mentioned in plan
 
 ## Output Format
 
@@ -87,7 +87,7 @@ Return JSON structure:
         {
           "title": "Another subtask",
           "description": "Description",
-          "dependsOn": ["Subtask title"]
+          "dependsOn": ["Subtask title"]  // reference by title; resolved to task IDs when created
         }
       ]
     }
