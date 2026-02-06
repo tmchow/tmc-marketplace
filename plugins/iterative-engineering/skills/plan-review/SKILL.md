@@ -58,8 +58,10 @@ Create a review team with specialized teammates:
 
 4. Once all reviewers are done: synthesize, present, and clean up
    ├── Collect and deduplicate issues from all reviewers
-   ├── Identify high-confidence items (multiple reviewers) and tensions
-   ├── Present to user using the exact Output Structure below
+   ├── REFORMAT all findings into the Output Structure below
+   │   Reviewers return raw text — you must reformat into:
+   │   ### [Reviewer] header → pipe table (| # | Col | Col |) → repeat → --- → Summary
+   │   Do NOT pass through reviewer output as-is
    ├── Put synthesis insights in the summary blockquotes at the end
    └── Then clean up the team
 ```
@@ -84,11 +86,12 @@ When agent teams are not available:
 3. Collect findings from all agents
    └── Each returns up to 5 issues
 
-4. Synthesize findings and format output
+4. Synthesize and reformat into the Output Structure below
    ├── Deduplicate overlapping issues
-   ├── Identify high-confidence items and tensions
-   ├── Present to user using the exact Output Structure below
-   └── Put synthesis insights in the summary blockquotes at the end — not as a preamble
+   ├── REFORMAT all findings into:
+   │   ### [Reviewer] header → pipe table (| # | Col | Col |) → repeat → --- → Summary
+   │   Do NOT pass through agent output as-is
+   └── Put synthesis insights in the summary blockquotes at the end
 ```
 
 ## Output Structure
