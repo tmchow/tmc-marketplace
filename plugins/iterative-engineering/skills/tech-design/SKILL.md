@@ -6,43 +6,55 @@ allowed-tools: Glob, Grep, Read, Write, Edit, AskUserQuestion, Task
 
 # Create Technical Plan
 
-Turns design into a structured implementation plan with TDD emphasis.
+Turn a brainstorm or set of requirements into a structured, executable implementation plan with TDD emphasis.
 
 ## When to Use
 
 - After `iterative:brainstorm` skill is complete
-- When you have clear requirements to implement
-- When you need a structured implementation approach
+- When clear requirements exist and need an implementation plan
 - Can be invoked standalone with existing requirements
+
+If requirements are vague and no brainstorm document exists, redirect to `iterative:brainstorm` skill first.
 
 ## Key Principles
 
-1. **TDD First** - Plan tests before implementation
-2. **Small Steps** - Break into subtasks that can be completed in one session
-3. **Dependencies Clear** - Explicit ordering of what depends on what
-4. **Verification Built-in** - Each step has clear success criteria
+1. **Understand before structuring** - Explore the codebase and ask questions before writing the plan
+2. **TDD First** - Plan tests before implementation for every subtask
+3. **Small steps** - Break into subtasks completable in one session (~30-60 min)
+4. **Dependencies clear** - Explicit ordering of what depends on what
+5. **Verification built-in** - Each step has clear success criteria
 
 ## Workflow
 
 ```
-Phase 0: Detect Resume Intent
-├── Check if user wants to continue existing work (references a document,
-│   topic from session, or otherwise indicates continuation)
-├── If resuming:
+Phase 0: Detect Resume / Assess Input
+├── If user references an existing plan document or topic:
 │   ├── Load the document, summarize current state
 │   └── Offer: user directs what to change, or agent identifies gaps
-├── Resume note: When resuming, build on existing content. Update in place.
-└── If starting fresh: proceed to Phase 1
+│   └── Resume note: build on existing content, update in place
+├── If no brainstorm AND requirements are vague:
+│   └── Redirect to `iterative:brainstorm` skill
+└── Otherwise: proceed to Phase 1
 
-Phase 1: Gather Context
+Phase 1: Gather Context (Q&A + Codebase Exploration)
 ├── Read brainstorm document (if exists)
-├── Understand requirements and constraints
-├── Identify existing code to integrate with
-└── Ask clarifying questions if needed
+├── Explore the codebase for:
+│   ├── Existing patterns and conventions to follow
+│   ├── Files and modules that will be affected
+│   ├── Test patterns and frameworks in use
+│   └── Related code that informs the design
+├── Ask implementation-focused questions ONE AT A TIME:
+│   ├── Architecture preferences (e.g., new module vs extend existing?)
+│   ├── Which parts are highest risk or uncertainty?
+│   ├── Testing approach preferences
+│   ├── Any constraints not in the brainstorm?
+│   └── Existing code patterns to follow or avoid?
+├── Gate: Continue until approach is clear OR user says "proceed"
+└── Do NOT start writing the plan until this phase is complete
 
 Phase 2: Structure the Plan
-├── Identify major components (become parent tasks)
-├── Break each into subtasks (implementable units)
+├── Identify major components (become parent tasks, typically 2-5)
+├── Break each into subtasks (2-5 per parent, implementable units)
 ├── For each subtask, define:
 │   ├── What test to write first (RED)
 │   ├── What implementation makes it pass (GREEN)
@@ -50,10 +62,10 @@ Phase 2: Structure the Plan
 └── Identify dependencies between tasks
 
 Phase 3: Write Technical Plan
-├── Create plan document with structure below
-├── Include enough detail for another agent to execute
-├── Reference relevant files and patterns
-└── Save to docs/plans/ or appropriate location
+├── Create plan document using template in references/tech-plan-template.md
+├── Include enough detail for another agent to execute each subtask
+├── Reference relevant files, patterns, and conventions
+└── Save to docs/plans/YYYY-MM-DD-<topic>-plan.md (ensure directory exists)
 
 Phase 4: Review Cycle
 ├── Offer: "Plan-review: 4 agents analyze for issues and improve (recommended)"
@@ -67,60 +79,16 @@ Phase 5: Convert to Tasks
 └── Handoff to `iterative:implement` skill
 ```
 
-## Plan Document Format
+## Anti-Patterns to Avoid
 
-```markdown
-# [Feature] - Technical Plan
-
-**Date:** [date]
-**Status:** Planning
-**Brainstorm:** [link to brainstorm if exists]
-
-## Overview
-[Brief description of what we're building]
-
-## Architecture
-[High-level design, key components, data flow]
-
-## Implementation Plan
-
-### Parent 1: [Component/Feature Name]
-
-#### 1.1 [Subtask Name]
-**Test First:**
-- [ ] [Test description - what behavior to verify]
-
-**Implementation:**
-- [ ] [Implementation step]
-- [ ] [Implementation step]
-
-**Files:** `src/path/to/file.ts`
-
-#### 1.2 [Subtask Name]
-**Depends on:** 1.1
-
-**Test First:**
-- [ ] [Test description]
-
-**Implementation:**
-- [ ] [Implementation step]
-
-### Parent 2: [Component/Feature Name]
-...
-
-## Testing Strategy
-- Unit tests: [approach]
-- Integration tests: [approach]
-- Manual verification: [steps]
-
-## Risks and Mitigations
-| Risk | Mitigation |
-|------|------------|
-| [Risk 1] | [How to address] |
-
-## Open Questions
-- [Any remaining unknowns]
-```
+| Anti-Pattern | Better Approach |
+|--------------|-----------------|
+| Writing the plan before exploring the codebase | Explore existing code and patterns first |
+| Skipping Q&A when brainstorm exists | Still ask implementation-focused questions |
+| Subtasks that are too large (touch 5+ files) | Break into smaller, atomic units |
+| Vague subtask descriptions ("implement the feature") | Specify exact test and implementation steps |
+| Planning without referencing existing code patterns | Ground every subtask in actual file paths and conventions |
+| Over-planning hypothetical scenarios | Plan only what's needed; defer decisions that can wait |
 
 ## Transition Points
 
@@ -145,16 +113,9 @@ Technical plan created. What next?
 After review + fixes:
 Same options as above, with "Another round of `plan-review` skill" as option A.
 
-## TDD Emphasis
+## Additional Resources
 
-Every subtask should have a clear TDD structure:
-1. **RED** - Write a failing test that defines the behavior
-2. **GREEN** - Write minimal code to make the test pass
-3. **REFACTOR** - Clean up while keeping tests green
-4. **COMMIT** - One commit per completed subtask
+### Reference Files
 
-This ensures:
-- Requirements are captured as tests
-- Implementation is focused and minimal
-- Code is clean and well-tested
-- Progress is trackable via commits
+For detailed templates and guidelines, consult:
+- **`references/tech-plan-template.md`** - Full plan document template, subtask granularity guidelines, and TDD structure per subtask
