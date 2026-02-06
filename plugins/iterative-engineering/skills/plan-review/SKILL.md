@@ -30,6 +30,8 @@ Each reviewer returns **max 5 issues** to keep feedback actionable.
 
 **First, check if agent teams are enabled for this session.**
 
+**When using Agent Teams, tell the user:** "Using **Agent Teams 🐝** — reviewers will run as teammates who can cross-validate findings."
+
 ### Mode A: Agent Team (if enabled)
 
 Create a review team with specialized teammates:
