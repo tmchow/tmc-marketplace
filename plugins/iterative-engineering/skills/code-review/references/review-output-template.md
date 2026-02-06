@@ -1,6 +1,8 @@
 # Code Review Output Template
 
-Use this format when presenting synthesized review findings. Tables make issues scannable; the summary calls out cross-reviewer patterns.
+Use this **exact format** when presenting synthesized review findings. Tables make issues scannable; the summary calls out cross-reviewer patterns.
+
+**IMPORTANT:** Use pipe-delimited markdown tables (`| col | col |`). Do NOT use ASCII box-drawing characters (`┌─┬─┐`, `│`, `└─┴─┘`).
 
 ## Example
 
@@ -52,12 +54,13 @@ Use this format when presenting synthesized review findings. Tables make issues 
 > **Fix order:** Critical/high security first → correctness bugs → add missing tests → simplicity cleanup.
 ```
 
-## Formatting Principles
+## Formatting Rules
 
-- **Use markdown tables** for each reviewer section — one row per issue
+- **Pipe-delimited markdown tables** (`| col | col |` with `|---|---|` separators) — never ASCII box-drawing characters
 - **Always include file:line location** for code review issues
 - **Include severity** (Critical/High/Medium/Low) for correctness and security
 - **Column headers vary by reviewer type** — adapt to what's useful (Issue/Severity, Suggestion, Gap, etc.)
+- **No preamble before tables** — go straight from `###` header to the table
 - **Summary uses blockquotes** for cross-domain insights and fix order
 - **Horizontal rule** (`---`) separates issues from summary
 - **`###` headers** for each reviewer section — never plain text headers

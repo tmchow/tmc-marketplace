@@ -115,16 +115,17 @@ When agent teams are not available:
 
 ## Output Formatting
 
-**Readability is critical** — review output can be long. Follow these principles:
+**Readability is critical** — review output can be long. Follow these rules exactly:
 
-1. **Use markdown tables** for each reviewer section — one row per issue, not bullet lists
+1. **Pipe-delimited markdown tables** for each reviewer section — one row per issue. Use `| col | col |` syntax with `|---|---|` separator rows. **Do NOT use ASCII box-drawing characters** (`┌─┬─┐`, `│`, `└─┴─┘`) — these render poorly in terminals.
 2. **Always include `file:line` location** in code review tables
 3. **Include severity** (Critical/High/Medium/Low) for correctness and security issues
-4. **`###` headers** for each section — never plain text headers
+4. **`###` headers** for each reviewer section — never plain text headers
 5. **Summary in blockquotes** — call out cross-domain insights and fix order
 6. **`---` horizontal rule** separates issues from summary
+7. **No preamble before tables** — go straight from the `###` header to the table. Do not add a paragraph of explanation before each table.
 
-See `references/review-output-template.md` for a full example.
+See `references/review-output-template.md` for the exact format to follow.
 
 ## Language-Agnostic
 
