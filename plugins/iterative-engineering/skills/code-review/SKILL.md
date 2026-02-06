@@ -72,16 +72,13 @@ Create a review team with specialized teammates:
 4. Wait for all teammates to complete their reviews
    └── Do NOT start synthesizing until all reviewers report back
 
-5. Lead synthesizes findings
+5. Synthesize and present using the exact output structure below
    ├── Collect issues from all reviewers
    ├── Deduplicate overlapping issues
-   ├── Note cross-domain insights (e.g., security issue with no test coverage)
-   ├── Prioritize by severity
-   └── Suggest fix order (security first, then correctness, etc.)
+   ├── Format output following the Output Structure section
+   └── Do NOT narrate your synthesis process — just output the formatted result
 
-6. Present consolidated results to user
-
-7. Clean up the team when done
+6. Clean up the team when done
 ```
 
 **Benefits of team mode:**
@@ -105,27 +102,49 @@ When agent teams are not available:
 
 4. Collect findings from all agents
 
-5. Synthesize findings
+5. Synthesize and present using the exact output structure below
    ├── Deduplicate overlapping issues
-   ├── Prioritize by severity
-   └── Present consolidated list
-
-6. Present to user
+   ├── Format output following the Output Structure section
+   └── Do NOT narrate your synthesis process — just output the formatted result
 ```
 
-## Output Formatting
+## Output Structure
 
-**Readability is critical** — review output can be long. Follow these rules exactly:
+**The output must follow this exact structure, in this order. Nothing else.**
 
-1. **Pipe-delimited markdown tables** for each reviewer section — one row per issue. Use `| col | col |` syntax with `|---|---|` separator rows. **Do NOT use ASCII box-drawing characters** (`┌─┬─┐`, `│`, `└─┴─┘`) — these render poorly in terminals.
-2. **Always include `file:line` location** in code review tables
-3. **Include severity** (Critical/High/Medium/Low) for correctness and security issues
-4. **`###` headers** for each reviewer section — never plain text headers
-5. **Summary in blockquotes** — call out cross-domain insights and fix order
-6. **`---` horizontal rule** separates issues from summary
-7. **No preamble before tables** — go straight from the `###` header to the table. Do not add a paragraph of explanation before each table.
+```
+## Code Review Results (Full|Quick)
 
-See `references/review-output-template.md` for the exact format to follow.
+### [Reviewer Name]              ← one section per reviewer
+| # | Location | Issue | Severity |  ← pipe-delimited table, immediately after header
+|---|----------|-------|----------|
+| 1 | `file:line` | ...  | High   |
+
+### [Next Reviewer]
+| # | Location | Issue | Severity |
+|---|----------|-------|----------|
+| 1 | `file:line` | ...  | Medium |
+
+[...repeat for each reviewer...]
+
+---
+
+**Summary:** N issues found. X critical, Y high, Z medium, W low.
+
+> **Cross-domain insight:** ...
+>
+> **Fix order:** ...
+```
+
+**Rules:**
+- **This structure is the entire output.** Do not add anything before `## Code Review Results` — no introductory paragraphs, no "here's what I found" narrative.
+- **One `###` section per reviewer**, each containing only a pipe-delimited table. No prose between the header and the table.
+- **Pipe-delimited markdown tables only** (`| col | col |` with `|---|---|`). Do NOT use ASCII box-drawing characters (`┌─┬─┐`, `│`, `└─┴─┘`).
+- **Always include `file:line` location** and **severity** (Critical/High/Medium/Low) in code review tables.
+- **One summary section at the end**, after the `---` rule. This is the only place for cross-domain insights and fix order. Do not put summary content anywhere else.
+- **Skip empty reviewer sections.** If a reviewer found no issues, omit that section entirely.
+
+See `references/review-output-template.md` for a complete example.
 
 ## Language-Agnostic
 

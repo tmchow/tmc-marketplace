@@ -54,16 +54,13 @@ Create a review team with specialized teammates:
 3. Wait for all teammates to complete their reviews
    └── Do NOT start synthesizing until all reviewers report back
 
-4. Lead synthesizes findings
+4. Synthesize and present using the exact output structure below
    ├── Collect issues from all reviewers
    ├── Deduplicate overlapping issues
-   ├── Note where multiple reviewers flagged the same concern (high confidence)
-   ├── Note conflicting perspectives (e.g., YAGNI vs Completeness)
-   └── Prioritize by impact
+   ├── Format output following the Output Structure section
+   └── Do NOT narrate your synthesis process — just output the formatted result
 
-5. Present consolidated results to user
-
-6. Clean up the team when done
+5. Clean up the team when done
 ```
 
 **Benefits of team mode:**
@@ -86,25 +83,50 @@ When agent teams are not available:
 3. Collect findings from all agents
    └── Each returns up to 5 issues
 
-4. Synthesize findings
+4. Synthesize and present using the exact output structure below
    ├── Deduplicate overlapping issues
-   ├── Prioritize by impact
-   └── Present consolidated list
-
-5. Present to user
+   ├── Format output following the Output Structure section
+   └── Do NOT narrate your synthesis process — just output the formatted result
 ```
 
-## Output Formatting
+## Output Structure
 
-**Readability is critical** — review output can be long. Follow these rules exactly:
+**The output must follow this exact structure, in this order. Nothing else.**
 
-1. **Pipe-delimited markdown tables** for each reviewer section — one row per issue. Use `| col | col |` syntax with `|---|---|` separator rows. **Do NOT use ASCII box-drawing characters** (`┌─┬─┐`, `│`, `└─┴─┘`) — these render poorly in terminals.
-2. **`###` headers** for each reviewer section — never plain text headers
-3. **Summary in blockquotes** — call out high-confidence items, tensions between reviewers, and quick wins
-4. **`---` horizontal rule** separates issues from summary
-5. **No preamble before tables** — go straight from the `###` header to the table. Do not add a paragraph of explanation before each table.
+```
+## Plan Review Results
 
-See `references/review-output-template.md` for the exact format to follow.
+### [Reviewer Name]              ← one section per reviewer
+| # | Col A | Col B |            ← pipe-delimited table, immediately after header
+|---|-------|-------|
+| 1 | ...   | ...   |
+
+### [Next Reviewer]
+| # | Col A | Col B |
+|---|-------|-------|
+| 1 | ...   | ...   |
+
+[...repeat for each reviewer...]
+
+---
+
+**Summary:** N issues across M categories.
+
+> **High confidence** (multiple reviewers): ...
+>
+> **Tension** (X vs Y): ...
+>
+> **Quick wins:** ...
+```
+
+**Rules:**
+- **This structure is the entire output.** Do not add anything before `## Plan Review Results` — no introductory paragraphs, no "here's what I found" narrative.
+- **One `###` section per reviewer**, each containing only a pipe-delimited table. No prose between the header and the table.
+- **Pipe-delimited markdown tables only** (`| col | col |` with `|---|---|`). Do NOT use ASCII box-drawing characters (`┌─┬─┐`, `│`, `└─┴─┘`).
+- **One summary section at the end**, after the `---` rule. This is the only place for cross-reviewer insights, tensions, and quick wins. Do not put summary content anywhere else.
+- **Skip empty reviewer sections.** If a reviewer found no issues, omit that section entirely.
+
+See `references/review-output-template.md` for a complete example.
 
 ## Multiple Rounds
 
