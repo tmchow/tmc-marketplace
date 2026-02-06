@@ -22,7 +22,7 @@ This plugin is built on a few core beliefs:
 ## The Workflow
 
 ```
-brainstorming ──► create-technical-plan ──► plan-to-tasks ──► executing-work ──► finishing-work
+brainstorming ──► create-technical-plan ──► plan-to-tasks ──► executing-work
      │                    │                                         │
      ▼                    ▼                                         ▼
  plan-review          plan-review                              code-review
@@ -33,15 +33,22 @@ Each stage produces an artifact, offers review, fixes issues, and continues. Non
 
 ## Skills
 
+### Core Workflow
+
 | Skill | Description |
 |-------|-------------|
 | `brainstorming` | Explore requirements and approaches before planning |
 | `create-technical-plan` | Transform brainstorms into structured technical plans |
+| `plan-review` | Multi-agent review of plans (4 reviewers) |
 | `plan-to-tasks` | Convert plans into task hierarchies |
 | `executing-work` | TDD-driven task execution with progress tracking |
-| `finishing-work` | Complete work with review and PR creation |
-| `plan-review` | Multi-agent review of technical plans (4 reviewers) |
 | `code-review` | Multi-agent code review (5 reviewers, full or quick mode) |
+| `finishing-work` | Complete work with final review and PR creation |
+
+### Supporting
+
+| Skill | Description |
+|-------|-------------|
 | `fix-code-review-feedback` | Resolve PR review comments systematically |
 | `git-worktree` | Isolated development using git worktrees |
 | `agent-browser` | Browser automation using Vercel's agent-browser CLI |
