@@ -114,9 +114,7 @@ Continue until satisfied or user chooses to proceed.
 
 ## After Review
 
-```
-Review complete. What next?
-├── A) Fix issues now
-├── B) Fix issues, then another review round
-└── C) Accept as-is and continue
-```
+Use AskUserQuestion with options:
+- Fix issues now
+- Fix issues, then another review round
+- Accept as-is and continue
