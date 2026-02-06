@@ -1,8 +1,27 @@
 ---
 name: plan-to-tasks-worker
-description: Parses technical plans and extracts task structure with parents, subtasks, and dependencies.
-tools: Glob, Grep, Read, Bash(hzl *), TodoWrite
+description: Use this agent when parsing a technical plan into structured tasks. Extracts parent tasks, subtasks, and dependencies. Spawned by the `plan-to-tasks` skill.
+
+  <example>
+  Context: The `plan-to-tasks` skill needs to parse a plan document.
+  user: "Convert my technical plan to tasks"
+  assistant: "I'll spawn the plan-to-tasks-worker agent to extract the task structure from the plan."
+  <commentary>
+  The plan-to-tasks skill delegates document parsing to this worker agent.
+  </commentary>
+  </example>
+
+  <example>
+  Context: User has a plan document and wants to see the task breakdown.
+  user: "Break down docs/plans/auth.md into tasks"
+  assistant: "I'll use the plan-to-tasks-worker agent to parse the plan and extract parents, subtasks, and dependencies."
+  <commentary>
+  Direct plan-to-task extraction maps to this worker agent.
+  </commentary>
+  </example>
+
 model: haiku
+color: green
 skills:
   - hzl
 ---

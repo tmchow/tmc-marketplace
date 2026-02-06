@@ -1,8 +1,27 @@
 ---
 name: branch-setup-worker
-description: Creates git worktrees or branches for workspace isolation.
-tools: Bash(git status), Bash(git branch *), Bash(git worktree *), Bash(git checkout -b *), Bash(git remote *)
+description: Use this agent when creating git worktrees or branches for workspace isolation. Spawned by the `iterative:implement` skill during setup phase.
+
+  <example>
+  Context: The `iterative:implement` skill needs an isolated workspace.
+  user: "Start implementing the plan on a new branch"
+  assistant: "I'll use the branch-setup-worker agent to create an isolated worktree for this work."
+  <commentary>
+  The implement skill delegates branch/worktree creation to this worker agent.
+  </commentary>
+  </example>
+
+  <example>
+  Context: User wants to set up a feature branch manually.
+  user: "Create a worktree for the auth feature"
+  assistant: "I'll use the branch-setup-worker agent to create the worktree and branch."
+  <commentary>
+  Direct workspace isolation request maps to the branch-setup-worker agent.
+  </commentary>
+  </example>
+
 model: haiku
+color: green
 ---
 
 # Branch Setup Worker

@@ -1,7 +1,28 @@
 ---
 name: yagni-reviewer
-description: Reviews documents for scope creep, hypothetical features, and over-specification. Advocates for minimal, focused plans.
-tools: Glob, Grep, Read
+description: Use this agent when reviewing a plan or brainstorm document for scope creep and over-specification. Identifies hypothetical features, unnecessary complexity, and opportunities to simplify.
+
+  <example>
+  Context: User is concerned their plan is too ambitious.
+  user: "Is this plan trying to do too much?"
+  assistant: "I'll use the yagni-reviewer agent to identify scope creep and opportunities to simplify."
+  <commentary>
+  The user suspects over-scoping, which is the yagni-reviewer's core focus area.
+  </commentary>
+  </example>
+
+  <example>
+  Context: The `plan-review` skill is running a multi-agent review.
+  user: "Run plan-review on my technical plan"
+  assistant: "I'll spawn the yagni-reviewer agent to check for unnecessary complexity and gold plating."
+  <commentary>
+  The plan-review skill uses this agent to ensure plans stay minimal and focused.
+  </commentary>
+  </example>
+
+model: inherit
+color: cyan
+tools: ["Glob", "Grep", "Read"]
 ---
 
 # YAGNI Reviewer

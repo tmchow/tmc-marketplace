@@ -1,7 +1,28 @@
 ---
 name: simplicity-reviewer
-description: Reviews code for over-engineering, unnecessary abstraction, and complexity. Advocates for minimal, focused implementations.
-tools: Glob, Grep, Read
+description: Use this agent when reviewing code for over-engineering and unnecessary complexity. Identifies premature abstraction, YAGNI violations, and opportunities to simplify.
+
+  <example>
+  Context: User suspects their implementation is over-engineered.
+  user: "Is this code more complex than it needs to be?"
+  assistant: "I'll use the simplicity-reviewer agent to identify over-engineering and simplification opportunities."
+  <commentary>
+  The user is concerned about unnecessary complexity, which is the simplicity-reviewer's focus.
+  </commentary>
+  </example>
+
+  <example>
+  Context: The `code-review` skill is running a multi-agent review.
+  user: "Review my refactored service layer"
+  assistant: "I'll spawn the simplicity-reviewer agent to check for unnecessary abstractions."
+  <commentary>
+  Refactoring can introduce premature abstractions that the simplicity-reviewer catches.
+  </commentary>
+  </example>
+
+model: inherit
+color: blue
+tools: ["Glob", "Grep", "Read"]
 ---
 
 # Simplicity Reviewer

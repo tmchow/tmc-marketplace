@@ -1,8 +1,27 @@
 ---
 name: pr-creator-worker
-description: Creates pull requests following repo conventions.
-tools: Glob, Grep, Read, Bash(git status), Bash(git diff *), Bash(gh pr create *), Bash(gh pr view *)
+description: Use this agent when creating a pull request following repo conventions. Spawned by the `finishing-work` skill to generate PR title, description, and create via GitHub CLI.
+
+  <example>
+  Context: The `finishing-work` skill is wrapping up a feature.
+  user: "Finish up and create a PR"
+  assistant: "I'll use the pr-creator-worker agent to create the pull request following repo conventions."
+  <commentary>
+  The finishing-work skill delegates PR creation to this worker agent.
+  </commentary>
+  </example>
+
+  <example>
+  Context: User wants to create a PR from the current branch.
+  user: "Create a PR for these changes"
+  assistant: "I'll use the pr-creator-worker agent to generate the PR with proper title and description."
+  <commentary>
+  Direct PR creation request maps to the pr-creator-worker agent.
+  </commentary>
+  </example>
+
 model: haiku
+color: green
 ---
 
 # PR Creator Worker

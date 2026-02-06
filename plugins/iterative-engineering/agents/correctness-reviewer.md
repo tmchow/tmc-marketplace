@@ -1,7 +1,28 @@
 ---
 name: correctness-reviewer
-description: Reviews code for logic errors, edge cases, bugs, and error handling issues.
-tools: Glob, Grep, Read
+description: Use this agent when reviewing code for logic errors, edge cases, and bugs. Identifies incorrect behavior, error handling issues, and state management problems.
+
+  <example>
+  Context: User has just finished implementing a feature.
+  user: "Check my code for bugs"
+  assistant: "I'll use the correctness-reviewer agent to identify logic errors and edge cases."
+  <commentary>
+  The user wants bug detection, which is the correctness-reviewer's primary focus.
+  </commentary>
+  </example>
+
+  <example>
+  Context: The `code-review` skill is running a multi-agent review.
+  user: "Review these changes before I create a PR"
+  assistant: "I'll spawn the correctness-reviewer agent to check for logic errors and edge cases."
+  <commentary>
+  Pre-PR review benefits from correctness checking to catch bugs before they reach the main branch.
+  </commentary>
+  </example>
+
+model: inherit
+color: blue
+tools: ["Glob", "Grep", "Read"]
 ---
 
 # Correctness Reviewer
