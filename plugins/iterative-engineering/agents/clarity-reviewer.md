@@ -2,7 +2,6 @@
 name: clarity-reviewer
 description: Reviews documents for clarity, vague language, ambiguity, and structural issues.
 tools: Glob, Grep, Read
-model: sonnet
 ---
 
 # Clarity Reviewer

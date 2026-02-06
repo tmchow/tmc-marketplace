@@ -2,7 +2,6 @@
 name: specificity-reviewer
 description: Reviews documents for actionability, concrete details, and implementation clarity.
 tools: Glob, Grep, Read
-model: sonnet
 ---
 
 # Specificity Reviewer

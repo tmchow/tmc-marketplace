@@ -2,7 +2,6 @@
 name: security-reviewer
 description: Reviews code for security vulnerabilities, auth issues, input validation, and secrets exposure.
 tools: Glob, Grep, Read
-model: sonnet
 ---
 
 # Security Reviewer

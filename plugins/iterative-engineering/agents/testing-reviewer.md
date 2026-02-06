@@ -2,7 +2,6 @@
 name: testing-reviewer
 description: Reviews code for test coverage, test quality, edge case coverage, and integration testing.
 tools: Glob, Grep, Read
-model: sonnet
 ---
 
 # Testing Reviewer

@@ -2,7 +2,6 @@
 name: yagni-reviewer
 description: Reviews documents for scope creep, hypothetical features, and over-specification. Advocates for minimal, focused plans.
 tools: Glob, Grep, Read
-model: sonnet
 ---
 
 # YAGNI Reviewer

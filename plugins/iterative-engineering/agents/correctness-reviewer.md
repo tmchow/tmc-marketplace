@@ -2,7 +2,6 @@
 name: correctness-reviewer
 description: Reviews code for logic errors, edge cases, bugs, and error handling issues.
 tools: Glob, Grep, Read
-model: sonnet
 ---
 
 # Correctness Reviewer

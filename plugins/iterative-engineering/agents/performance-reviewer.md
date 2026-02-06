@@ -2,7 +2,6 @@
 name: performance-reviewer
 description: Reviews code for performance issues including algorithmic complexity, database queries, memory usage, and caching opportunities.
 tools: Glob, Grep, Read
-model: sonnet
 ---
 
 # Performance Reviewer

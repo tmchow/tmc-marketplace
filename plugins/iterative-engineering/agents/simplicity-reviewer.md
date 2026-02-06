@@ -2,7 +2,6 @@
 name: simplicity-reviewer
 description: Reviews code for over-engineering, unnecessary abstraction, and complexity. Advocates for minimal, focused implementations.
 tools: Glob, Grep, Read
-model: sonnet
 ---
 
 # Simplicity Reviewer

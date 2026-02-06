@@ -2,7 +2,6 @@
 name: completeness-reviewer
 description: Reviews documents for missing sections, gaps in coverage, and unaddressed dependencies.
 tools: Glob, Grep, Read
-model: sonnet
 ---
 
 # Completeness Reviewer
