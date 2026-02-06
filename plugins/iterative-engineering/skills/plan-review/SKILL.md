@@ -54,11 +54,12 @@ Create a review team with specialized teammates:
 3. Wait for all teammates to complete their reviews
    └── Do NOT start synthesizing until all reviewers report back
 
-4. Synthesize and present using the exact output structure below
+4. Synthesize findings and format output
    ├── Collect issues from all reviewers
    ├── Deduplicate overlapping issues
-   ├── Format output following the Output Structure section
-   └── Do NOT narrate your synthesis process — just output the formatted result
+   ├── Identify high-confidence items (multiple reviewers) and tensions
+   ├── Present to user using the exact Output Structure below
+   └── Put synthesis insights in the summary blockquotes at the end — not as a preamble
 
 5. Clean up the team when done
 ```
@@ -83,10 +84,11 @@ When agent teams are not available:
 3. Collect findings from all agents
    └── Each returns up to 5 issues
 
-4. Synthesize and present using the exact output structure below
+4. Synthesize findings and format output
    ├── Deduplicate overlapping issues
-   ├── Format output following the Output Structure section
-   └── Do NOT narrate your synthesis process — just output the formatted result
+   ├── Identify high-confidence items and tensions
+   ├── Present to user using the exact Output Structure below
+   └── Put synthesis insights in the summary blockquotes at the end — not as a preamble
 ```
 
 ## Output Structure
