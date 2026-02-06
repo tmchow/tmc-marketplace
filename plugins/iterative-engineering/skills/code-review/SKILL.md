@@ -62,32 +62,37 @@ Create a review team with specialized teammates:
    └── Detect language from package.json, Gemfile, etc.
 
 3. Create agent team with reviewer teammates
-   Spawn each with a detailed prompt including context, for example:
+   Spawn each with a detailed prompt that includes:
+   ├── Their review focus, the code scope, and project context
+   ├── Max 5 issues with file:line, severity, description, and suggested fix
+   └── Cross-validation instruction (see below)
 
-   "Review the code changes in [scope] for security vulnerabilities.
-   The project uses [language/framework]. Focus on auth, input validation,
-   and secrets exposure. Return up to 5 issues with file:line, severity,
-   description, and suggested fix."
+   Include this in every reviewer's spawn prompt:
+   "You are on a review team with other reviewers. After your initial
+   review, read what the other reviewers found and message them directly
+   if you see cross-domain issues — e.g., if security finds a vulnerability
+   and testing confirms there's no coverage, or if performance and simplicity
+   disagree on approach. Challenge each other's findings."
 
-4. Wait for all teammates to report back
+4. Let reviewers work and cross-validate
+   ├── Reviewers do their initial review, then discuss with each other
    ├── Brief one-line status is fine (e.g., "Correctness and security done, waiting on 3 more")
    ├── Don't repeat status, narrate your thinking, or fill the wait with commentary
-   └── Do NOT start synthesizing until all reviewers are done
+   └── Wait until discussion settles before synthesizing
 
-5. Once all reviewers are done: synthesize, present, and clean up
-   ├── Collect and deduplicate issues from all reviewers
-   ├── REFORMAT all findings into the Output Structure below
-   │   Reviewers return raw text — you must reformat into:
+5. Synthesize, present, and clean up
+   ├── Collect final findings from all reviewers (post-discussion)
+   ├── REFORMAT into the Output Structure below
    │   ### [Reviewer] header → pipe table (| # | Location | Issue | Severity |) → repeat → --- → Summary
    │   Do NOT pass through reviewer output as-is
-   ├── Put synthesis insights in the summary blockquotes at the end
+   ├── Put synthesis insights (including cross-reviewer debates) in summary blockquotes
    └── Then clean up the team
 ```
 
 **Benefits of team mode:**
-- Cross-domain validation (security finds issue, testing confirms no coverage)
-- Multiple reviewers flagging same issue = high confidence
-- Trade-offs surfaced (performance vs simplicity)
+- Reviewers message each other directly — cross-domain insights emerge from debate, not just lead synthesis
+- Security finds vulnerability, testing confirms no coverage — through direct conversation
+- Trade-offs surfaced through actual disagreement (performance vs simplicity)
 
 **Note:** Agent teams use more tokens than subagents. For small changes, subagent mode may be sufficient.
 
