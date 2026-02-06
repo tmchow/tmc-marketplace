@@ -1,7 +1,7 @@
 ---
 name: plan-to-tasks
 description: Convert a technical plan into trackable tasks with dependencies. This skill should be used when the user says "break down the plan", "create tasks", or "convert to tasks". Supports HZL and TodoWrite.
-allowed-tools: Glob, Grep, Read, Bash(hzl *), TodoWrite, AskUserQuestion, Task
+allowed-tools: Glob, Grep, Read, Bash(hzl *), Task
 ---
 
 # Plan to Tasks

@@ -1,7 +1,7 @@
 ---
 name: iterative:brainstorm
 description: Explore ideas and approaches before building. This skill should be used when the user says "brainstorm", "explore approaches", "think through options", or is starting a new feature with unclear direction.
-allowed-tools: Glob, Grep, Read, WebSearch, WebFetch, AskUserQuestion, Task
+allowed-tools: Glob, Grep, Read, WebSearch, WebFetch, Task
 ---
 
 # Brainstorming

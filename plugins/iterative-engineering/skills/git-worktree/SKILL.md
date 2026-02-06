@@ -2,7 +2,7 @@
 name: git-worktree
 description: Internal skill for workspace isolation. Detects current git state and offers worktree/branch options to ensure agent has isolated workspace. Called by iterative:implement, not user-invocable.
 user-invocable: false
-allowed-tools: Bash(git status), Bash(git branch *), Bash(git worktree *), Bash(git checkout -b *), Bash(git remote *), Task
+allowed-tools: Glob, Grep, Read, Bash(git *), Task
 ---
 
 # Git Worktree (Workspace Isolation)

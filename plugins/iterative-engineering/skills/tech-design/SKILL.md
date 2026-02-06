@@ -1,7 +1,7 @@
 ---
 name: iterative:tech-design
 description: Turn requirements into a structured implementation plan. This skill should be used when the user says "create a plan", "design the implementation", or has a brainstorm document ready to formalize.
-allowed-tools: Glob, Grep, Read, Write, Edit, AskUserQuestion, Task
+allowed-tools: Glob, Grep, Read, Task
 ---
 
 # Create Technical Plan

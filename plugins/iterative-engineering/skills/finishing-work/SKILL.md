@@ -1,7 +1,7 @@
 ---
 name: finishing-work
 description: Complete a feature branch with test verification and PR creation. This skill should be used when the user says "finish up", "create a PR", or "wrap up the feature".
-allowed-tools: Glob, Grep, Read, Bash(git status), Bash(git diff *), Bash(git add *), Bash(git commit *), Bash(gh pr create *), Bash(gh pr view *), AskUserQuestion, Task
+allowed-tools: Glob, Grep, Read, Task
 ---
 
 # Finishing Work

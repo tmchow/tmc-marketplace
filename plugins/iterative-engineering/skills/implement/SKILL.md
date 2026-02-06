@@ -1,7 +1,7 @@
 ---
 name: iterative:implement
 description: Execute an implementation plan with TDD and code review. This skill should be used when the user says "implement the plan", "start building", or has tasks ready to execute.
-allowed-tools: Glob, Grep, Read, Bash(hzl *), Bash(git status), Bash(git diff *), Bash(git add *), Bash(git commit *), TodoWrite, AskUserQuestion, Task
+allowed-tools: Glob, Grep, Read, Bash(hzl *), Task
 ---
 
 # Executing Work
