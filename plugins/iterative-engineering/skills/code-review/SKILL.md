@@ -69,17 +69,17 @@ Create a review team with specialized teammates:
    and secrets exposure. Return up to 5 issues with file:line, severity,
    description, and suggested fix."
 
-4. Wait for all teammates to complete their reviews
-   └── Do NOT start synthesizing until all reviewers report back
+4. Wait for all teammates to report back
+   ├── Brief one-line status is fine (e.g., "Correctness and security done, waiting on 3 more")
+   ├── Don't repeat status, narrate your thinking, or fill the wait with commentary
+   └── Do NOT start synthesizing until all reviewers are done
 
-5. Synthesize findings and format output
-   ├── Collect issues from all reviewers
-   ├── Deduplicate overlapping issues
+5. Once all reviewers are done: synthesize, present, and clean up
+   ├── Collect and deduplicate issues from all reviewers
    ├── Identify cross-domain insights and fix order
    ├── Present to user using the exact Output Structure below
-   └── Put synthesis insights in the summary blockquotes at the end — not as a preamble
-
-6. Clean up the team when done
+   ├── Put synthesis insights in the summary blockquotes at the end
+   └── Then clean up the team
 ```
 
 **Benefits of team mode:**

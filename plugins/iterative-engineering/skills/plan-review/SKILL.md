@@ -51,17 +51,17 @@ Create a review team with specialized teammates:
    ambiguity, and structural problems. Return up to 5 issues, each with:
    location, problem description, and suggested fix."
 
-3. Wait for all teammates to complete their reviews
-   └── Do NOT start synthesizing until all reviewers report back
+3. Wait for all teammates to report back
+   ├── Brief one-line status is fine (e.g., "Clarity and YAGNI done, waiting on 2 more")
+   ├── Don't repeat status, narrate your thinking, or fill the wait with commentary
+   └── Do NOT start synthesizing until all reviewers are done
 
-4. Synthesize findings and format output
-   ├── Collect issues from all reviewers
-   ├── Deduplicate overlapping issues
+4. Once all reviewers are done: synthesize, present, and clean up
+   ├── Collect and deduplicate issues from all reviewers
    ├── Identify high-confidence items (multiple reviewers) and tensions
    ├── Present to user using the exact Output Structure below
-   └── Put synthesis insights in the summary blockquotes at the end — not as a preamble
-
-5. Clean up the team when done
+   ├── Put synthesis insights in the summary blockquotes at the end
+   └── Then clean up the team
 ```
 
 **Benefits of team mode:**
