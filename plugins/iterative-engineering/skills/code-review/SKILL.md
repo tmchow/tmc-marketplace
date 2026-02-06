@@ -2,7 +2,6 @@
 name: code-review
 description: Use when reviewing code changes for quality. Supports Full mode (5 reviewers) or Quick mode (2-3 reviewers). Uses agent teams when available for cross-domain validation, falls back to parallel subagents. Language-agnostic, adapts to project context.
 allowed-tools: Glob, Grep, Read, Task
-model: opus
 ---
 
 # Code Review
@@ -11,7 +10,7 @@ Reviews code changes using specialized reviewers. Uses agent teams when availabl
 
 ## When to Use
 
-- After completing a parent task (during executing-work)
+- After completing a parent task (during `implement`)
 - Before finishing work and creating a PR
 - When you want feedback on any code changes
 - Can be invoked standalone

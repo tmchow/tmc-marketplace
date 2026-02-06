@@ -2,7 +2,6 @@
 name: plan-to-tasks
 description: Use when converting a technical plan into trackable tasks. Automatically uses HZL if project uses HZL for task tracking, otherwise uses TodoWrite. Parses plan structure, presents for approval, creates tasks with dependencies.
 allowed-tools: Glob, Grep, Read, Bash(hzl *), TodoWrite, Task
-model: haiku
 ---
 
 # Plan to Tasks
@@ -13,7 +12,7 @@ Converts technical plans into trackable tasks using HZL or TodoWrite.
 
 - After completing a technical plan
 - When you have a structured document to break into tasks
-- Called by create-technical-plan skill at handoff
+- Called by `tech-design` skill at handoff
 - Can be invoked standalone
 
 ## Task System Detection
@@ -63,7 +62,7 @@ Step 6: Sanity Check
 ├── Verify counts match expected
 └── Report: "Created [N] parents, [M] subtasks"
 
-Step 7: Handoff → executing-work
+Step 7: Handoff → implement
 ```
 
 ## Task Descriptions

@@ -1,8 +1,7 @@
 ---
-name: create-technical-plan
-description: Use when turning a brainstorm or requirements into an implementation plan. Emphasizes TDD approach, creates structured plan with tasks and subtasks, iterates with plan-review, hands off to plan-to-tasks then executing-work.
+name: tech-design
+description: Use when turning a brainstorm or requirements into an implementation plan. Emphasizes TDD approach, creates structured plan with tasks and subtasks, iterates with plan-review, hands off to plan-to-tasks then implement.
 allowed-tools: Glob, Grep, Read, Write, Edit, AskUserQuestion, Task
-model: opus
 ---
 
 # Create Technical Plan
@@ -11,7 +10,7 @@ Turns design into a structured implementation plan with TDD emphasis.
 
 ## When to Use
 
-- After brainstorming is complete
+- After `brainstorm` is complete
 - When you have clear requirements to implement
 - When you need a structured implementation approach
 - Can be invoked standalone with existing requirements
@@ -65,7 +64,7 @@ Phase 4: Review Cycle
 Phase 5: Convert to Tasks
 ├── Offer: "Convert to HZL/TodoWrite tasks" or "Start execution"
 ├── If convert: invoke plan-to-tasks skill
-└── Handoff to executing-work
+└── Handoff to implement
 ```
 
 ## Plan Document Format

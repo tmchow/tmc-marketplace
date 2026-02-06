@@ -1,6 +1,6 @@
 # Iterative Engineering Plugin
 
-A Claude Code plugin for iterative development workflows - brainstorming, planning, multi-agent reviews, TDD execution, and PR management.
+A Claude Code plugin for iterative development workflows - brainstorm, design, multi-agent reviews, TDD implementation, and PR management.
 
 ## Philosophy
 
@@ -22,14 +22,15 @@ This plugin is built on a few core beliefs:
 ## The Workflow
 
 ```
-brainstorming ──► create-technical-plan ──► plan-to-tasks ──► executing-work
-     │                    │                                         │
-     ▼                    ▼                                         ▼
- plan-review          plan-review                              code-review
- (1+ rounds)          (1+ rounds)                              (1+ rounds)
+brainstorm ──────► tech-design ──────► implement
+     ↓↑                 ↓↑                 ↓↑
+ plan-review        plan-review        code-review
+   (1+)               (1+)               (1+)
 ```
 
-Each stage produces an artifact, offers review, fixes issues, and continues. Non-linear re-entry is supported - run `/brainstorming` again after seeing the technical plan, or `/code-review` multiple times.
+Each stage: produce artifact → review → fix → repeat until satisfied.
+
+Re-entry is supported - run `/brainstorm` again after seeing the design, or `/code-review` multiple times.
 
 ## Skills
 
@@ -37,11 +38,10 @@ Each stage produces an artifact, offers review, fixes issues, and continues. Non
 
 | Skill | Description |
 |-------|-------------|
-| `brainstorming` | Explore requirements and approaches before planning |
-| `create-technical-plan` | Transform brainstorms into structured technical plans |
+| `brainstorm` | Explore requirements and approaches before planning |
+| `tech-design` | Transform brainstorms into structured technical plans |
 | `plan-review` | Multi-agent review of plans (4 reviewers) |
-| `plan-to-tasks` | Convert plans into task hierarchies |
-| `executing-work` | TDD-driven task execution with progress tracking |
+| `implement` | TDD-driven task execution with progress tracking |
 | `code-review` | Multi-agent code review (5 reviewers, full or quick mode) |
 | `finishing-work` | Complete work with final review and PR creation |
 
@@ -49,6 +49,7 @@ Each stage produces an artifact, offers review, fixes issues, and continues. Non
 
 | Skill | Description |
 |-------|-------------|
+| `plan-to-tasks` | Convert plans into task hierarchies (auto-runs after `tech-design`) |
 | `fix-code-review-feedback` | Resolve PR review comments systematically |
 | `git-worktree` | Isolated development using git worktrees |
 | `agent-browser` | Browser automation using Vercel's agent-browser CLI |

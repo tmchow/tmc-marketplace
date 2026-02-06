@@ -10,7 +10,7 @@ Completes development with verification, optional review, and PR creation.
 
 ## When to Use
 
-- After executing-work completes all tasks
+- After `implement` completes all tasks
 - When you're ready to create a PR
 - When you want to finish a feature branch
 - Can be invoked standalone on any branch

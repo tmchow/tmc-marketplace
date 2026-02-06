@@ -1,8 +1,7 @@
 ---
-name: brainstorming
-description: Use before implementing features or making changes. Explores user intent, presents 2-3 approaches with pros/cons BEFORE deep research, iterates with plan-review. Produces brainstorm document for handoff to create-technical-plan.
+name: brainstorm
+description: Use before implementing features or making changes. Explores user intent, presents 2-3 approaches with pros/cons BEFORE deep research, iterates with plan-review. Produces brainstorm document for handoff to tech-design.
 allowed-tools: Glob, Grep, Read, WebSearch, WebFetch, AskUserQuestion, Task
-model: opus
 ---
 
 # Brainstorming
@@ -79,7 +78,7 @@ Phase 6: Review Cycle
 └── Offer another round or continue
 
 Phase 7: Handoff
-└── Continue to create-technical-plan when ready
+└── Continue to tech-design when ready
 ```
 
 ## Output Format

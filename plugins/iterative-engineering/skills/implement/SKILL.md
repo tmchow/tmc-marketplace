@@ -1,8 +1,7 @@
 ---
-name: executing-work
+name: implement
 description: Use when executing an implementation plan. Handles workspace isolation, spawns task-workers sequentially for TDD cycle, runs code review after parent tasks, and hands off to finishing-work. Works with HZL or TodoWrite tasks.
 allowed-tools: Glob, Grep, Read, Bash(hzl *), Bash(git status), Bash(git diff *), Bash(git add *), Bash(git commit *), TodoWrite, AskUserQuestion, Task
-model: sonnet
 ---
 
 # Executing Work
@@ -11,7 +10,7 @@ Executes implementation plans with TDD cycle, code review, and task tracking.
 
 ## When to Use
 
-- After plan-to-tasks creates tasks
+- After `plan-to-tasks` creates tasks
 - When you have tasks ready to execute
 - Can work with HZL tasks or TodoWrite tasks
 

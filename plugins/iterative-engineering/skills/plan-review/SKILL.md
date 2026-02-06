@@ -2,7 +2,6 @@
 name: plan-review
 description: Use when reviewing brainstorm documents or technical plans for quality. Spawns 4 specialized reviewers (clarity, completeness, specificity, YAGNI) to analyze in parallel and synthesize findings. Uses agent teams when available for richer cross-validation.
 allowed-tools: Glob, Grep, Read, Task
-model: opus
 ---
 
 # Plan Review
@@ -14,7 +13,7 @@ Reviews brainstorm documents and technical plans using 4 specialized reviewers.
 - After writing a brainstorm document
 - After writing a technical plan
 - When you want feedback on any planning document
-- Can be invoked standalone or called by brainstorming/create-technical-plan skills
+- Can be invoked standalone or called by `brainstorm`/`tech-design` skills
 
 ## Reviewers
 
