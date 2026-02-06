@@ -36,108 +36,85 @@ Each reviewer returns **max 5 issues** to keep feedback actionable.
 
 ### Mode A: Agent Team (if enabled)
 
-Create a review team with specialized teammates:
+**Step 1.** Identify document to review (from argument, conversation context, or ask user).
 
-```
-1. Identify document to review
-   ├── Use document from argument
-   ├── Or infer from conversation context
-   └── Or ask user to specify
+**Step 2.** Create agent team with 4 reviewer teammates. Spawn each with a prompt that includes their review focus, the document, max 5 issues, and this cross-validation instruction:
 
-2. Create agent team with 4 reviewer teammates
-   Spawn each with a detailed prompt that includes:
-   ├── Their review focus and the document to review
-   ├── Max 5 issues, each with: location, problem, and suggested fix
-   └── Cross-validation instruction (see below)
+> "You are on a review team with other reviewers. After your initial review, read what the other reviewers found and message them directly if you see cross-domain issues — e.g., if completeness wants detail that YAGNI says is over-specified. Challenge each other's findings."
 
-   Include this in every reviewer's spawn prompt:
-   "You are on a review team with other reviewers. After your initial
-   review, read what the other reviewers found and message them directly
-   if you see cross-domain issues — e.g., if completeness wants detail
-   that YAGNI says is over-specified, or if multiple reviewers flagged
-   the same concern. Challenge each other's findings."
+**Step 3.** Let reviewers work and cross-validate. Brief one-line status is fine. Don't repeat status or narrate your thinking. Wait until discussion settles.
 
-3. Let reviewers work and cross-validate
-   ├── Reviewers do their initial review, then discuss with each other
-   ├── Brief one-line status is fine (e.g., "Clarity and YAGNI done, waiting on 2 more")
-   ├── Don't repeat status, narrate your thinking, or fill the wait with commentary
-   └── Wait until discussion settles before synthesizing
+**Step 4.** Synthesize and present. Collect final findings from all reviewers. **You must reformat all findings into the exact output format shown below — do NOT pass through raw reviewer text.** Then clean up the team.
 
-4. Synthesize, present, and clean up
-   ├── Collect final findings from all reviewers (post-discussion)
-   ├── REFORMAT into the Output Structure below
-   │   ### [Reviewer] header → pipe table (| # | Col | Col |) → repeat → --- → Summary
-   │   Do NOT pass through reviewer output as-is
-   ├── Put synthesis insights (including cross-reviewer debates) in summary blockquotes
-   └── Then clean up the team
-```
+### Mode B: Parallel Subagents (fallback)
 
-**Benefits of team mode:**
+**Step 1.** Identify document to review.
+
+**Step 2.** Spawn 4 reviewer agents via Task tool in parallel. Each analyzes independently, returns up to 5 issues.
+
+**Step 3.** Collect findings. Deduplicate overlapping issues.
+
+**Step 4.** **You must reformat all findings into the exact output format shown below — do NOT pass through raw agent text.**
+
+### Benefits of team mode
+
 - Reviewers message each other directly — cross-domain insights emerge from debate, not just lead synthesis
 - Conflicting findings surface real tradeoffs (e.g., YAGNI vs completeness)
 - Multiple reviewers flagging same issue = high confidence
 
 **Note:** Agent teams use more tokens than subagents. For simple documents, subagent mode may be sufficient.
 
-### Mode B: Parallel Subagents (fallback)
+## Output Format
 
-When agent teams are not available:
+**Your output for Step 4 must look exactly like this example. Copy this structure.**
 
-```
-1. Identify document to review
-
-2. Spawn 4 reviewer agents via Task tool in parallel
-   └── Each analyzes the document independently
-
-3. Collect findings from all agents
-   └── Each returns up to 5 issues
-
-4. Synthesize and reformat into the Output Structure below
-   ├── Deduplicate overlapping issues
-   ├── REFORMAT all findings into:
-   │   ### [Reviewer] header → pipe table (| # | Col | Col |) → repeat → --- → Summary
-   │   Do NOT pass through agent output as-is
-   └── Put synthesis insights in the summary blockquotes at the end
-```
-
-## Output Structure
-
-**The output must follow this exact structure, in this order. Nothing else.**
-
-```
+```markdown
 ## Plan Review Results
 
-### [Reviewer Name]              ← one section per reviewer
-| # | Col A | Col B |            ← pipe-delimited table, immediately after header
-|---|-------|-------|
-| 1 | ...   | ...   |
+### Clarity
 
-### [Next Reviewer]
-| # | Col A | Col B |
-|---|-------|-------|
-| 1 | ...   | ...   |
+| # | Issue | Suggestion |
+|---|-------|------------|
+| 1 | "minus comments and checkpoints" is ambiguous | Clarify: "excluding comments and checkpoints for those children" |
+| 2 | Approach B conclusion dangles without rationale | Expand reasoning or remove |
 
-[...repeat for each reviewer...]
+### Completeness
+
+| # | Gap | Impact |
+|---|-----|--------|
+| 1 | `blocked_by` shape undefined | Affects JSON contract |
+| 2 | Subtask ordering not specified | Agents may depend on deterministic ordering |
+
+### Specificity
+
+| # | Issue | What's needed |
+|---|-------|---------------|
+| 1 | Service method signature missing | Concrete interface for new/modified method |
+
+### YAGNI
+
+| # | Over-specification | Simpler alternative |
+|---|--------------------|---------------------|
+| 1 | Re-listing all 16+ fields | Just say "same as task show minus comments/checkpoints" |
 
 ---
 
-**Summary:** N issues across M categories.
+**Summary:** 6 issues across 4 categories.
 
-> **High confidence** (multiple reviewers): ...
+> **High confidence** (multiple reviewers): Field list needs to be explicit or reference existing schema — don't do both.
 >
-> **Tension** (X vs Y): ...
+> **Tension** (Completeness vs YAGNI): Completeness wants edge case detail; YAGNI says defer. Resolution: pin down the JSON contract shape, defer implementation specifics.
 >
-> **Quick wins:** ...
+> **Quick wins:** Clarify `--deep` without `--json` behavior, specify subtask sort order.
 ```
 
 **Rules:**
-- **This structure is the entire output.** Do not add anything before `## Plan Review Results` — no introductory paragraphs, no "here's what I found" narrative.
-- **One `###` section per reviewer**, each containing only a pipe-delimited table. No prose between the header and the table.
-- **Pipe-delimited markdown tables only** (`| col | col |` with `|---|---|`). Do NOT use ASCII box-drawing characters (`┌─┬─┐`, `│`, `└─┴─┘`).
-- **One summary section at the end**, after the `---` rule. This is the only place for cross-reviewer insights, tensions, and quick wins. Do not put summary content anywhere else.
-- **Skip empty reviewer sections.** If a reviewer found no issues, omit that section entirely.
-
-See `references/review-output-template.md` for a complete example.
+- Start with `## Plan Review Results` — nothing before it. No "here's what I found" or "let me synthesize."
+- One `### Section` per reviewer, each containing **only** a pipe-delimited markdown table.
+- Pipe tables use `| col | col |` with `|---|---|` separators. **Never** ASCII box-drawing (`┌─┬─┐`), key-value lists (`#: 1`, `Issue:`), or `────` separators.
+- Column headers vary by reviewer (Issue/Suggestion, Gap/Impact, etc.).
+- Single summary section after `---` with blockquotes. This is the only place for cross-reviewer insights.
+- Skip empty reviewer sections.
 
 ## Multiple Rounds
 

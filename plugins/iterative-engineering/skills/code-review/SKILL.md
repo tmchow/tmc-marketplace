@@ -49,112 +49,89 @@ When explicitly requested, uses 2-3 reviewers based on change type:
 
 ### Mode A: Agent Team (if enabled)
 
-Create a review team with specialized teammates:
+**Step 1.** Identify code to review and determine Full/Quick mode (from argument, git diff, or ask user). Detect project context from CLAUDE.md, AGENTS.md, package.json, etc.
 
-```
-1. Identify code to review and determine Full/Quick mode
-   ├── Use diff from argument (file, commit, branch)
-   ├── Or infer from recent changes (git diff)
-   └── Or ask user to specify scope
+**Step 2.** Create agent team with reviewer teammates. Spawn each with a prompt that includes their review focus, the code scope, project context, max 5 issues with file:line and severity, and this cross-validation instruction:
 
-2. Detect project context
-   ├── Read CLAUDE.md, AGENTS.md for conventions
-   └── Detect language from package.json, Gemfile, etc.
+> "You are on a review team with other reviewers. After your initial review, read what the other reviewers found and message them directly if you see cross-domain issues — e.g., if security finds a vulnerability and testing confirms no coverage, or if performance and simplicity disagree. Challenge each other's findings."
 
-3. Create agent team with reviewer teammates
-   Spawn each with a detailed prompt that includes:
-   ├── Their review focus, the code scope, and project context
-   ├── Max 5 issues with file:line, severity, description, and suggested fix
-   └── Cross-validation instruction (see below)
+**Step 3.** Let reviewers work and cross-validate. Brief one-line status is fine. Don't repeat status or narrate your thinking. Wait until discussion settles.
 
-   Include this in every reviewer's spawn prompt:
-   "You are on a review team with other reviewers. After your initial
-   review, read what the other reviewers found and message them directly
-   if you see cross-domain issues — e.g., if security finds a vulnerability
-   and testing confirms there's no coverage, or if performance and simplicity
-   disagree on approach. Challenge each other's findings."
+**Step 4.** Synthesize and present. Collect final findings from all reviewers. **You must reformat all findings into the exact output format shown below — do NOT pass through raw reviewer text.** Then clean up the team.
 
-4. Let reviewers work and cross-validate
-   ├── Reviewers do their initial review, then discuss with each other
-   ├── Brief one-line status is fine (e.g., "Correctness and security done, waiting on 3 more")
-   ├── Don't repeat status, narrate your thinking, or fill the wait with commentary
-   └── Wait until discussion settles before synthesizing
+### Mode B: Parallel Subagents (fallback)
 
-5. Synthesize, present, and clean up
-   ├── Collect final findings from all reviewers (post-discussion)
-   ├── REFORMAT into the Output Structure below
-   │   ### [Reviewer] header → pipe table (| # | Location | Issue | Severity |) → repeat → --- → Summary
-   │   Do NOT pass through reviewer output as-is
-   ├── Put synthesis insights (including cross-reviewer debates) in summary blockquotes
-   └── Then clean up the team
-```
+**Step 1.** Identify code to review and determine Full/Quick mode. Detect project context.
 
-**Benefits of team mode:**
+**Step 2.** Spawn reviewer agents via Task tool in parallel. Each analyzes code independently.
+
+**Step 3.** Collect findings. Deduplicate overlapping issues.
+
+**Step 4.** **You must reformat all findings into the exact output format shown below — do NOT pass through raw agent text.**
+
+### Benefits of team mode
+
 - Reviewers message each other directly — cross-domain insights emerge from debate, not just lead synthesis
 - Security finds vulnerability, testing confirms no coverage — through direct conversation
 - Trade-offs surfaced through actual disagreement (performance vs simplicity)
 
 **Note:** Agent teams use more tokens than subagents. For small changes, subagent mode may be sufficient.
 
-### Mode B: Parallel Subagents (fallback)
+## Output Format
 
-When agent teams are not available:
+**Your output for Step 4 must look exactly like this example. Copy this structure.**
 
-```
-1. Identify code to review and determine Full/Quick mode
+```markdown
+## Code Review Results (Full)
 
-2. Detect project context
+### Correctness
 
-3. Spawn reviewer agents via Task tool in parallel
-   └── Each analyzes code independently
-
-4. Collect findings from all agents
-
-5. Synthesize and reformat into the Output Structure below
-   ├── Deduplicate overlapping issues
-   ├── REFORMAT all findings into:
-   │   ### [Reviewer] header → pipe table (| # | Location | Issue | Severity |) → repeat → --- → Summary
-   │   Do NOT pass through agent output as-is
-   └── Put synthesis insights in the summary blockquotes at the end — not as a preamble
-```
-
-## Output Structure
-
-**The output must follow this exact structure, in this order. Nothing else.**
-
-```
-## Code Review Results (Full|Quick)
-
-### [Reviewer Name]              ← one section per reviewer
-| # | Location | Issue | Severity |  ← pipe-delimited table, immediately after header
-|---|----------|-------|----------|
-| 1 | `file:line` | ...  | High   |
-
-### [Next Reviewer]
 | # | Location | Issue | Severity |
 |---|----------|-------|----------|
-| 1 | `file:line` | ...  | Medium |
+| 1 | `task-service.ts:142` | Off-by-one in pagination — skips last page when total is exact multiple | High |
+| 2 | `claim.ts:87` | Race condition if two agents claim simultaneously without transaction | High |
 
-[...repeat for each reviewer...]
+### Security
+
+| # | Location | Vulnerability | Severity |
+|---|----------|---------------|----------|
+| 1 | `auth.ts:34` | User-supplied ID used directly in SQL query — injection risk | Critical |
+
+### Performance
+
+| # | Location | Issue | Impact |
+|---|----------|-------|--------|
+| 1 | `list.ts:156` | N+1 query — fetches dependencies per task in loop | High at scale |
+
+### Simplicity
+
+| # | Location | Suggestion |
+|---|----------|------------|
+| 1 | `utils/format.ts` | Three formatting helpers do the same thing — consolidate |
+
+### Testing
+
+| # | Location | Gap |
+|---|----------|-----|
+| 1 | `claim.ts` | No test for concurrent claim scenario | High |
 
 ---
 
-**Summary:** N issues found. X critical, Y high, Z medium, W low.
+**Summary:** 6 issues found. 1 critical, 2 high, 2 medium, 1 low.
 
-> **Cross-domain insight:** ...
+> **Cross-domain insight:** The SQL injection in `auth.ts:34` has no test coverage (flagged by both security and testing reviewers).
 >
-> **Fix order:** ...
+> **Fix order:** Critical/high security first → correctness bugs → add missing tests → simplicity cleanup.
 ```
 
 **Rules:**
-- **This structure is the entire output.** Do not add anything before `## Code Review Results` — no introductory paragraphs, no "here's what I found" narrative.
-- **One `###` section per reviewer**, each containing only a pipe-delimited table. No prose between the header and the table.
-- **Pipe-delimited markdown tables only** (`| col | col |` with `|---|---|`). Do NOT use ASCII box-drawing characters (`┌─┬─┐`, `│`, `└─┴─┘`).
-- **Always include `file:line` location** and **severity** (Critical/High/Medium/Low) in code review tables.
-- **One summary section at the end**, after the `---` rule. This is the only place for cross-domain insights and fix order. Do not put summary content anywhere else.
-- **Skip empty reviewer sections.** If a reviewer found no issues, omit that section entirely.
-
-See `references/review-output-template.md` for a complete example.
+- Start with `## Code Review Results` — nothing before it. No "here's what I found" or "let me synthesize."
+- One `### Section` per reviewer, each containing **only** a pipe-delimited markdown table.
+- Pipe tables use `| col | col |` with `|---|---|` separators. **Never** ASCII box-drawing (`┌─┬─┐`), key-value lists (`#: 1`, `Issue:`), or `────` separators.
+- Always include `file:line` location and severity (Critical/High/Medium/Low).
+- Column headers vary by reviewer (Issue/Severity, Vulnerability/Severity, Suggestion, Gap, etc.).
+- Single summary section after `---` with blockquotes. This is the only place for cross-domain insights and fix order.
+- Skip empty reviewer sections.
 
 ## Language-Agnostic
 
