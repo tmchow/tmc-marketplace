@@ -154,6 +154,6 @@ After fixing issues, run another round. Continue until:
 ## After Review
 
 Use AskUserQuestion with options:
-- Fix issues now
-- Fix issues, then another review round
-- Accept as-is and continue
+- Fix issues and re-review (Recommended)
+- Fix issues and proceed to [name the actual next step based on context, e.g., "create a PR" if code is ready, "continue implementing" if mid-task]
+- Continue without changes

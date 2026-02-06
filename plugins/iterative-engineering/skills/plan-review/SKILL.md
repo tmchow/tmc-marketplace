@@ -128,6 +128,6 @@ Continue until satisfied or user chooses to proceed.
 ## After Review
 
 Use AskUserQuestion with options:
-- Fix issues now
-- Fix issues, then another review round
-- Accept as-is and continue
+- Fix issues and re-review (Recommended)
+- Fix issues and proceed to [name the actual next step based on context, e.g., "tech design" if called from brainstorm, "implementation" if called from tech-design]
+- Continue without changes

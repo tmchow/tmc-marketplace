@@ -3,7 +3,7 @@ name: performance-reviewer
 description: Review code for performance issues. Identifies algorithmic complexity problems, N+1 queries, memory leaks, and caching opportunities. Spawned by the code-review skill as part of a reviewer ensemble.
 model: inherit
 color: yellow
-tools: ["Glob", "Grep", "Read"]
+
 ---
 
 # Performance Reviewer
@@ -50,19 +50,20 @@ Will it perform acceptably under expected load, and scale as load increases?
 
 ## Output Format
 
-Return **maximum 5 issues**, prioritized by impact.
+Return **maximum 5 issues** as a **pipe-delimited markdown table**, prioritized by impact.
 
 ```markdown
-## Performance Issues
-
-1. **[file:line]** [Impact: High/Medium/Low]
-   - Issue: [What's inefficient]
-   - Impact: [How this affects performance]
-   - Fix: [How to optimize]
-
-2. **[file:line]** [Impact: High/Medium/Low]
-   ...
+| # | Location | Issue | Impact |
+|---|----------|-------|--------|
+| 1 | `list.ts:156` | N+1 query — fetches dependencies per task in loop | High at scale |
+| 2 | `export.ts:89` | Loads all events into memory — unbounded for large projects | Medium |
 ```
+
+**Format rules:**
+- Use `| col | col |` pipe tables with `|---|---|` separators — nothing else
+- Never use numbered lists, key-value pairs, bullet points, or ASCII box-drawing
+- Always include `file:line` in the Location column
+- Keep each row to one issue — put the essential detail in the cells
 
 ## Impact Levels
 

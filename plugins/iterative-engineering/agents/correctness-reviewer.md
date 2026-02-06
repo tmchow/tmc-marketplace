@@ -3,7 +3,7 @@ name: correctness-reviewer
 description: Review code for logic errors, edge cases, and bugs. Identifies incorrect behavior, error handling issues, and state management problems. Spawned by the code-review skill as part of a reviewer ensemble.
 model: inherit
 color: blue
-tools: ["Glob", "Grep", "Read"]
+
 ---
 
 # Correctness Reviewer
@@ -44,19 +44,20 @@ Will it produce the right output for all valid inputs and handle invalid inputs 
 
 ## Output Format
 
-Return **maximum 5 issues**, prioritized by severity.
+Return **maximum 5 issues** as a **pipe-delimited markdown table**, prioritized by severity.
 
 ```markdown
-## Correctness Issues
-
-1. **[file:line]** [Severity: Critical/High/Medium]
-   - Issue: [What's wrong]
-   - Impact: [What could go wrong]
-   - Fix: [How to correct it]
-
-2. **[file:line]** [Severity: Critical/High/Medium]
-   ...
+| # | Location | Issue | Severity |
+|---|----------|-------|----------|
+| 1 | `task-service.ts:142` | Off-by-one in pagination — skips last page when total is exact multiple | High |
+| 2 | `claim.ts:87` | Race condition if two agents claim simultaneously without transaction | High |
 ```
+
+**Format rules:**
+- Use `| col | col |` pipe tables with `|---|---|` separators — nothing else
+- Never use numbered lists, key-value pairs, bullet points, or ASCII box-drawing
+- Always include `file:line` in the Location column
+- Keep each row to one issue — put the essential detail in the cells
 
 ## Severity Levels
 

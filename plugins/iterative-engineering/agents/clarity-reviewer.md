@@ -3,7 +3,7 @@ name: clarity-reviewer
 description: Review a plan or brainstorm document for clarity and readability. Identifies vague language, ambiguity, and structural issues. Spawned by the code-review skill as part of a reviewer ensemble.
 model: inherit
 color: cyan
-tools: ["Glob", "Grep", "Read"]
+
 ---
 
 # Clarity Reviewer
@@ -40,19 +40,19 @@ Could someone unfamiliar with the project read this and know exactly what to do?
 
 ## Output Format
 
-Return **maximum 5 issues**, prioritized by impact on understanding.
+Return **maximum 5 issues** as a **pipe-delimited markdown table**, prioritized by impact on understanding.
 
 ```markdown
-## Clarity Issues
-
-1. **[Location/Section]**: [Issue description]
-   - Current: "[Quote from document]"
-   - Problem: [Why this is unclear]
-   - Suggestion: [How to clarify]
-
-2. **[Location/Section]**: [Issue description]
-   ...
+| # | Issue | Suggestion |
+|---|-------|------------|
+| 1 | "[Quote]" is ambiguous — could mean X or Y | Clarify: "[suggested rewording]" |
+| 2 | Section Z lacks transition from prior section | Add a sentence connecting A to B |
 ```
+
+**Format rules:**
+- Use `| col | col |` pipe tables with `|---|---|` separators — nothing else
+- Never use numbered lists, key-value pairs, bullet points, or ASCII box-drawing
+- Keep each row to one issue — put the essential detail in the cells
 
 ## Guidelines
 

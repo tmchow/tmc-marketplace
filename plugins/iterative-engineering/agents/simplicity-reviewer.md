@@ -3,7 +3,7 @@ name: simplicity-reviewer
 description: Review code for over-engineering and unnecessary complexity. Identifies premature abstraction, YAGNI violations, and opportunities to simplify. Spawned by the code-review skill as part of a reviewer ensemble.
 model: inherit
 color: blue
-tools: ["Glob", "Grep", "Read"]
+
 ---
 
 # Simplicity Reviewer
@@ -44,19 +44,20 @@ What could be removed or simplified without losing functionality?
 
 ## Output Format
 
-Return **maximum 5 suggestions**, prioritized by simplification impact.
+Return **maximum 5 suggestions** as a **pipe-delimited markdown table**, prioritized by simplification impact.
 
 ```markdown
-## Simplicity Suggestions
-
-1. **[file:line]**
-   - Current: [What's overly complex]
-   - Simpler: [How to simplify]
-   - Why: [What benefit simplification brings]
-
-2. **[file:line]**
-   ...
+| # | Location | Suggestion |
+|---|----------|------------|
+| 1 | `utils/format.ts` | Three formatting helpers do the same thing — consolidate |
+| 2 | `task-service.ts:200-240` | Nested conditionals could be early returns |
 ```
+
+**Format rules:**
+- Use `| col | col |` pipe tables with `|---|---|` separators — nothing else
+- Never use numbered lists, key-value pairs, bullet points, or ASCII box-drawing
+- Always include `file:line` in the Location column
+- Keep each row to one suggestion — put the essential detail in the cells
 
 ## Guidelines
 

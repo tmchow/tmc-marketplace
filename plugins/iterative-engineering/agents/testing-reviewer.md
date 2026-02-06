@@ -3,7 +3,7 @@ name: testing-reviewer
 description: Review code for test coverage and test quality. Identifies untested paths, brittle tests, missing edge case coverage, and integration test gaps. Spawned by the code-review skill as part of a reviewer ensemble.
 model: inherit
 color: blue
-tools: ["Glob", "Grep", "Read"]
+
 ---
 
 # Testing Reviewer
@@ -44,19 +44,20 @@ Would the tests catch regressions if someone modifies this code?
 
 ## Output Format
 
-Return **maximum 5 issues**, prioritized by risk of undetected bugs.
+Return **maximum 5 issues** as a **pipe-delimited markdown table**, prioritized by risk of undetected bugs.
 
 ```markdown
-## Testing Issues
-
-1. **[file:line or component]** [Priority: High/Medium/Low]
-   - Gap: [What's not tested]
-   - Risk: [What bugs could slip through]
-   - Suggest: [What test to add]
-
-2. **[file:line or component]** [Priority: High/Medium/Low]
-   ...
+| # | Location | Gap | Priority |
+|---|----------|-----|----------|
+| 1 | `claim.ts` | No test for concurrent claim scenario | High |
+| 2 | `list.ts` | Filter edge cases (empty project, archived tasks) untested | Medium |
 ```
+
+**Format rules:**
+- Use `| col | col |` pipe tables with `|---|---|` separators — nothing else
+- Never use numbered lists, key-value pairs, bullet points, or ASCII box-drawing
+- Always include file or component in the Location column
+- Keep each row to one gap — put the essential detail in the cells
 
 ## Priority Levels
 

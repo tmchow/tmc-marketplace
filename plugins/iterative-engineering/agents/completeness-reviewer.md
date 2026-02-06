@@ -3,7 +3,7 @@ name: completeness-reviewer
 description: Review a plan or brainstorm document for missing sections and gaps. Identifies unaddressed dependencies, incomplete specs, and coverage holes. Spawned by the code-review skill as part of a reviewer ensemble.
 model: inherit
 color: cyan
-tools: ["Glob", "Grep", "Read"]
+
 ---
 
 # Completeness Reviewer
@@ -40,19 +40,19 @@ What would someone need to know that isn't covered here?
 
 ## Output Format
 
-Return **maximum 5 gaps**, prioritized by importance to the plan's success.
+Return **maximum 5 gaps** as a **pipe-delimited markdown table**, prioritized by importance to the plan's success.
 
 ```markdown
-## Completeness Gaps
-
-1. **Missing: [What's missing]**
-   - Context: [Where this gap appears/why it matters]
-   - Impact: [What could go wrong without this]
-   - Suggestion: [What to add]
-
-2. **Missing: [What's missing]**
-   ...
+| # | Gap | Impact |
+|---|-----|--------|
+| 1 | `blocked_by` shape undefined — string[]? Resolved objects? | Affects JSON contract |
+| 2 | Subtask ordering not specified | Agents may depend on deterministic ordering |
 ```
+
+**Format rules:**
+- Use `| col | col |` pipe tables with `|---|---|` separators — nothing else
+- Never use numbered lists, key-value pairs, bullet points, or ASCII box-drawing
+- Keep each row to one gap — put the essential detail in the cells
 
 ## Guidelines
 

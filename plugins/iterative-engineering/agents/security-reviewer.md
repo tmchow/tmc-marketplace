@@ -3,7 +3,7 @@ name: security-reviewer
 description: Review code for security vulnerabilities. Identifies injection risks, auth issues, input validation gaps, and secrets exposure. Spawned by the code-review skill as part of a reviewer ensemble.
 model: inherit
 color: red
-tools: ["Glob", "Grep", "Read"]
+
 ---
 
 # Security Reviewer
@@ -50,19 +50,20 @@ Could an attacker exploit this code to gain unauthorized access or cause harm?
 
 ## Output Format
 
-Return **maximum 5 issues**, prioritized by severity.
+Return **maximum 5 issues** as a **pipe-delimited markdown table**, prioritized by severity.
 
 ```markdown
-## Security Issues
-
-1. **[file:line]** [Severity: Critical/High/Medium]
-   - Vulnerability: [Type of vulnerability]
-   - Risk: [What an attacker could do]
-   - Fix: [How to remediate]
-
-2. **[file:line]** [Severity: Critical/High/Medium]
-   ...
+| # | Location | Vulnerability | Severity |
+|---|----------|---------------|----------|
+| 1 | `auth.ts:34` | User-supplied ID used directly in SQL query — injection risk | Critical |
+| 2 | `config.ts:12` | API key logged at debug level | Medium |
 ```
+
+**Format rules:**
+- Use `| col | col |` pipe tables with `|---|---|` separators — nothing else
+- Never use numbered lists, key-value pairs, bullet points, or ASCII box-drawing
+- Always include `file:line` in the Location column
+- Keep each row to one vulnerability — put the essential detail in the cells
 
 ## Severity Levels
 
