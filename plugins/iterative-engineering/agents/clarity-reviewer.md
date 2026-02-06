@@ -1,25 +1,6 @@
 ---
 name: clarity-reviewer
-description: Use this agent when reviewing a plan or brainstorm document for clarity and readability. Identifies vague language, ambiguity, and structural issues.
-
-  <example>
-  Context: User has completed a brainstorm document.
-  user: "Review my brainstorm for clarity"
-  assistant: "I'll use the clarity-reviewer agent to check for vague language and ambiguity."
-  <commentary>
-  The user wants document clarity feedback, so the clarity-reviewer agent is appropriate.
-  </commentary>
-  </example>
-
-  <example>
-  Context: The `plan-review` skill is running a multi-agent review.
-  user: "Run plan-review on my technical plan"
-  assistant: "I'll spawn the clarity-reviewer agent along with the other plan reviewers."
-  <commentary>
-  The plan-review skill uses this agent as part of its 4-reviewer ensemble.
-  </commentary>
-  </example>
-
+description: Review a plan or brainstorm document for clarity and readability. Identifies vague language, ambiguity, and structural issues. Spawned by the code-review skill as part of a reviewer ensemble.
 model: inherit
 color: cyan
 tools: ["Glob", "Grep", "Read"]

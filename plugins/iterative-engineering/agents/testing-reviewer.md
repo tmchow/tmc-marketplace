@@ -1,25 +1,6 @@
 ---
 name: testing-reviewer
-description: Use this agent when reviewing code for test coverage and test quality. Identifies untested paths, brittle tests, missing edge case coverage, and integration test gaps.
-
-  <example>
-  Context: User has added tests and wants to verify coverage.
-  user: "Are my tests thorough enough?"
-  assistant: "I'll use the testing-reviewer agent to check test coverage and identify gaps."
-  <commentary>
-  The user wants test quality feedback, which is the testing-reviewer's primary focus.
-  </commentary>
-  </example>
-
-  <example>
-  Context: The `code-review` skill is running a multi-agent review.
-  user: "Review these changes before I create a PR"
-  assistant: "I'll spawn the testing-reviewer agent to verify test coverage for the new code."
-  <commentary>
-  Pre-PR review should verify that new code is well-tested to prevent regressions.
-  </commentary>
-  </example>
-
+description: Review code for test coverage and test quality. Identifies untested paths, brittle tests, missing edge case coverage, and integration test gaps. Spawned by the code-review skill as part of a reviewer ensemble.
 model: inherit
 color: blue
 tools: ["Glob", "Grep", "Read"]

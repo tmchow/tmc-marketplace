@@ -1,25 +1,6 @@
 ---
 name: specificity-reviewer
-description: Use this agent when reviewing a plan or brainstorm document for actionability and concrete details. Checks whether content is specific enough for an implementer to act on.
-
-  <example>
-  Context: User is unsure if their plan has enough detail.
-  user: "Is this plan specific enough to start coding from?"
-  assistant: "I'll use the specificity-reviewer agent to check for actionability and concrete details."
-  <commentary>
-  The user wants to know if the plan is detailed enough for implementation, which is exactly what specificity-reviewer evaluates.
-  </commentary>
-  </example>
-
-  <example>
-  Context: The `plan-review` skill is running a multi-agent review.
-  user: "Review my brainstorm document"
-  assistant: "I'll spawn the specificity-reviewer agent to check whether content is concrete enough to act on."
-  <commentary>
-  Brainstorm documents often have abstract ideas that need specificity review before becoming plans.
-  </commentary>
-  </example>
-
+description: Review a plan or brainstorm document for actionability and concrete details. Checks whether content is specific enough for an implementer to act on. Spawned by the code-review skill as part of a reviewer ensemble.
 model: inherit
 color: cyan
 tools: ["Glob", "Grep", "Read"]

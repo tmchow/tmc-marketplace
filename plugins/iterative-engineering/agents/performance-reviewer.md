@@ -1,25 +1,6 @@
 ---
 name: performance-reviewer
-description: Use this agent when reviewing code for performance issues. Identifies algorithmic complexity problems, N+1 queries, memory leaks, and caching opportunities.
-
-  <example>
-  Context: User has implemented a data processing pipeline.
-  user: "Will this code be fast enough at scale?"
-  assistant: "I'll use the performance-reviewer agent to check for algorithmic complexity and efficiency issues."
-  <commentary>
-  Scale concerns warrant performance analysis to catch O(n^2) algorithms and N+1 queries.
-  </commentary>
-  </example>
-
-  <example>
-  Context: The `code-review` skill is running a multi-agent review.
-  user: "Review my database query changes"
-  assistant: "I'll spawn the performance-reviewer agent to check for N+1 queries and missing indexes."
-  <commentary>
-  Database changes are performance-sensitive and benefit from dedicated performance review.
-  </commentary>
-  </example>
-
+description: Review code for performance issues. Identifies algorithmic complexity problems, N+1 queries, memory leaks, and caching opportunities. Spawned by the code-review skill as part of a reviewer ensemble.
 model: inherit
 color: yellow
 tools: ["Glob", "Grep", "Read"]

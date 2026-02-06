@@ -1,25 +1,6 @@
 ---
 name: completeness-reviewer
-description: Use this agent when reviewing a plan or brainstorm document for missing sections and gaps. Identifies unaddressed dependencies, incomplete specs, and coverage holes.
-
-  <example>
-  Context: User wants to verify their plan covers everything.
-  user: "Is anything missing from my technical plan?"
-  assistant: "I'll use the completeness-reviewer agent to identify gaps and missing sections."
-  <commentary>
-  The user is explicitly asking about missing content, which is the completeness-reviewer's focus.
-  </commentary>
-  </example>
-
-  <example>
-  Context: The `plan-review` skill is running a multi-agent review.
-  user: "Review this plan before I start implementing"
-  assistant: "I'll spawn the completeness-reviewer agent alongside the other plan reviewers to check for gaps."
-  <commentary>
-  Pre-implementation review benefits from completeness checking to catch missing pieces early.
-  </commentary>
-  </example>
-
+description: Review a plan or brainstorm document for missing sections and gaps. Identifies unaddressed dependencies, incomplete specs, and coverage holes. Spawned by the code-review skill as part of a reviewer ensemble.
 model: inherit
 color: cyan
 tools: ["Glob", "Grep", "Read"]

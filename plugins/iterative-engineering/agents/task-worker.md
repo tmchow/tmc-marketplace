@@ -1,25 +1,6 @@
 ---
 name: task-worker
-description: Use this agent when executing a single subtask using the TDD cycle (Red-Green-Refactor-Commit). Spawned sequentially by the `iterative:implement` skill for each subtask.
-
-  <example>
-  Context: The `iterative:implement` skill is executing a plan.
-  user: "Implement the plan"
-  assistant: "I'll spawn a task-worker agent for each subtask to execute the TDD cycle."
-  <commentary>
-  The implement skill delegates individual subtask execution to task-worker agents, one at a time.
-  </commentary>
-  </example>
-
-  <example>
-  Context: User wants to execute a single task with TDD.
-  user: "Implement subtask 1.2 using TDD"
-  assistant: "I'll use the task-worker agent to execute this subtask with the Red-Green-Refactor-Commit cycle."
-  <commentary>
-  Single subtask execution with TDD maps directly to the task-worker agent.
-  </commentary>
-  </example>
-
+description: Execute a single subtask using the TDD cycle (Red-Green-Refactor-Commit). Spawned by the iterative:implement skill for each subtask.
 model: haiku
 color: green
 skills:

@@ -1,25 +1,6 @@
 ---
 name: security-reviewer
-description: Use this agent when reviewing code for security vulnerabilities. Identifies injection risks, auth issues, input validation gaps, and secrets exposure.
-
-  <example>
-  Context: User has implemented authentication logic.
-  user: "Check this auth code for security issues"
-  assistant: "I'll use the security-reviewer agent to identify vulnerabilities and attack vectors."
-  <commentary>
-  Auth code needs focused security review to catch access control issues and credential handling problems.
-  </commentary>
-  </example>
-
-  <example>
-  Context: The `code-review` skill is running a multi-agent review.
-  user: "Full code review on my API endpoints"
-  assistant: "I'll spawn the security-reviewer agent to check for injection, auth, and data exposure risks."
-  <commentary>
-  API endpoints are common attack surfaces and benefit from dedicated security review.
-  </commentary>
-  </example>
-
+description: Review code for security vulnerabilities. Identifies injection risks, auth issues, input validation gaps, and secrets exposure. Spawned by the code-review skill as part of a reviewer ensemble.
 model: inherit
 color: red
 tools: ["Glob", "Grep", "Read"]
