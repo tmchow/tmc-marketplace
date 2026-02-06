@@ -37,20 +37,12 @@ This prevents:
 
 ```
 Phase 0: Detect Resume Intent
-├── Check if user indicates continuation:
-│   ├── References a file path or document
-│   ├── Mentions "continue", "resume", "pick up"
-│   └── References a topic matching prior brainstorm in session
+├── Check if user wants to continue existing work (references a document,
+│   topic from session, or otherwise indicates continuation)
 ├── If resuming:
-│   ├── Load the referenced document
-│   ├── Summarize current state briefly
-│   └── Offer options:
-│       ├── "What would you like to explore or change?" (user directs)
-│       └── "Want me to identify gaps and suggest next steps?" (Claude proposes)
-├── If Claude proposes:
-│   ├── Review document for incomplete sections, open questions, weak areas
-│   ├── Suggest 2-3 areas to develop further
-│   └── User picks direction, then continue from appropriate phase
+│   ├── Load the document, summarize current state
+│   └── Offer: user directs what to change, or agent identifies gaps
+├── Resume note: When resuming, build on existing content. Update in place.
 └── If starting fresh: proceed to Phase 1
 
 Phase 1: Understand Intent

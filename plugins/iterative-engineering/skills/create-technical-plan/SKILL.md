@@ -27,20 +27,12 @@ Turns design into a structured implementation plan with TDD emphasis.
 
 ```
 Phase 0: Detect Resume Intent
-├── Check if user indicates continuation:
-│   ├── References an existing plan document
-│   ├── Mentions "continue", "resume", "pick up"
-│   └── References a topic matching prior plan in session
+├── Check if user wants to continue existing work (references a document,
+│   topic from session, or otherwise indicates continuation)
 ├── If resuming:
-│   ├── Load the referenced document
-│   ├── Summarize current state briefly
-│   └── Offer options:
-│       ├── "What would you like to change or add?" (user directs)
-│       └── "Want me to identify gaps and suggest improvements?" (Claude proposes)
-├── If Claude proposes:
-│   ├── Review plan for incomplete sections, missing tests, unclear dependencies
-│   ├── Suggest 2-3 areas to develop further
-│   └── User picks direction, then continue from appropriate phase
+│   ├── Load the document, summarize current state
+│   └── Offer: user directs what to change, or agent identifies gaps
+├── Resume note: When resuming, build on existing content. Update in place.
 └── If starting fresh: proceed to Phase 1
 
 Phase 1: Gather Context
