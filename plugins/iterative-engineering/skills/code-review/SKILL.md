@@ -43,7 +43,9 @@ When explicitly requested, uses 2-3 reviewers based on change type:
 
 **First, check if agent teams are enabled for this session.**
 
-**When using Agent Teams, tell the user:** "Using **Agent Teams 🐝** — reviewers will run as teammates who can cross-validate findings."
+**When using Agent Teams, tell the user exactly this:**
+
+> Using Agent Teams 🐝 — reviewers will run as teammates who can cross-validate findings.
 
 ### Mode A: Agent Team (if enabled)
 

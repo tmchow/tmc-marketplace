@@ -81,7 +81,9 @@ Phase 3: Finish
 
 If Agent Teams is not enabled for the session, use sequential execution with `task-worker` agents — no choice needed.
 
-If Agent Teams is enabled, offer it as an option. **When the user chooses Agent Teams, tell them:** "Using **Agent Teams 🐝** — subtasks will be assigned to teammates with dependency-based coordination."
+If Agent Teams is enabled, offer it as an option. **When the user chooses Agent Teams, tell them exactly this:**
+
+> Using Agent Teams 🐝 — subtasks will be assigned to teammates with dependency-based coordination.
 
 Agent Teams uses a shared task list with automatic dependency management — teammates can only claim tasks whose dependencies are resolved. This makes it safe even when subtasks touch overlapping files, as long as the dependency graph is set up correctly.
 
