@@ -18,7 +18,7 @@ Skip brainstorming when requirements are explicit, detailed, and the user knows 
 
 ## Key Principles
 
-1. **Questions before options** - Understand the idea through dialogue BEFORE presenting approaches
+1. **Quick questions, then broad options** - Ask 2-3 questions to map the space, then present lightweight directions to steer deeper exploration
 2. **One question at a time** - Never ask multiple questions in a single message
 3. **Multiple choice preferred** - Easier to answer than open-ended when natural options exist
 4. **Incremental validation** - Present ideas in small sections (200-300 words), confirm before continuing
@@ -37,28 +37,29 @@ Phase 0: Detect Resume / Assess Clarity
 │   └── Suggest skipping to `iterative:tech-design` skill
 └── Otherwise: proceed to Phase 1
 
-Phase 1: Understand the Idea (iterative Q&A)
+Phase 1: Map the Space (2-3 questions)
 ├── Explore the codebase lightly for relevant context
-├── Ask questions ONE AT A TIME using AskUserQuestion
-├── Start broad (purpose, users), then narrow (constraints, edge cases)
+├── Ask the 2-3 BEST questions to understand the problem space
+│   (use AskUserQuestion, one at a time)
+├── Pick questions that will most differentiate possible approaches
+├── Don't try to cover everything — just enough to propose broad directions
+└── Move to Phase 2 after 2-3 questions (do not extend)
+
+Phase 2: Broad Directions (steering, not detailed)
+├── Present 2-3 high-level directions (1-2 sentences each)
+├── Keep them lightweight — these are steering choices, not final approaches
+├── Include a brief trade-off for each (not full pros/cons yet)
+├── Lead with a recommendation
+├── Use AskUserQuestion to let user pick a direction
+└── This narrows the search space for deeper exploration
+
+Phase 3: Deep Exploration (Q&A within chosen direction)
+├── Now ask targeted questions within the chosen direction
+├── Cover: constraints, edge cases, success criteria, existing patterns
+├── Research libraries, patterns, prior art as relevant
 ├── Validate assumptions explicitly ("I'm assuming X. Is that correct?")
-├── Topics to cover: Purpose, Users, Constraints, Success Criteria,
-│   Edge Cases, Existing Patterns
-├── Gate: Continue until the idea is clear OR user says "proceed"
-└── Do NOT present approaches until this phase is complete
-
-Phase 2: Explore Approaches
-├── Propose 2-3 concrete approaches with pros/cons
-├── Lead with a recommendation and explain why
-├── Apply YAGNI — prefer simpler approaches
-├── Ask user to pick a direction or give feedback
-└── Refine through further Q&A if needed
-
-Phase 3: Deep Research (on chosen approach)
-├── Explore implementation details for the chosen direction
-├── Research libraries, patterns, prior art
 ├── Identify risks and dependencies
-└── Draft detailed design
+└── Continue until the approach is well-understood
 
 Phase 4: Document Findings
 ├── Write brainstorm document (format below)
@@ -66,27 +67,30 @@ Phase 4: Document Findings
 └── Save to docs/brainstorms/YYYY-MM-DD-<topic>-brainstorm.md (ensure directory exists)
 
 Phase 5: Review Cycle
-├── Offer: "Plan-review: 4 agents analyze for issues and improve (recommended)"
+├── Use AskUserQuestion to offer plan-review (recommended) or skip
 ├── If review: invoke `plan-review` skill
 ├── Fix issues identified
-└── Offer another round or continue
+└── Use AskUserQuestion to offer another round or continue
 
 Phase 6: Handoff
 └── Continue to `iterative:tech-design` skill when ready
 ```
 
-## Question Techniques (Phase 1)
+## Question Techniques
+
+**Phase 1 questions (2-3 max) — pick the ones that differentiate approaches:**
+- What's the core problem? (purpose)
+- Who's the primary user/audience? (scope)
+- Are there hard constraints? (boundaries)
 
 **Prefer multiple choice when natural options exist:**
 - Good: "Should the notification be: (a) email only, (b) in-app only, or (c) both?"
 - Avoid: "How should users be notified?"
 
-**Key topics to explore:**
+**Phase 3 questions — go deeper within the chosen direction:**
 
 | Topic | Example Questions |
 |-------|-------------------|
-| Purpose | What problem does this solve? What's the motivation? |
-| Users | Who uses this? What's their context? |
 | Constraints | Technical limitations? Timeline? Dependencies? |
 | Success | How will you measure success? What's the happy path? |
 | Edge Cases | What shouldn't happen? Any error states? |
@@ -96,20 +100,18 @@ Phase 6: Handoff
 - "I'm assuming users will be logged in. Is that correct?"
 - "It sounds like you want X. Did I understand that right?"
 
-## Approach Comparison Format (Phase 2)
+## Broad Directions Format (Phase 2)
+
+Keep these lightweight — 1-2 sentences each with a brief trade-off. These steer the conversation, not finalize the approach.
 
 ```markdown
-### Approach A: [Name]
-[2-3 sentence description]
+Here are 2-3 broad directions:
 
-**Pros:** [bullets]
-**Cons:** [bullets]
-**Best when:** [circumstances]
+**A) [Name]** — [1-2 sentence description]. Trade-off: [brief].
+**B) [Name]** — [1-2 sentence description]. Trade-off: [brief].
+**C) [Name]** — [1-2 sentence description]. Trade-off: [brief].
 
-### Approach B: [Name]
-...
-
-**Recommendation:** [Approach X] because [brief rationale].
+I'd lean toward **A** because [one sentence]. Which direction feels right?
 ```
 
 ## Brainstorm Document Format (Phase 4)
@@ -142,7 +144,8 @@ Phase 6: Handoff
 
 | Anti-Pattern | Better Approach |
 |--------------|-----------------|
-| Presenting options before understanding the idea | Ask questions first, options come after Phase 1 |
+| Exhaustive Q&A before presenting any options | Ask 2-3 questions, then present broad directions to steer |
+| Detailed approach comparison too early | Phase 2 directions are lightweight; detail comes in Phase 3 |
 | Asking multiple questions at once | One question per message |
 | Jumping to implementation details | Focus on WHAT, not HOW |
 | Proposing overly complex solutions | Start simple, add complexity only if needed |
@@ -151,18 +154,14 @@ Phase 6: Handoff
 
 ## Transition Points
 
-After brainstorm document is created:
-```
-Brainstorm document created. What next?
-├── A) Plan-review: 4 agents analyze for issues and improve (recommended)
-├── B) Continue to `iterative:tech-design` skill
-├── C) I'll take it from here (exit)
-```
+**Always use AskUserQuestion for transition points** — never just print options as text.
 
-After review + fixes:
-```
-Review issues addressed. What next?
-├── A) Another round of `plan-review` skill (recommended if significant changes)
-├── B) Continue to `iterative:tech-design` skill
-├── C) I'll take it from here (exit)
-```
+After brainstorm document is created, use AskUserQuestion with options:
+- Plan-review: 4 agents analyze for issues and improve (recommended)
+- Continue to `iterative:tech-design` skill
+- I'll take it from here (exit)
+
+After review + fixes, use AskUserQuestion with options:
+- Another round of `plan-review` skill (recommended if significant changes)
+- Continue to `iterative:tech-design` skill
+- I'll take it from here (exit)
