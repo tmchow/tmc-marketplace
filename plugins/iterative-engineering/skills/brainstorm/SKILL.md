@@ -6,7 +6,7 @@ allowed-tools: Glob, Grep, Read, WebSearch, WebFetch, Task
 
 # Brainstorming
 
-Clarify **WHAT** to build before diving into **HOW**. Use collaborative dialogue to understand user intent, then explore approaches.
+Clarify **WHAT** to build before diving into **HOW**. Use collaborative dialogue to understand user intent, scope the goal, and make directional choices. Stay at the product and requirements level.
 
 ## When to Use
 
@@ -23,7 +23,7 @@ Skip brainstorming when requirements are explicit, detailed, and the user knows 
 3. **Multiple choice preferred** - Easier to answer than open-ended when natural options exist
 4. **Incremental validation** - Present ideas in small sections (200-300 words), confirm before continuing
 5. **YAGNI** - Resist complexity; choose the simplest approach that solves the stated problem
-6. **WHAT not HOW** - Stay focused on requirements and design, not implementation details
+6. **WHAT not HOW** - Stay at the product and requirements level, not implementation details
 
 ## Workflow
 
@@ -55,11 +55,10 @@ Phase 2: Broad Directions (steering, not detailed)
 
 Phase 3: Deep Exploration (Q&A within chosen direction)
 ├── Now ask targeted questions within the chosen direction
-├── Cover: constraints, edge cases, success criteria, existing patterns
-├── Research libraries, patterns, prior art as relevant
+├── Cover: goals, scope boundaries, user behavior, success criteria, constraints
 ├── Validate assumptions explicitly ("I'm assuming X. Is that correct?")
-├── Identify risks and dependencies
-└── Continue until the approach is well-understood
+├── Identify risks and open questions to carry forward
+└── Continue until the approach is well-scoped
 
 Phase 4: Document Findings
 ├── Write brainstorm document (format below)
@@ -91,10 +90,11 @@ Phase 6: Handoff
 
 | Topic | Example Questions |
 |-------|-------------------|
-| Constraints | Technical limitations? Timeline? Dependencies? |
-| Success | How will you measure success? What's the happy path? |
-| Edge Cases | What shouldn't happen? Any error states? |
-| Existing Patterns | Similar features in the codebase to follow? |
+| Goals | What does success look like? What's the happy path? |
+| Scope | What's in v1 vs later? What's explicitly out of scope? |
+| User behavior | Who uses this? What's the workflow? What do they see? |
+| Constraints | Timeline? Budget? Must integrate with existing thing? |
+| Risks | What could go wrong? What are you most uncertain about? |
 
 **Validate assumptions explicitly:**
 - "I'm assuming users will be logged in. Is that correct?"
@@ -116,17 +116,22 @@ I'd lean toward **A** because [one sentence]. Which direction feels right?
 
 ## Brainstorm Document Format (Phase 4)
 
+This document captures **what** and **why** — not **how**. It should read like a product brief, not a technical spec. No library choices, architecture patterns, API design, database schema, or file structure.
+
 ```markdown
 # [Feature/Change] - Brainstorm
 
 **Date:** [date]
 **Status:** Brainstorming
 
-## What We're Building
-[Concise description — 1-2 paragraphs max]
+## Goal
+[What problem are we solving and for whom? 1-2 paragraphs max]
 
-## Why This Approach
-[Approaches considered and why this one was chosen]
+## Scope
+[What's in v1. What's explicitly out of scope or deferred.]
+
+## Chosen Direction
+[Which direction we picked and why]
 
 ## Key Decisions
 - [Decision 1]: [Rationale]
@@ -137,7 +142,7 @@ I'd lean toward **A** because [one sentence]. Which direction feels right?
 - [Question 2]
 
 ## Next Steps
-→ Create technical plan via `iterative:tech-design` skill
+→ Create technical plan
 ```
 
 ## Anti-Patterns to Avoid
@@ -147,7 +152,7 @@ I'd lean toward **A** because [one sentence]. Which direction feels right?
 | Exhaustive Q&A before presenting any options | Ask 2-3 questions, then present broad directions to steer |
 | Detailed approach comparison too early | Phase 2 directions are lightweight; detail comes in Phase 3 |
 | Asking multiple questions at once | One question per message |
-| Jumping to implementation details | Focus on WHAT, not HOW |
+| Including implementation details (libraries, APIs, schema, architecture) | Stay at the product and requirements level |
 | Proposing overly complex solutions | Start simple, add complexity only if needed |
 | Making assumptions without validating | State assumptions explicitly and confirm |
 | Creating lengthy design documents | Keep concise — details go in the technical plan |
