@@ -1,0 +1,21 @@
+{
+  "name": "iterative-engineering",
+  "version": "1.0.0",
+  "description": "Iterative development workflow - brainstorming, planning, multi-agent reviews, TDD execution, and PR feedback resolution. Supports HZL task tracking (optional).",
+  "author": {
+    "name": "Trevin Chow",
+    "url": "https://github.com/tmchow"
+  },
+  "repository": "https://github.com/tmchow/tmc-marketplace",
+  "license": "MIT",
+  "keywords": [
+    "workflow",
+    "brainstorming",
+    "planning",
+    "code-review",
+    "tdd",
+    "multi-agent",
+    "iterative",
+    "hzl"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "name": "tmc-marketplace",
+  "owner": {
+    "name": "Trevin Chow"
+  },
+  "metadata": {
+    "description": "Claude Code plugins by Trevin Chow",
+    "version": "0.1.0",
+    "pluginRoot": "./plugins"
+  },
+  "plugins": [
+    {
+      "name": "iterative-engineering",
+      "source": "./plugins/iterative-engineering",
+      "description": "Iterative development workflow - brainstorming, planning, multi-agent reviews, TDD execution, and PR feedback resolution",
+      "version": "1.0.0"
+    }
+  ]
+}

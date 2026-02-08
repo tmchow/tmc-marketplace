@@ -1,0 +1,19 @@
+{
+  "enabledPlugins": {
+    "plugin-dev@claude-plugins-official": true,
+    "superpowers-developing-for-claude-code@superpowers-marketplace": true
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if echo \"$CLAUDE_TOOL_INPUT\" | grep -q 'marketplace.json'; then echo '⚠️  Editing marketplace registry - ensure plugin entry has: name, source, description, version'; fi"
+          }
+        ]
+      }
+    ]
+  }
+}
