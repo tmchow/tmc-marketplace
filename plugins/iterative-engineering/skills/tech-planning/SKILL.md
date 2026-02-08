@@ -49,10 +49,12 @@ A plan is ready when an implementer can start working without asking clarifying 
 ### Phase 1: Gather Context (Q&A + Codebase Exploration)
 
 1. Read PRD (if exists). Check both `docs/prd/` and `docs/brainstorms/` for existing documents.
-2. Explore the codebase for: existing patterns and conventions to follow, files and modules that will be affected, test patterns and frameworks in use, related code that informs the design.
-3. Ask implementation-focused questions ONE AT A TIME: architecture preferences, highest risk areas, testing approach, constraints not in the PRD, existing code patterns to follow or avoid.
-4. Gate: continue until approach is clear OR user says "proceed."
-5. Do NOT start writing the plan until this phase is complete.
+2. **Check for open questions.** If the PRD has an Open Questions section, review each question. Technical questions (tagged `[Affects ...]` or implementation-related) should be investigated during codebase exploration below. Non-technical questions that remain unresolved may need the user's input — flag them early.
+3. Explore the codebase for: existing patterns and conventions to follow, files and modules that will be affected, test patterns and frameworks in use, related code that informs the design.
+4. **Resolve technical open questions.** As codebase exploration answers PRD questions, note the resolution. These findings may trigger PRD updates (see PRD Alignment below).
+5. Ask implementation-focused questions ONE AT A TIME: architecture preferences, highest risk areas, testing approach, constraints not in the PRD, existing code patterns to follow or avoid.
+6. Gate: continue until approach is clear OR user says "proceed."
+7. Do NOT start writing the plan until this phase is complete.
 
 ### Phase 2: Structure the Plan
 
@@ -80,11 +82,12 @@ A plan is ready when an implementer can start working without asking clarifying 
 
 ## PRD Alignment
 
-Codebase exploration during Phase 1 may reveal that the PRD's chosen direction, scope, or requirements need to change. Keep the PRD in sync — it's the source of truth for requirements that downstream code review validates against.
+The PRD is a living document and the source of truth for requirements. Codebase exploration during Phase 1 may reveal that the PRD's chosen direction, scope, or requirements need to change. Keep it in sync — downstream code review validates against it.
 
 - **Minor adjustments** (slightly different scope boundary, refined requirement wording): update the PRD in place and note the change when presenting the plan.
 - **Significant divergence** (different approach than chosen direction, requirement added/removed, scope change): stop and discuss with the user before proceeding. Update the PRD's Chosen Direction, Requirements, and/or Scope sections to reflect the new reality. The tech plan should never contradict the PRD.
-- **New requirements discovered** (codebase reveals constraints not in PRD): add them to the PRD's Requirements section with a note that they were discovered during tech planning.
+- **New requirements discovered** (codebase reveals constraints not in PRD): add them to the PRD's Requirements section with the appropriate priority (Core, Must-Have, Nice-to-Have) and a note that they were discovered during tech planning (e.g., "R6 added during tech planning — API requires backward compatibility").
+- **Open questions resolved** (codebase exploration answers a PRD question): remove the question from Open Questions and update the affected section. If the answer changes a requirement's priority or scope boundary, update those sections too.
 
 The tech plan's `**PRD:**` header links to the PRD document. If the PRD is updated during tech planning, this link ensures reviewers can find the authoritative requirements.
 
@@ -107,7 +110,7 @@ The tech plan's `**PRD:**` header links to the PRD document. If the PRD is updat
 **Always present options to the user at transition points** — never just print options as text.
 
 After technical plan is written, and after each review round, present options:
-- Review the plan — 4 agents analyze for issues and improve (recommended on first pass)
+- Review the plan — 4 agents analyze for issues (recommended on first pass)
 - Start implementing
 - I'll take it from here (exit)
 
