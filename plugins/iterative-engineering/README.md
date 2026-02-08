@@ -179,7 +179,7 @@ See the [HZL repository](https://github.com/tmchow/hzl) for installation.
 This plugin draws inspiration from:
 
 - [superpowers](https://github.com/obra/superpowers) by Jesse Vincent
-- [compound-engineering](https://github.com/EveryInc/compound-engineering-plugin) by [Kieran Klaassen](https://x.com/kieranklaassen) / Every
+- [compound-engineering](https://github.com/EveryInc/compound-engineering-plugin) by [Kieran Klaassen](https://x.com/kieranklaassen) / [Every](https://every.to)
 - [pr-review-toolkit](https://github.com/anthropics/claude-code-pr-review) by Anthropic
 - [code-simplifier](https://github.com/anthropics/claude-code-code-simplifier) by Anthropic
 - [Shape Up](https://basecamp.com/shapeup) by Ryan Singer
