@@ -1,6 +1,6 @@
 ---
 name: completeness-reviewer
-description: Review a plan or brainstorm document for missing sections and gaps. Identifies unaddressed dependencies, incomplete specs, and coverage holes. Spawned by the code-review skill as part of a reviewer ensemble.
+description: Review a plan or PRD for missing sections and gaps. Identifies unaddressed dependencies, incomplete specs, and coverage holes. Spawned by the code-review skill as part of a reviewer ensemble.
 model: inherit
 color: cyan
 
@@ -40,19 +40,13 @@ What would someone need to know that isn't covered here?
 
 ## Output Format
 
-Return **maximum 5 gaps** as a **pipe-delimited markdown table**, prioritized by importance to the plan's success.
+Return your **top 5 most important gaps**, prioritized by importance to the plan's success. For each gap, clearly state:
 
-```markdown
-| # | Gap | Impact |
-|---|-----|--------|
-| 1 | `blocked_by` shape undefined — string[]? Resolved objects? | Affects JSON contract |
-| 2 | Subtask ordering not specified | Agents may depend on deterministic ordering |
-```
+- **Line number** — the specific line(s) where the gap exists or should be addressed
+- **Gap** — what's missing or incomplete
+- **Impact** — what goes wrong if this gap isn't filled
 
-**Format rules:**
-- Use `| col | col |` pipe tables with `|---|---|` separators — nothing else
-- Never use numbered lists, key-value pairs, bullet points, or ASCII box-drawing
-- Keep each row to one gap — put the essential detail in the cells
+Number your issues (1, 2, 3...) so the lead can reference them. Focus on making each issue's line number, gap, and impact easy to extract at a glance.
 
 ## Guidelines
 

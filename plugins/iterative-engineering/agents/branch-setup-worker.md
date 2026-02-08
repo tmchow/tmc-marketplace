@@ -1,6 +1,6 @@
 ---
 name: branch-setup-worker
-description: Create git worktrees or branches for workspace isolation. Spawned by the iterative:implement skill during setup phase.
+description: Create git worktrees or branches for workspace isolation. Spawned by the iterative:implementing skill during setup phase.
 model: haiku
 color: green
 ---

@@ -1,6 +1,6 @@
 ---
 name: clarity-reviewer
-description: Review a plan or brainstorm document for clarity and readability. Identifies vague language, ambiguity, and structural issues. Spawned by the code-review skill as part of a reviewer ensemble.
+description: Review a plan or PRD for clarity and readability. Identifies vague language, ambiguity, and structural issues. Spawned by the code-review skill as part of a reviewer ensemble.
 model: inherit
 color: cyan
 
@@ -40,19 +40,13 @@ Could someone unfamiliar with the project read this and know exactly what to do?
 
 ## Output Format
 
-Return **maximum 5 issues** as a **pipe-delimited markdown table**, prioritized by impact on understanding.
+Return your **top 5 most important issues**, prioritized by impact on understanding. For each issue, clearly state:
 
-```markdown
-| # | Issue | Suggestion |
-|---|-------|------------|
-| 1 | "[Quote]" is ambiguous — could mean X or Y | Clarify: "[suggested rewording]" |
-| 2 | Section Z lacks transition from prior section | Add a sentence connecting A to B |
-```
+- **Line number** — the specific line(s) in the document
+- **Issue** — quote the problematic text and explain the ambiguity or clarity problem
+- **Suggestion** — a concrete rewording or structural fix
 
-**Format rules:**
-- Use `| col | col |` pipe tables with `|---|---|` separators — nothing else
-- Never use numbered lists, key-value pairs, bullet points, or ASCII box-drawing
-- Keep each row to one issue — put the essential detail in the cells
+Number your issues (1, 2, 3...) so the lead can reference them. Focus on making each issue's line number, problem, and suggestion easy to extract at a glance.
 
 ## Guidelines
 

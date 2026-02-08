@@ -1,6 +1,6 @@
 ---
 name: pr-creator-worker
-description: Create a pull request following repo conventions. Spawned by the finishing-work skill to generate PR title, description, and create via GitHub CLI.
+description: Create a pull request following repo conventions. Spawned by the implementation-wrapup skill to generate PR title, description, and create via GitHub CLI.
 model: haiku
 color: green
 ---

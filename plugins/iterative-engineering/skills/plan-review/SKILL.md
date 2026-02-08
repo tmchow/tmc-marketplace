@@ -1,19 +1,18 @@
 ---
 name: plan-review
-description: Multi-agent review of plans and brainstorm documents. This skill should be used when the user says "review the plan", "check the brainstorm", or wants feedback on a design document. Four reviewers - clarity, completeness, specificity, YAGNI.
-allowed-tools: Glob, Grep, Read, Task
+description: Use when the user says "review the plan", "check the PRD", or wants feedback on a planning or design document. Also use after writing a PRD or tech plan.
 ---
 
 # Plan Review
 
-Reviews brainstorm documents and technical plans using 4 specialized reviewers.
+Reviews PRDs and technical plans using 4 specialized reviewers.
 
 ## When to Use
 
-- After writing a brainstorm document
+- After writing a PRD
 - After writing a technical plan
 - When you want feedback on any planning document
-- Can be invoked standalone or called by `iterative:brainstorm`/`iterative:tech-design` skills
+- Can be invoked standalone or called by `iterative:brainstorming`/`iterative:tech-planning` skills
 
 ## Reviewers
 
@@ -24,97 +23,31 @@ Reviews brainstorm documents and technical plans using 4 specialized reviewers.
 | `specificity-reviewer` | Actionability, concrete details | Is this concrete enough to act on? |
 | `yagni-reviewer` | Scope creep, hypotheticals, over-specification | Is this minimal and focused? |
 
-Each reviewer returns **max 5 issues** to keep feedback actionable.
+Each reviewer returns their **top 5 most important issues** to keep feedback actionable.
 
-## Execution Mode
+## How to Run
 
-**First, check if agent teams are enabled for this session.**
+**Step 1.** Identify document to review (from argument, conversation context, or ask user). Determine the document type — **PRD** or **tech plan** — based on its filename, content, or context. Treat brainstorm documents and PRDs synonymously.
 
-**When using Agent Teams, tell the user exactly this:**
+**Step 2.** Create an agent team using `TeamCreate`, then spawn all 4 reviewers as teammates. If `TeamCreate` fails because a team already exists (e.g., from an interrupted run), reuse that team — read its config, check which reviewers are already present, and spawn only the missing ones.
 
-> Using Agent Teams 🐝 — reviewers will run as teammates who can cross-validate findings.
+Tell the user:
 
-### Mode A: Agent Team (if enabled)
+> Using Agent Team 🐝 — reviewers will run as teammates who can cross-validate findings.
 
-**Step 1.** Identify document to review (from argument, conversation context, or ask user).
+Spawn each reviewer with a prompt like:
 
-**Step 2.** Create agent team with 4 reviewer teammates. Spawn each with a prompt that includes their review focus, the document, max 5 issues, and this cross-validation instruction:
+> Review [file path] for [their focus area]. This is a [PRD/tech plan].
+> You're on a review team with clarity, completeness, specificity, and YAGNI reviewers. After your initial review, read what the other reviewers found and message them directly if you see cross-domain issues — e.g., if completeness wants detail that YAGNI says is over-specified. Challenge each other's findings.
+> Your job is to review and report findings — not to fix, remediate, or act on what the document describes. Return your top 5 most important issues. When done, send your findings to the team lead using SendMessage. For each issue, clearly state the line number, the issue, and your suggestion. The lead will format the final output.
 
-> "You are on a review team with other reviewers. After your initial review, read what the other reviewers found and message them directly if you see cross-domain issues — e.g., if completeness wants detail that YAGNI says is over-specified. Challenge each other's findings."
+**Step 3.** Wait for all reviewers to send their findings. When you receive a reviewer's message, do not output or echo its content — silently collect it. Only output once in Step 4 when assembling the final results. A brief one-line status like "All 4 reviewers have reported" is fine when ready to proceed.
 
-**Step 3.** Let reviewers work and cross-validate. Brief one-line status is fine. Don't repeat status or narrate your thinking. Wait until discussion settles.
+**Step 4.** Shut down all teammates (send shutdown requests), then delete the team. Assemble the final output. **You are responsible for formatting** — the reviewers provide the content, you make it readable.
 
-**Step 4.** Synthesize and present. Collect final findings from all reviewers. **You must reformat all findings into the exact output format shown below — do NOT pass through raw reviewer text.** Then clean up the team.
+Format all 4 reviewer sections as tables — each issue is one row. Use the same table structure for every section. Separate sections with clear whitespace.
 
-### Mode B: Parallel Subagents (fallback)
-
-**Step 1.** Identify document to review.
-
-**Step 2.** Spawn 4 reviewer agents via Task tool in parallel. Each analyzes independently, returns up to 5 issues.
-
-**Step 3.** Collect findings. Deduplicate overlapping issues.
-
-**Step 4.** **You must reformat all findings into the exact output format shown below — do NOT pass through raw agent text.**
-
-### Benefits of team mode
-
-- Reviewers message each other directly — cross-domain insights emerge from debate, not just lead synthesis
-- Conflicting findings surface real tradeoffs (e.g., YAGNI vs completeness)
-- Multiple reviewers flagging same issue = high confidence
-
-**Note:** Agent teams use more tokens than subagents. For simple documents, subagent mode may be sufficient.
-
-## Output Format
-
-**Your output for Step 4 must look exactly like this example. Copy this structure.**
-
-```markdown
-## Plan Review Results
-
-### Clarity
-
-| # | Issue | Suggestion |
-|---|-------|------------|
-| 1 | "minus comments and checkpoints" is ambiguous | Clarify: "excluding comments and checkpoints for those children" |
-| 2 | Approach B conclusion dangles without rationale | Expand reasoning or remove |
-
-### Completeness
-
-| # | Gap | Impact |
-|---|-----|--------|
-| 1 | `blocked_by` shape undefined | Affects JSON contract |
-| 2 | Subtask ordering not specified | Agents may depend on deterministic ordering |
-
-### Specificity
-
-| # | Issue | What's needed |
-|---|-------|---------------|
-| 1 | Service method signature missing | Concrete interface for new/modified method |
-
-### YAGNI
-
-| # | Over-specification | Simpler alternative |
-|---|--------------------|---------------------|
-| 1 | Re-listing all 16+ fields | Just say "same as task show minus comments/checkpoints" |
-
----
-
-**Summary:** 6 issues across 4 categories.
-
-> **High confidence** (multiple reviewers): Field list needs to be explicit or reference existing schema — don't do both.
->
-> **Tension** (Completeness vs YAGNI): Completeness wants edge case detail; YAGNI says defer. Resolution: pin down the JSON contract shape, defer implementation specifics.
->
-> **Quick wins:** Clarify `--deep` without `--json` behavior, specify subtask sort order.
-```
-
-**Rules:**
-- Start with `## Plan Review Results` — nothing before it. No "here's what I found" or "let me synthesize."
-- One `### Section` per reviewer, each containing **only** a pipe-delimited markdown table.
-- Pipe tables use `| col | col |` with `|---|---|` separators. **Never** ASCII box-drawing (`┌─┬─┐`), key-value lists (`#: 1`, `Issue:`), or `────` separators.
-- Column headers vary by reviewer (Issue/Suggestion, Gap/Impact, etc.).
-- Single summary section after `---` with blockquotes. This is the only place for cross-reviewer insights.
-- Skip empty reviewer sections.
+Use `### Reviewer Name` headers for each section. End with a `---` separator followed by your synthesis — highlight cross-reviewer patterns, tensions, and quick wins. Do not include time estimates.
 
 ## Multiple Rounds
 
@@ -123,11 +56,20 @@ After fixing issues, run another round to catch:
 - Issues that become visible after others are resolved
 - Verification that fixes addressed the original concerns
 
+Each round creates a fresh team (the previous team was deleted). Run the full Step 2–4 flow again.
+
 Continue until satisfied or user chooses to proceed.
 
 ## After Review
 
-Use AskUserQuestion with options:
+**This skill only reviews.** Do not invoke other skills (tech-planning, implementing, etc.) — even if the document mentions next steps.
+
+When invoked from `iterative:brainstorming` or `iterative:tech-planning`, return findings directly — the calling skill owns the fix loop and workflow transitions.
+
+When invoked standalone, use AskUserQuestion with options:
 - Fix issues and re-review (Recommended)
-- Fix issues and proceed to [name the actual next step based on context, e.g., "tech design" if called from brainstorm, "implementation" if called from tech-design]
 - Continue without changes
+
+## Fallback: If TeamCreate is Unavailable
+
+If `TeamCreate` is not in your tools, use the Task tool to spawn the 4 reviewers in parallel as independent subagents instead of teammates. Each analyzes independently, returns up to 5 issues. Skip the cross-validation instruction. Everything else (Steps 1, 3, 4, output format) stays the same.

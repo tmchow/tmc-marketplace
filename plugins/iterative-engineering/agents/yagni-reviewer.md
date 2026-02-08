@@ -1,6 +1,6 @@
 ---
 name: yagni-reviewer
-description: Review a plan or brainstorm document for scope creep and over-specification. Identifies hypothetical features, unnecessary complexity, and opportunities to simplify. Spawned by the code-review skill as part of a reviewer ensemble.
+description: Review a plan or PRD for scope creep and over-specification. Identifies hypothetical features, unnecessary complexity, and opportunities to simplify. Spawned by the code-review skill as part of a reviewer ensemble.
 model: inherit
 color: cyan
 
@@ -39,19 +39,13 @@ What could be removed or simplified without losing the core value?
 
 ## Output Format
 
-Return **maximum 5 suggestions** as a **pipe-delimited markdown table**, prioritized by how much they simplify the plan.
+Return your **top 5 most important issues**, prioritized by how much they simplify the plan. For each issue, clearly state:
 
-```markdown
-| # | Over-specification | Simpler alternative |
-|---|--------------------|---------------------|
-| 1 | Re-listing all 16+ fields | Just say "same as task show minus comments/checkpoints" |
-| 2 | Non-parent task edge case spelled out | Empty array follows naturally — no design needed |
-```
+- **Line number** — the specific line(s) with the over-specification
+- **Over-specification** — what's unnecessarily complex or hypothetical
+- **Simpler alternative** — a concrete way to simplify or remove it
 
-**Format rules:**
-- Use `| col | col |` pipe tables with `|---|---|` separators — nothing else
-- Never use numbered lists, key-value pairs, bullet points, or ASCII box-drawing
-- Keep each row to one suggestion — put the essential detail in the cells
+Number your issues (1, 2, 3...) so the lead can reference them. Focus on making each issue's line number, problem, and simpler alternative easy to extract at a glance.
 
 ## Guidelines
 
