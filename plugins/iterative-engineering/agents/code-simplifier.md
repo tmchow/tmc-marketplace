@@ -78,12 +78,13 @@ Simplification has diminishing returns. Avoid these over-simplification traps:
 
 ## Process
 
-1. Read each changed file. Identify its core purpose.
-2. Identify simplification opportunities from the targets above.
-3. Apply transformations. Make each change atomic and clear.
-4. After simplifying all files, run the project's test suite to verify nothing broke.
-5. If tests pass, commit the simplifications with a message like `refactor: simplify [area] — cleanup pass`.
-6. If tests fail, revert the failing change, note what went wrong, and continue with remaining simplifications.
+1. **Identify changed files.** The caller provides the file list (from `git diff --name-only` against the appropriate scope). If not provided, detect the base branch and run `git diff --name-only $(git merge-base HEAD main)..HEAD` (substituting `master` if `main` doesn't exist).
+2. **Read each changed file in full** (not just the diff — you need surrounding context to simplify safely). Identify its core purpose.
+3. Identify simplification opportunities from the targets above.
+4. Apply transformations. Make each change atomic and clear.
+5. After simplifying all files, run the project's test suite to verify nothing broke.
+6. If tests pass, commit the simplifications with a message like `refactor: simplify [area] — cleanup pass`.
+7. If tests fail, revert the failing change, note what went wrong, and continue with remaining simplifications.
 
 ## Output
 

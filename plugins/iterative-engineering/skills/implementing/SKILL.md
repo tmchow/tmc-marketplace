@@ -40,28 +40,30 @@ Read the plan critically, create tasks, and implement with TDD, code review, and
 
 ### Phase 2: Execute (repeat per plan section)
 
-1. **Analyze dependency graph.** Using the plan's `**Depends on:**` and `**Files:**` fields, group the section's subtasks into execution batches — subtasks with no unmet dependencies form the next batch.
-2. **Execute batch.** For each batch, spawn `task-worker` subagents concurrently for all subtasks in the batch. Each subagent receives:
+1. **Record section baseline.** Before starting each plan section, capture the current commit: `git rev-parse HEAD`. This SHA is the section's baseline — used to scope reviews to only this section's changes.
+2. **Analyze dependency graph.** Using the plan's `**Depends on:**` and `**Files:**` fields, group the section's subtasks into execution batches — subtasks with no unmet dependencies form the next batch.
+3. **Execute batch.** For each batch, spawn `task-worker` subagents concurrently for all subtasks in the batch. Each subagent receives:
    - Path to the tech plan document
    - Subtask number and title
    - Parent task context
    - Task system (HZL or TaskCreate) and task ID if HZL
-3. Worker reads subtask from plan, loads referenced patterns, implements, commits, and updates task status (see task-worker agent for details).
-4. **Wait for batch completion.** All subagents in the batch must finish before the next batch starts.
-5. **Incremental review (large sections only).** If the plan section has more than 5 subtasks, automatically run a quick code review after each batch — this catches issues before subsequent batches build on flawed code. If issues are found, present them with severity acceptance before continuing. If clean, continue to the next batch silently.
-6. **Repeat** steps 2-5 for remaining batches.
-7. Update plan document progress (mark completed items).
-8. Mark section complete in task system.
-9. **Final code review.** Run after all subtasks in the plan section are complete, regardless of whether incremental reviews occurred (see When to Review table for trivial exceptions).
+4. Worker reads subtask from plan, loads referenced patterns, implements, commits, and updates task status (see task-worker agent for details).
+5. **Wait for batch completion.** All subagents in the batch must finish before the next batch starts.
+6. **Incremental review (large sections only).** If the plan section has more than 5 subtasks, automatically run a quick code review after each batch — this catches issues before subsequent batches build on flawed code. Scope the review to `git diff <section-baseline-sha>..HEAD`. If issues are found, present them with severity acceptance before continuing. If clean, continue to the next batch silently.
+7. **Repeat** steps 3-6 for remaining batches.
+8. Update plan document progress (mark completed items).
+9. Mark section complete in task system.
+10. **Final code review.** Run after all subtasks in the plan section are complete, regardless of whether incremental reviews occurred (see When to Review table for trivial exceptions). Scope: `git diff <section-baseline-sha>..HEAD`. Pass the baseline SHA and plan context to the `code-review` skill.
 
 ### Phase 3: Finish
 
 1. Verify: all tasks complete, all section-level code reviews passed.
-2. **Simplification pass.** Spawn the `code-simplifier` agent with the list of changed files (from `git diff` against base branch). The agent applies behavior-preserving simplifications (flatten nesting, remove dead code, simplify conditionals, clean up review-fix accumulation), runs tests, and commits separately. This is a single bounded pass — not a refactor.
-3. **Final review offer.** Use AskUserQuestion: A) Full code review of complete work (recommended), B) Quick review, C) Skip to finish.
-4. If review: invoke `code-review` skill across all changes (including simplification). Present findings with severity acceptance (see Severity Acceptance in Code Review section). Fix selected severities.
-5. Use AskUserQuestion: A) Another review round, B) Continue to `implementation-wrapup` skill (recommended), C) I'll handle PR/merge myself (exit).
-6. Repeat steps 4-5 if user chooses another round.
+2. **Detect base branch.** `git rev-parse --verify origin/main >/dev/null 2>&1 && echo main || echo master`. Use this for all branch-level scoping in Phase 3.
+3. **Simplification pass.** Get changed files with `git diff --name-only $(git merge-base HEAD <base>)..HEAD`. Spawn the `code-simplifier` agent with this file list. The agent applies behavior-preserving simplifications, runs tests, and commits separately. This is a single bounded pass — not a refactor.
+4. **Final review offer.** Use AskUserQuestion: A) Full code review of complete work (recommended), B) Quick review, C) Skip to finish.
+5. If review: invoke `code-review` skill with scope `git diff $(git merge-base HEAD <base>)..HEAD` (all branch changes including simplification). Present findings with severity acceptance (see Severity Acceptance in Code Review section). Fix selected severities.
+6. Use AskUserQuestion: A) Another review round, B) Continue to `implementation-wrapup` skill (recommended), C) I'll handle PR/merge myself (exit).
+7. Repeat steps 5-6 if user chooses another round.
 
 ## Workspace Setup
 
@@ -191,7 +193,7 @@ If reality diverges from the plan during implementation:
 
 **Always use AskUserQuestion for transition points** — never just print options as text.
 
-After simplification pass completes, use AskUserQuestion with options:
+After simplification pass completes (Phase 3 step 4), use AskUserQuestion with options:
 - Full code review of complete work (recommended)
 - Quick review
 - Skip to finish

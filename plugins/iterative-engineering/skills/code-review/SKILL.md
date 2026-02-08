@@ -59,13 +59,14 @@ Uses 2-3 reviewers. Auto-detect from changed files when the caller doesn't speci
 
 **Step 1: Determine scope.**
 
-Identify what code to review and gather context:
+Identify what code to review using the appropriate git diff range:
 
-- **From implementing (section-level):** The caller provides file paths and plan context (what was built, plan section reference, test scenarios from the plan). Use the plan's git commits or `git diff` since the section started.
-- **Standalone:** Run `git diff` against the base branch (main/master) to identify changed files. If no base branch diff, use unstaged changes.
+- **From implementing (section-level):** The caller provides a baseline SHA (captured at section start) and plan context. Use `git diff <baseline-sha>..HEAD` to scope to only the section's changes. Get changed files with `git diff --name-only <baseline-sha>..HEAD`.
+- **From implementing (final/branch-level):** The caller provides a merge-base scope. Use `git diff $(git merge-base HEAD <base>)..HEAD` for all branch changes.
+- **Standalone:** Detect base branch (`git rev-parse --verify origin/main >/dev/null 2>&1 && echo main || echo master`). Use `git diff $(git merge-base HEAD <base>)..HEAD` to identify changed files. If no commits on branch, fall back to unstaged changes (`git diff`).
 - **Explicit files:** If the caller specifies files, use those.
 
-Determine Full or Quick mode from argument, change analysis, or ask user.
+Get the changed file list with `--name-only` to determine Full or Quick mode from change analysis. The full diff content is what reviewers analyze.
 
 **Step 2: Spawn reviewers.**
 
