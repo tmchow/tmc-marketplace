@@ -1,7 +1,6 @@
 ---
-name: iterative:brainstorm
-description: Explore ideas and approaches before building. This skill should be used when the user says "brainstorm", "explore approaches", "think through options", or is starting a new feature with unclear direction.
-allowed-tools: Glob, Grep, Read, WebSearch, WebFetch, Task
+name: iterative:brainstorming
+description: Explore ideas and approaches before building. This skill should be used when the user says "brainstorm", "brainstorming", "create a PRD", "write requirements", "define scenarios", "explore approaches", "think through options", or is starting a new feature with unclear direction.
 ---
 
 # Brainstorming
@@ -29,56 +28,48 @@ Skip brainstorming when requirements are explicit, detailed, and the user knows 
 
 ## Workflow
 
-```
-Phase 0: Detect Resume / Assess Clarity
-├── If user references an existing brainstorm document or topic:
-│   ├── Load the document, summarize current state
-│   └── Offer: user directs what to change, or agent identifies gaps
-│   └── Resume note: build on existing content, update in place
-├── If requirements are already explicit and detailed:
-│   └── Suggest skipping to `iterative:tech-design` skill
-└── Otherwise: proceed to Phase 1
+### Phase 0: Detect Resume / Assess Clarity
 
-Phase 1: Map the Space (2-3 questions)
-├── Explore the codebase lightly for relevant context
-├── Ask the 2-3 BEST questions to understand the problem space
-│   (use AskUserQuestion, one at a time)
-├── Pick questions that will most differentiate possible approaches
-├── Don't try to cover everything — just enough to propose broad directions
-└── Move to Phase 2 after 2-3 questions (do not extend)
+1. If user references an existing PRD or brainstorming topic: load the document (check both `docs/prd/` and `docs/brainstorms/` — treat PRDs and brainstorm documents synonymously), summarize current state, and let the user direct what happens next. Build on existing content, update in place.
+2. If requirements are already explicit and detailed: use AskUserQuestion: A) Skip to `iterative:tech-planning` (recommended), B) Brainstorm anyway.
+3. Otherwise: proceed to Phase 1.
 
-Phase 2: Broad Directions (steering, not detailed)
-├── Present 2-3 high-level directions (1-2 sentences each)
-├── Keep them lightweight — these are steering choices, not final approaches
-├── Include a brief trade-off for each (not full pros/cons yet)
-├── Lead with a recommendation
-├── Use AskUserQuestion to let user pick a direction
-└── This narrows the search space for deeper exploration
+### Phase 1: Map the Space (2-3 questions)
 
-Phase 3: Deep Exploration (Q&A within chosen direction)
-├── Now ask targeted questions within the chosen direction
-├── Bring ideas — don't just ask, suggest and react
-├── Explore: goals, scope, user experience, feasibility, constraints
-├── Challenge assumptions ("Do you actually need X, or would Y work?")
-├── Research prior art and alternatives when useful
-├── Validate assumptions explicitly ("I'm assuming X. Is that correct?")
-├── Identify risks and open questions to carry forward
-└── Continue until the approach is well-scoped
+1. Explore the codebase lightly for relevant context.
+2. Ask the 2-3 BEST questions to understand the problem space (use AskUserQuestion, one at a time). Pick questions that will most differentiate possible approaches.
+3. Don't try to cover everything — just enough to propose broad directions.
+4. Move to Phase 2 after 2-3 questions (do not extend).
 
-Phase 4: Document Findings
-├── Write brainstorm document (format below)
-├── Scale the document to the scope of the brainstorm
-└── Save to docs/brainstorms/YYYY-MM-DD-<topic>-brainstorm.md (ensure directory exists)
+### Phase 2: Broad Directions (steering, not detailed)
 
-Phase 5: Review Cycle
-├── Use AskUserQuestion to offer plan-review (recommended) or skip
-├── If review: invoke `plan-review` skill
-├── Fix issues identified
-└── Use AskUserQuestion to offer another round or continue
+1. Present 2-3 high-level directions (1-2 sentences each). Keep them lightweight — these are steering choices, not final approaches.
+2. Include a brief trade-off for each (not full pros/cons yet). Lead with a recommendation.
+3. Use AskUserQuestion to let user pick a direction. This narrows the search space for deeper exploration.
 
-Phase 6: Handoff
-└── Continue to `iterative:tech-design` skill when ready
-```
+### Phase 3: Deep Exploration (Q&A within chosen direction)
+
+1. Ask targeted questions within the chosen direction.
+2. Bring ideas — don't just ask, suggest and react.
+3. Explore: goals, scope, user experience, feasibility, constraints.
+4. Challenge assumptions ("Do you actually need X, or would Y work?"). Research prior art and alternatives when useful.
+5. Validate assumptions explicitly ("I'm assuming X. Is that correct?"). Identify risks and open questions to carry forward.
+6. Continue until the approach is well-scoped.
+
+### Phase 4: Document Findings
+
+1. Write PRD (format below).
+2. Scale the document to the scope.
+3. Save to `docs/prd/YYYY-MM-DD-<topic>-prd.md` (ensure directory exists).
+
+### Phase 5: Review and Handoff
+
+1. Use AskUserQuestion: A) Plan-review (recommended), B) Continue to `iterative:tech-planning`, C) I'll take it from here (exit).
+2. If review: invoke `plan-review` skill. Plan-review returns findings — brainstorming owns the fix loop.
+3. Fix issues identified by plan-review.
+4. Use AskUserQuestion: A) Another round of plan-review (recommended if significant changes), B) Continue to `iterative:tech-planning`, C) I'll take it from here (exit).
+5. Repeat steps 2-4 if user chooses another round.
+6. If user chooses tech-planning: invoke `iterative:tech-planning` skill.
 
 ## Question Techniques
 
@@ -126,12 +117,12 @@ Here are 2-3 broad directions:
 I'd lean toward **A** because [one sentence]. Which direction feels right?
 ```
 
-## Brainstorm Document Format (Phase 4)
+## PRD Format (Phase 4)
 
-Scale the document to the scope. A small feature might only need Goal, Scope, and Key Decisions. An app idea might need all sections. Use the sections that are relevant — skip the rest.
+Scale the document to the scope. A small feature might only need Goal, Scope, Requirements, and Key Decisions. An app idea might need all sections. Use the sections that are relevant — skip the rest. Requirements should always be included (even if brief) because they are referenced downstream by tech planning and code review.
 
 ```markdown
-# [Feature/Change] - Brainstorm
+# [Feature/Change] - PRD
 
 **Date:** [date]
 **Status:** Brainstorming
@@ -141,6 +132,13 @@ Scale the document to the scope. A small feature might only need Goal, Scope, an
 
 ## Scope
 [What's in v1. What's explicitly out of scope or deferred.]
+
+## Requirements
+[Verifiable criteria that the implementation must satisfy. These are referenced downstream by tech planning (to design the solution) and code review (to validate correctness). Number them for cross-referencing.]
+
+1. [Requirement — specific and verifiable, not vague]
+2. [Requirement]
+3. [Requirement]
 
 ## Chosen Direction
 [Which direction we picked and why — can include high-level technical direction]
@@ -157,7 +155,7 @@ Scale the document to the scope. A small feature might only need Goal, Scope, an
 → Create technical plan
 ```
 
-The brainstorm document should give enough context for someone to create a detailed technical plan from it. High-level technical direction (e.g., "real-time via WebSockets", "CLI-first with optional web dashboard") belongs here. Implementation specifics (e.g., specific libraries, database schema, API endpoints) do not.
+The PRD should give enough context for someone to create a detailed technical plan from it. High-level technical direction (e.g., "real-time via WebSockets", "CLI-first with optional web dashboard") belongs here. Implementation specifics (e.g., specific libraries, database schema, API endpoints) do not.
 
 ## Anti-Patterns to Avoid
 
@@ -170,18 +168,15 @@ The brainstorm document should give enough context for someone to create a detai
 | Going too deep into implementation specifics | High-level direction is fine; specific libraries, schema, and code design are not |
 | Proposing overly complex solutions | Start simple, add complexity only if needed |
 | Making assumptions without validating | State assumptions explicitly and confirm |
-| Same depth for every brainstorm | Scale to scope — brief for small features, thorough for app ideas |
+| Same depth for every PRD | Scale to scope — brief for small features, thorough for app ideas |
 
 ## Transition Points
 
 **Always use AskUserQuestion for transition points** — never just print options as text.
 
-After brainstorm document is created, use AskUserQuestion with options:
-- Plan-review: 4 agents analyze for issues and improve (recommended)
-- Continue to `iterative:tech-design` skill
+After PRD is created, and after each review round, use AskUserQuestion with options:
+- Plan-review: 4 agents analyze for issues and improve (recommended on first pass)
+- Continue to `iterative:tech-planning` skill
 - I'll take it from here (exit)
 
-After review + fixes, use AskUserQuestion with options:
-- Another round of `plan-review` skill (recommended if significant changes)
-- Continue to `iterative:tech-design` skill
-- I'll take it from here (exit)
+**Never skip this step.** Do not proceed to tech-planning or announce "the PRD is ready" without presenting these options first.

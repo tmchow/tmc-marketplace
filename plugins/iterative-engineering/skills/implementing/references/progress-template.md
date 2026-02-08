@@ -9,9 +9,9 @@ Use this format to report progress during and after implementation.
 
 ### Setup
 - Workspace: [worktree/branch/main]
-- Task source: [HZL/TodoWrite]
+- Task source: [HZL/TaskCreate]
 - Execution mode: [A/B/C]
-- Execution strategy: [Sequential/Parallel (Agent Teams)]
+- Parallel execution: [yes/no — which parents/subtasks ran concurrently]
 
 ### Parent 1: [Name]
 - [x] Subtask 1.1 - committed abc123
