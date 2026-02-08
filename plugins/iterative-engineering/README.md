@@ -35,6 +35,8 @@ implementing
      ├─ code-review (per plan section)
      │   fix selected severities
      │
+     ├─ code-simplifier (cleanup pass)
+     │
      ├─ final code-review (all changes)
      │   fix selected severities
      │
@@ -60,7 +62,7 @@ Each stage has a clear scope — what it produces and what it deliberately leave
 Reviews are user-driven:
 
 - **Offered, never forced** — Every review is presented via AskUserQuestion. The user can skip.
-- **Severity-based acceptance** — Findings grouped by severity (Critical → Nitpick). User selects which levels to fix — not all-or-nothing.
+- **Severity-based acceptance** — Findings grouped by severity (Critical / High / Medium / Low). User selects which levels to fix — not all-or-nothing.
 - **User-controlled loop** — After fixes, user chooses to re-review or continue. No automatic re-review.
 - **Scaled to scope** — Full review for substantial work, quick review for moderate changes, skip for trivial config edits.
 
@@ -121,11 +123,11 @@ The core workflow skills use an `iterative:` prefix in their name (e.g., `/itera
 
 | Agent | Focus |
 |-------|-------|
-| `correctness-reviewer` | Logic errors, edge cases, bugs |
-| `security-reviewer` | Vulnerabilities, auth, input validation |
-| `performance-reviewer` | Algorithmic complexity, queries, caching |
-| `simplicity-reviewer` | YAGNI, over-engineering, abstraction |
-| `testing-reviewer` | Coverage, test quality, edge cases |
+| `correctness-reviewer` | Logic errors, edge cases, bugs, silent failures, plan compliance |
+| `security-reviewer` | Vulnerabilities, auth, input validation, project conventions |
+| `performance-reviewer` | Algorithmic complexity, queries, memory, caching |
+| `simplicity-reviewer` | YAGNI, over-engineering, unnecessary abstraction |
+| `testing-reviewer` | Coverage, test quality, edge cases, plan test scenarios |
 
 Review agents run as teammates who can cross-validate findings — a security reviewer can flag missing test coverage, a YAGNI reviewer can push back on completeness suggestions. When agent teams are unavailable, reviews fall back to parallel subagent execution.
 
@@ -134,6 +136,7 @@ Review agents run as teammates who can cross-validate findings — a security re
 | Agent | Purpose |
 |-------|---------|
 | `task-worker` | Executes subtasks — reads plan context, loads patterns, implements with TDD, commits |
+| `code-simplifier` | Behavior-preserving simplification pass on changed files before final review |
 | `branch-setup-worker` | Creates git worktrees or branches for isolation |
 | `pr-creator-worker` | Creates pull requests following repo conventions |
 
@@ -149,8 +152,10 @@ See the [HZL repository](https://github.com/tmchow/hzl) for installation.
 
 This plugin draws inspiration from:
 
-- [superpowers](https://github.com/obra/superpowers) by Jesse Vincent — TDD workflows, git worktrees, execution patterns
-- [compound-engineering](https://github.com/EveryInc/compound-engineering-plugin) by Every — Brainstorming, document review, workflow orchestration
+- [superpowers](https://github.com/obra/superpowers) by Jesse Vincent — TDD workflows, git worktrees, execution patterns, SHA-based review scoping
+- [compound-engineering](https://github.com/EveryInc/compound-engineering-plugin) by Every — Brainstorming, document review, workflow orchestration, code simplicity analysis
+- [pr-review-toolkit](https://github.com/anthropics/claude-code-pr-review) by Anthropic — Confidence filtering, silent failure audit patterns, selective reviewer activation
+- [code-simplifier](https://github.com/anthropics/claude-code-code-simplifier) by Anthropic — Over-simplification guardrails, project convention awareness
 
 ## License
 
