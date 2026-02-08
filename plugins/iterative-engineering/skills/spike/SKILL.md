@@ -73,7 +73,7 @@ This skill resolves unknowns where the answer **needs to be built and experience
    - **Iterate** — refine based on feedback, return to step 1
    - **Conclude** — enough was learned, proceed to Phase 4
    - **Abandon** — the spike isn't helping, proceed to Phase 4 with inconclusive findings
-   - **Pause** — park this spike, keep the worktree, come back later (the Progress section enables resume)
+   - **Pause** — ensure Progress section is current, keep the worktree. Resume detection (Phase 0) will find this spike in a future session.
 
 ### Phase 4: Wrap Up
 

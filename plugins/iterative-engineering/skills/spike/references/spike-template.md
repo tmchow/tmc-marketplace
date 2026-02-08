@@ -14,7 +14,7 @@ Use this template when creating spike documents. Update the Progress section as 
 **Tech Plan:** [path, if exists]
 ```
 
-**Valid status values:** `In Progress`, `Complete`, `Paused`, `Abandoned`
+**Valid status values:** `In Progress`, `Complete`, `Abandoned`
 
 ## Sections
 
