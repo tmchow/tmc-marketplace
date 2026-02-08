@@ -1,6 +1,6 @@
 # Iterative Engineering Plugin
 
-A Claude Code plugin for iterative development workflows — brainstorming, tech planning, multi-agent reviews, TDD implementation, and PR management.
+A plugin for Claude Code and Codex — iterative development workflows with brainstorming, tech planning, multi-agent reviews, TDD implementation, and PR management.
 
 ## Philosophy
 
@@ -80,7 +80,7 @@ Reviews are user-driven:
 
 ### Core Workflow
 
-The core workflow skills use an `iterative:` prefix in their name (e.g., `/iterative:brainstorming`). Claude Code's slash command menu shows skill names from all installed plugins — if another plugin also has a "brainstorming" skill, you'd see duplicate `/brainstorming` entries. The prefix makes ours immediately identifiable. Substring search still works — typing `/brain` finds `/iterative:brainstorming`.
+The core workflow skills use an `iterative:` prefix in their name (e.g., `/iterative:brainstorming`). The slash command menu shows skill names from all installed plugins — if another plugin also has a "brainstorming" skill, you'd see duplicate `/brainstorming` entries. The prefix makes ours immediately identifiable. Substring search still works — typing `/brain` finds `/iterative:brainstorming`.
 
 | Skill | Output | Description |
 |-------|--------|-------------|
@@ -144,7 +144,7 @@ Workflow agents run as isolated subagents. Each `task-worker` gets its own conte
 
 ## HZL Integration (Optional)
 
-This plugin supports [HZL](https://github.com/tmchow/hzl) for persistent task tracking across sessions and agents. Implementing detects HZL automatically and offers it as the recommended option. Without HZL, the workflow uses Claude's built-in task management (TaskCreate).
+This plugin supports [HZL](https://github.com/tmchow/hzl) for persistent task tracking across sessions and agents. Implementing detects HZL automatically and offers it as the recommended option. Without HZL, the workflow uses built-in task management (TaskCreate).
 
 See the [HZL repository](https://github.com/tmchow/hzl) for installation.
 

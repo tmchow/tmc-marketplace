@@ -93,7 +93,7 @@ Check whether HZL is installed (e.g., `hzl status`) and the project uses HZL for
 - **HZL not detected** → Use TaskCreate automatically, no question needed
 - **HZL detected** → Use AskUserQuestion to let the user choose:
   - HZL tasks (Recommended) — durable tracking with dependencies, persists across sessions
-  - Claude's built-in tasks (TaskCreate) — lightweight, session-scoped
+  - Built-in tasks (TaskCreate) — lightweight, session-scoped
 
 ### Parsing the Plan
 

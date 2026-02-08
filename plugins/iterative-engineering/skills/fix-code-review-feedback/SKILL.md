@@ -230,7 +230,7 @@ Do NOT use `gh api` for operations that have high-level equivalents.
 ```
 User: /fix-code-review-feedback
 
-Claude:
+Agent:
 Fetching feedback for current branch's PR (#123)...
 
 Found 3 unresolved threads:
@@ -252,7 +252,7 @@ Committed and pushed. 2 fixed, 1 declined.
 ```
 User: /fix-code-review-feedback https://github.com/org/repo/pull/123#discussion_r1234567
 
-Claude:
+Agent:
 Fetching specific feedback...
 
 Thread: "Missing null check on user.email"
@@ -266,7 +266,7 @@ Replied, resolved thread, committed and pushed.
 ```
 [After code review agent provides feedback in conversation]
 
-Claude:
+Agent:
 Processing review feedback...
 
 1. ✅ Race condition at api.ts:23 → Adding mutex lock
