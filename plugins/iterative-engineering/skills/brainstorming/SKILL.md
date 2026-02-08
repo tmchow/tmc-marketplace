@@ -66,18 +66,38 @@ Skip brainstorming when requirements are explicit, detailed, and the user knows 
 
 ### Phase 5: Review and Handoff
 
-1. Ask the user to choose: A) Review the PRD (recommended), B) Investigate open questions (if PRD has open questions), C) Continue to technical planning, D) I'll take it from here (exit). Only show option B when the PRD has an Open Questions section with unresolved items.
-2. If review: invoke `plan-review` skill. Plan-review returns findings — brainstorming owns the fix loop.
-3. Fix issues identified by plan-review.
-4. Ask the user to choose (see recommendation logic below): A) Another review round, B) Investigate open questions (if applicable), C) Continue to technical planning, D) I'll take it from here (exit).
-5. Repeat steps 2-4 if user chooses another round.
-6. If user chooses investigate: invoke `iterative:answer-unknowns` skill with the PRD path. After investigation completes (findings presented and PRD updated with user-approved changes), return to step 4.
-7. If user chooses tech-planning: invoke `iterative:tech-planning` skill.
+1. **Classify open questions.** If the PRD has an Open Questions section, read the questions and assess which resolution method fits each (see classification criteria below). Use this to determine which options to surface in step 2.
+2. Ask the user to choose — surface options based on what's relevant:
+   - A) Review the PRD (recommended on first pass)
+   - B) Research open questions — when questions exist that can be answered by gathering information
+   - C) Spike — when questions exist that need to be built and experienced to validate
+   - D) Continue to technical planning
+   - E) I'll take it from here (exit)
+   Only show B and C when the PRD has open questions that fit that resolution method. If active spikes exist (in-progress spike docs in `docs/spikes/`), mention them as a resume option alongside C.
+3. If review: invoke `plan-review` skill. Plan-review returns findings — brainstorming owns the fix loop.
+4. Fix issues identified by plan-review.
+5. Ask the user to choose (see recommendation logic below) — same options as step 2, re-assessed with updated PRD context.
+6. Repeat steps 3-5 if user chooses another round.
+7. If user chooses research: invoke `iterative:research` skill with the PRD path. After research completes (findings presented and PRD updated with user-approved changes), return to step 5.
+8. If user chooses spike: invoke `iterative:spike` skill. After the spike concludes (spike doc finalized, PRD updated with user-approved changes), return to step 5.
+9. If user chooses tech-planning: invoke `iterative:tech-planning` skill.
 
-**Recommendation logic for step 4.** Shift the recommended option based on what the review found:
+**Open question classification criteria.** When assessing open questions in step 1, apply these criteria to determine which options to surface:
+
+| Resolution method | When | The answer... |
+|---|---|---|
+| **Research** | Facts, patterns, prior art, external constraints | ...exists somewhere and needs to be found |
+| **Spike** | UX feel, interaction design, "would this work in practice?" | ...doesn't exist yet and needs to be built and experienced |
+| **User decision** | Priorities, preferences, business judgment | ...is a human call, not something research or building will reveal |
+| **Tech planning** | Implementation details, architecture, codebase mechanics | ...requires deep codebase context that tech planning will explore |
+
+This classification is a judgment call — present it as informed options, not a formal categorization step. The user picks what to do.
+
+**Recommendation logic for step 5.** Shift the recommended option based on what the review found:
 - Review found Critical or High issues (now fixed) → recommend **another review round** to verify the fixes landed well
 - Review found only Medium/Low issues, or a round came back clean → recommend **continue to technical planning** — further rounds will have diminishing returns
 - After 3+ rounds → recommend **continue to technical planning** regardless, and note that additional passes are unlikely to surface significant issues
+- If open questions remain that need research or spiking → mention these as options alongside the review recommendation
 
 ## Question Techniques
 
@@ -132,7 +152,7 @@ See `references/prd-template.md` for the full template with section descriptions
 Key structural points:
 - **Requirements are grouped by priority:** Core (the whole point), Must-Have (required for v1), Nice-to-Have (include if straightforward), Out (explicitly excluded). Each requirement gets a persistent number (R1, R2...) for cross-referencing.
 - **Scope is split into In Scope and Boundaries.** Boundaries are deliberate limits — active decisions that prevent scope creep, not oversights.
-- **Open Questions are tagged** with what they affect (specific requirements, scope, direction, or research needed) so downstream stages know what depends on their resolution.
+- **Open Questions are tagged** with what they affect (specific requirements, scope, direction) so downstream stages know what depends on their resolution.
 - **Sections earn their inclusion.** Goal, Scope, Requirements, and Next Steps are always present. Other sections (Chosen Direction, Alternatives Considered, Key Decisions, Open Questions) are included when their criteria apply.
 
 The PRD should give enough context for someone to create a detailed technical plan from it. High-level technical direction belongs here. Implementation specifics do not.
@@ -156,9 +176,10 @@ The PRD should give enough context for someone to create a detailed technical pl
 
 **Always present options to the user at transition points** — never just print options as text.
 
-After PRD is created, and after each review round, present options:
+After PRD is created, and after each review round, present options (surface based on relevance):
 - Review the PRD — 4 agents analyze for issues (recommended on first pass)
-- Investigate open questions — resolve unknowns before planning (only when PRD has open questions)
+- Research open questions — resolve unknowns through investigation (when researchable questions exist)
+- Spike — build and validate uncertain requirements (when questions need to be experienced)
 - Continue to technical planning (recommended when prior review found only Medium/Low issues or after 3+ rounds)
 - I'll take it from here (exit)
 

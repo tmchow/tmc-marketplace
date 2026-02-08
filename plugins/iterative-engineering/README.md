@@ -23,7 +23,8 @@ A plugin for Claude Code and Codex — iterative development workflows with brai
 brainstorming
      │ PRD
      ↕ plan-review (1+ rounds)
-     ↕ answer-unknowns (optional)
+     ↕ research (optional)
+     ↕ spike (optional)
      │
 tech-planning
      │ Tech Plan
@@ -52,7 +53,9 @@ Brainstorming shapes requirements through dialogue. It asks 2-3 questions to map
 
 The output is a **PRD** with requirements grouped by priority: Core (the whole point), Must-Have (required for v1), Nice-to-Have (include if straightforward), Out (considered and explicitly excluded). Scope splits into In Scope and deliberate Boundaries — active decisions that prevent scope creep, not oversights. Open questions are tagged with what they affect (requirements, scope, direction) so downstream stages know what depends on resolving them. Sections earn their place based on criteria, not a rigid template. High-level technical direction belongs here; implementation specifics do not.
 
-After the PRD is written, it goes through review. 4 specialized reviewers (clarity, completeness, specificity, YAGNI) analyze the document via agent team with cross-validation — a YAGNI reviewer can push back when completeness wants more detail. The user reviews findings, fixes issues, and can run as many rounds as needed. If the PRD has open questions, they can be investigated before planning. Scope and research questions get parallel research; technical questions defer to tech planning; questions needing user decisions get flagged. Findings are proposed as PRD updates, applied only with user approval. The PRD stays live — tech planning and implementation update it when they hit new constraints.
+After the PRD is written, it goes through review. 4 specialized reviewers (clarity, completeness, specificity, YAGNI) analyze the document via agent team with cross-validation — a YAGNI reviewer can push back when completeness wants more detail. The user reviews findings, fixes issues, and can run as many rounds as needed. If the PRD has open questions, they can be resolved before planning. The agent classifies each question by resolution method: questions where the answer exists somewhere (prior art, constraints, competitive landscape) get parallel research via `iterative:research`. Questions that need to be built and experienced (UX feel, interaction design, behavioral validation) get spiked via `iterative:spike`. Technical questions defer to tech planning; questions needing user decisions get flagged. Findings are proposed as PRD updates, applied only with user approval. The PRD stays live — tech planning, spiking, and implementation update it when they hit new constraints.
+
+Spiking builds lightweight throwaway prototypes in isolated worktrees to validate uncertain requirements. Each spike follows a build → present → feedback loop — the user experiences the prototype and provides direction. The spike adapts its approach to the system state: if relevant modules exist, it spikes within the existing system; if not, it builds a standalone prototype. Spike findings update the PRD with full rationale — the PRD stays self-sufficient for downstream stages without needing to read the spike doc. Spike code is throwaway; the decisions are what persist.
 
 ### Tech Planning
 
@@ -110,7 +113,8 @@ The core workflow skills use an `iterative:` prefix in their name (e.g., `/itera
 | Skill | Output | Description |
 |-------|--------|-------------|
 | `iterative:brainstorming` | PRD | Collaborative exploration of problem space, broad directions, deep Q&A |
-| `iterative:answer-unknowns` | Updated PRD | Investigate open questions from PRD or user — parallel research, findings synthesis |
+| `iterative:research` | Updated PRD | Research open questions from PRD or user — parallel investigation, findings synthesis |
+| `iterative:spike` | Spike Doc + Updated PRD | Build and validate uncertain requirements — throwaway prototypes, user feedback loops |
 | `iterative:tech-planning` | Tech Plan | Structure PRD into dependency-ordered subtasks with file paths, test scenarios, architecture decisions |
 | `plan-review` | Review Report | 4 specialized reviewers analyze PRDs and tech plans via agent team with cross-validation |
 | `iterative:implementing` | Code → PR | Dependency-aware batch execution with TDD, incremental and final code reviews, then wrapup |
@@ -121,7 +125,7 @@ The core workflow skills use an `iterative:` prefix in their name (e.g., `/itera
 | Skill | Description |
 |-------|-------------|
 | `implementation-wrapup` | Test verification, final review, PR creation — invoked by implementing or standalone ("create a PR") |
-| `git-worktree` | Workspace isolation — invoked by implementing during setup |
+| `git-worktree` | Workspace isolation — invoked by implementing and spike during setup |
 
 ### Supporting
 

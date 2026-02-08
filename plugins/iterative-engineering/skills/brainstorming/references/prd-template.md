@@ -122,10 +122,9 @@ Tag each question with what it affects so downstream stages know which questions
 - **[Affects R3]** [Question about a specific requirement]
 - **[Affects Scope]** [Question that could change what's in/out of scope]
 - **[Affects Direction]** [Question that could change the chosen approach]
-- **[Research needed]** [Question requiring external investigation]
 ```
 
-Questions tagged with specific requirements or scope signal that those areas aren't fully locked in. Tech planning should resolve technical questions during codebase exploration. Non-technical questions (scope, requirements, external research) are best resolved before tech planning — see `iterative:answer-unknowns` skill.
+Questions tagged with specific requirements or scope signal that those areas aren't fully locked in. Tech planning should resolve technical questions during codebase exploration. Non-technical questions may be resolved through research (see `iterative:research`) or by building and experiencing a prototype (see `iterative:spike`). Resolution method is determined when you go to resolve them, not when writing the PRD.
 
 ### Next Steps (always include)
 
