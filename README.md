@@ -28,7 +28,7 @@ Claude Code plugins by Trevin Chow.
 
 | Plugin | Description |
 |--------|-------------|
-| [iterative-engineering](./plugins/iterative-engineering) | Iterative development workflow - brainstorming, planning, multi-agent reviews, TDD execution |
+| [iterative-engineering](./plugins/iterative-engineering) | Iterative development workflow — brainstorming → tech planning → implementing with multi-agent reviews, dependency-aware execution, and severity-based acceptance |
 
 ## License
 
