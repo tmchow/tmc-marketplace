@@ -25,6 +25,7 @@ Skip brainstorming when requirements are explicit, detailed, and the user knows 
 5. **Directional, not detailed** - High-level technical direction is welcome ("real-time vs polling", "build vs buy"). Implementation specifics are not ("use Socket.io with Redis", "add a notifications table with columns X, Y, Z")
 6. **Scale to the scope** - An entire app idea needs deeper exploration than a small feature. Match the depth to what's being brainstormed
 7. **YAGNI** - Resist complexity; choose the simplest approach that solves the stated problem
+8. **PRD is a living document** - The PRD is the requirements source of truth throughout the workflow. Tech planning and implementation may update it as reality reveals new constraints
 
 ## Workflow
 
@@ -46,6 +47,7 @@ Skip brainstorming when requirements are explicit, detailed, and the user knows 
 1. Present 2-3 high-level directions (1-2 sentences each). Keep them lightweight — these are steering choices, not final approaches.
 2. Include a brief trade-off for each (not full pros/cons yet). Lead with a recommendation.
 3. Ask the user to pick a direction. This narrows the search space for deeper exploration.
+4. **Validate the direction.** After the user picks, briefly check: does this direction satisfy the core requirements identified so far? If any requirement looks at risk, flag it before going deeper. This is a quick sanity check, not a formal review — a sentence or two is sufficient.
 
 ### Phase 3: Deep Exploration (Q&A within chosen direction)
 
@@ -58,18 +60,19 @@ Skip brainstorming when requirements are explicit, detailed, and the user knows 
 
 ### Phase 4: Document Findings
 
-1. Write PRD (format below).
-2. Scale the document to the scope.
+1. Write PRD using the template in `references/prd-template.md`. Include sections when their inclusion criteria apply — skip the rest.
+2. Group requirements by priority (Core, Must-Have, Nice-to-Have, Out). Be deliberate about priority — if everything is Must-Have, nothing is.
 3. Save to `docs/prd/YYYY-MM-DD-<topic>-prd.md` (ensure directory exists).
 
 ### Phase 5: Review and Handoff
 
-1. Ask the user to choose: A) Review the PRD (recommended), B) Continue to technical planning, C) I'll take it from here (exit).
+1. Ask the user to choose: A) Review the PRD (recommended), B) Investigate open questions (if PRD has open questions), C) Continue to technical planning, D) I'll take it from here (exit). Only show option B when the PRD has an Open Questions section with unresolved items.
 2. If review: invoke `plan-review` skill. Plan-review returns findings — brainstorming owns the fix loop.
 3. Fix issues identified by plan-review.
-4. Ask the user to choose: A) Another review round (recommended if significant changes), B) Continue to technical planning, C) I'll take it from here (exit).
+4. Ask the user to choose: A) Another review round (recommended if significant changes), B) Investigate open questions (if applicable), C) Continue to technical planning, D) I'll take it from here (exit).
 5. Repeat steps 2-4 if user chooses another round.
-6. If user chooses tech-planning: invoke `iterative:tech-planning` skill.
+6. If user chooses investigate: invoke `iterative:answer-unknowns` skill with the PRD path. After investigation completes (findings presented and PRD updated with user-approved changes), return to step 4.
+7. If user chooses tech-planning: invoke `iterative:tech-planning` skill.
 
 ## Question Techniques
 
@@ -87,7 +90,7 @@ Skip brainstorming when requirements are explicit, detailed, and the user knows 
 | Topic | Example Questions |
 |-------|-------------------|
 | Goals | What does success look like? What's the happy path? |
-| Scope | What's in v1 vs later? What's explicitly out of scope? |
+| Scope | What's in v1 vs later? What are the deliberate boundaries? |
 | User experience | Who uses this? What's the workflow? What do they see? |
 | Feasibility | Is this technically viable? Build vs buy? Any hard constraints? |
 | Prior art | How do others solve this? What can we learn from? |
@@ -119,43 +122,15 @@ I'd lean toward **A** because [one sentence]. Which direction feels right?
 
 ## PRD Format (Phase 4)
 
-Scale the document to the scope. A small feature might only need Goal, Scope, Requirements, and Key Decisions. An app idea might need all sections. Use the sections that are relevant — skip the rest. Requirements should always be included (even if brief) because they are referenced downstream by tech planning and code review.
+See `references/prd-template.md` for the full template with section descriptions and inclusion criteria.
 
-```markdown
-# [Feature/Change] - PRD
+Key structural points:
+- **Requirements are grouped by priority:** Core (the whole point), Must-Have (required for v1), Nice-to-Have (include if straightforward), Out (explicitly excluded). Each requirement gets a persistent number (R1, R2...) for cross-referencing.
+- **Scope is split into In Scope and Boundaries.** Boundaries are deliberate limits — active decisions that prevent scope creep, not oversights.
+- **Open Questions are tagged** with what they affect (specific requirements, scope, direction, or research needed) so downstream stages know what depends on their resolution.
+- **Sections earn their inclusion.** Goal, Scope, Requirements, and Next Steps are always present. Other sections (Chosen Direction, Alternatives Considered, Key Decisions, Open Questions) are included when their criteria apply.
 
-**Date:** [date]
-**Status:** Brainstorming
-
-## Goal
-[What problem are we solving and for whom?]
-
-## Scope
-[What's in v1. What's explicitly out of scope or deferred.]
-
-## Requirements
-[Verifiable criteria that the implementation must satisfy. These are referenced downstream by tech planning (to design the solution) and code review (to validate correctness). Number them for cross-referencing.]
-
-1. [Requirement — specific and verifiable, not vague]
-2. [Requirement]
-3. [Requirement]
-
-## Chosen Direction
-[Which direction we picked and why — can include high-level technical direction]
-
-## Key Decisions
-- [Decision 1]: [Rationale]
-- [Decision 2]: [Rationale]
-
-## Open Questions
-- [Question 1]
-- [Question 2]
-
-## Next Steps
-→ Create technical plan
-```
-
-The PRD should give enough context for someone to create a detailed technical plan from it. High-level technical direction (e.g., "real-time via WebSockets", "CLI-first with optional web dashboard") belongs here. Implementation specifics (e.g., specific libraries, database schema, API endpoints) do not.
+The PRD should give enough context for someone to create a detailed technical plan from it. High-level technical direction belongs here. Implementation specifics do not.
 
 ## Anti-Patterns to Avoid
 
@@ -168,15 +143,25 @@ The PRD should give enough context for someone to create a detailed technical pl
 | Going too deep into implementation specifics | High-level direction is fine; specific libraries, schema, and code design are not |
 | Proposing overly complex solutions | Start simple, add complexity only if needed |
 | Making assumptions without validating | State assumptions explicitly and confirm |
-| Same depth for every PRD | Scale to scope — brief for small features, thorough for app ideas |
+| Same depth for every PRD | Scale to scope — include sections when their criteria apply |
+| Everything is Must-Have | Use priority grouping honestly — if everything is Core, nothing is |
+| Leaving open questions unstructured | Tag each question with what it affects (requirement, scope, direction) |
 
 ## Transition Points
 
 **Always present options to the user at transition points** — never just print options as text.
 
 After PRD is created, and after each review round, present options:
-- Review the PRD — 4 agents analyze for issues and improve (recommended on first pass)
+- Review the PRD — 4 agents analyze for issues (recommended on first pass)
+- Investigate open questions — resolve unknowns before planning (only when PRD has open questions)
 - Continue to technical planning
 - I'll take it from here (exit)
 
 **Never skip this step.** Do not proceed to tech-planning or announce "the PRD is ready" without presenting these options first.
+
+## Additional Resources
+
+### Reference Files
+
+For templates and detailed guidelines, consult:
+- **`references/prd-template.md`** — PRD document template with section descriptions, priority definitions, and inclusion criteria
