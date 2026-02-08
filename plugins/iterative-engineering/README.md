@@ -4,10 +4,10 @@ A plugin for Claude Code and Codex — iterative development workflows with brai
 
 ## Philosophy
 
-- **Planning pays off** — Time spent planning yields better implementation. Rushing to code is often slower overall.
-- **Iteration improves quality** — Multiple review passes catch issues early. A review after a review can still find improvements.
-- **User drives every transition** — The workflow never auto-proceeds. Every stage transition, review acceptance, and decision point presents options to the user — the user always chooses what happens next.
-- **Opinionated defaults, user choice** — Recommend reviews, suggest worktrees, default to full coverage. But the user can skip, customize, or exit at any point.
+- **Planning pays off** — Rushing to code is often slower than planning first.
+- **Iteration improves quality** — A review after a review can still find improvements.
+- **User drives decisions** — Stage transitions, review rounds, and what to fix all surface options to go deeper or move forward.
+- **Opinionated defaults, user choice** — Recommend reviews, suggest worktrees, default to full coverage. The user can skip, customize, or exit at any point.
 - **Skills are independently valuable** — Each skill works standalone. Run `/code-review` without the full pipeline, or `/iterative:brainstorming` to revisit requirements mid-implementation.
 
 ## Installation
@@ -23,6 +23,7 @@ A plugin for Claude Code and Codex — iterative development workflows with brai
 brainstorming
      │ PRD
      ↕ plan-review (1+ rounds)
+     ↕ answer-unknowns (optional)
      │
 tech-planning
      │ Tech Plan
@@ -43,9 +44,31 @@ implementing
      └─ wrapup: verify tests → PR
 ```
 
-Each stage produces an artifact, offers review, and hands off when the user is ready. Re-entry is supported — run any skill again at any point.
+Each stage produces an artifact, offers iterative review, and hands off when the user is ready. Re-entry is supported — run any skill again at any point.
 
-The implementing stage does the heavy lifting: the tech plan is broken into sections, each with dependency-ordered subtasks that execute in batches. Sections with many subtasks get incremental code reviews between batches. Every section gets a code review when complete, and a final review covers all changes before wrapup verifies tests and creates the PR.
+### Brainstorming
+
+Brainstorming shapes requirements through dialogue. It asks 2-3 questions to map the problem space, presents broad directions to narrow things down, and validates the user's choice against core requirements before going deep. It pushes back on assumptions and suggests alternatives — the goal is to surface options, not just document what the user already knows.
+
+The output is a **PRD** with requirements grouped by priority: Core (the whole point), Must-Have (required for v1), Nice-to-Have (include if straightforward), Out (considered and explicitly excluded). Scope splits into In Scope and deliberate Boundaries — active decisions that prevent scope creep, not oversights. Open questions are tagged with what they affect (requirements, scope, direction) so downstream stages know what depends on resolving them. Sections earn their place based on criteria, not a rigid template. High-level technical direction belongs here; implementation specifics do not.
+
+After the PRD is written, it goes through review. 4 specialized reviewers (clarity, completeness, specificity, YAGNI) analyze the document via agent team with cross-validation — a YAGNI reviewer can push back when completeness wants more detail. The user reviews findings, fixes issues, and can run as many rounds as needed. If the PRD has open questions, they can be investigated before planning. Scope and research questions get parallel research; technical questions defer to tech planning; questions needing user decisions get flagged. Findings are proposed as PRD updates, applied only with user approval. The PRD stays live — tech planning and implementation update it when they hit new constraints.
+
+### Tech Planning
+
+Tech planning turns the PRD into an implementation plan. It starts by exploring the codebase — existing patterns, conventions, affected modules — and asking implementation-focused questions before writing anything. Open questions from the PRD get resolved during exploration, and the PRD is updated accordingly.
+
+The output is a **Tech Plan** that captures what to build and where — architecture decisions, query strategies, file paths, concrete test scenarios with specific inputs and expected outputs. It does not pre-write implementation code; that's brittle and gets followed blindly. The implementer writes the actual code. Subtasks are scoped to atomic commits (typically 2-3 files) with explicit dependencies. New constraints found during planning go back into the PRD with rationale.
+
+Same review process: the 4 plan reviewers analyze via agent team, the user fixes issues, multiple rounds until it's ready.
+
+### Implementing
+
+Implementing executes the tech plan with dependency-aware batching. Subtasks are grouped by their dependency graph — each batch runs concurrently via worker subagents, but batches execute sequentially to respect ordering. Each worker reads its subtask from the plan, loads referenced patterns, implements with TDD, and commits.
+
+Code review happens throughout. Large plan sections (6+ subtasks) get automatic incremental reviews between batches to catch issues before later batches build on flawed code. Every section gets a code review when complete, using 5 specialized reviewers (correctness, security, performance, simplicity, testing) via agent team with cross-validation. Severity-based fix acceptance keeps the user in control — they pick which levels to address, not all-or-nothing.
+
+After all sections finish, a code-simplifier agent makes a single bounded pass of behavior-preserving cleanup on changed files, followed by a final code review of all branch changes. Wrapup verifies tests pass and creates the PR.
 
 ### Stage Boundaries
 
@@ -53,7 +76,7 @@ Each stage has a clear scope — what it produces and what it deliberately leave
 
 | Stage | Produces | Does | Does NOT |
 |-------|----------|------|----------|
-| **Brainstorming** | PRD | Explore problem space, make directional choices, capture scope and key decisions | Specify libraries, schemas, API endpoints, or implementation details |
+| **Brainstorming** | PRD | Explore problem space, make directional choices, capture prioritized requirements and scope boundaries | Specify libraries, schemas, API endpoints, or implementation details |
 | **Tech Planning** | Tech Plan | Structure subtasks with dependencies, file paths, test scenarios, and architecture decisions | Pre-write implementation code — describe what and where, implementer writes the code |
 | **Implementing** | Code → PR | Execute plan with dependency-aware batching, TDD, code reviews, test verification, PR creation | Deploy or release — the workflow ends at PR creation |
 
@@ -71,6 +94,8 @@ Reviews are user-driven:
 | Decision | Rationale |
 |----------|-----------|
 | PRD captures direction, not implementation | High-level technical direction ("real-time via WebSockets") belongs in the PRD. Specific libraries and database schemas don't — that's tech planning's job. |
+| Requirements are prioritized, not flat | Requirements grouped as Core / Must-Have / Nice-to-Have / Out. Priority drives implementation scope and prevents everything from being treated as equally important. |
+| PRD is a living document | Tech planning and implementation update the PRD when they hit new constraints. Changes are noted with rationale. |
 | Tech plan describes what, not how | Plans capture architecture, query strategies, and test scenarios. They don't pre-write method bodies — that's brittle and gets followed blindly. The implementer writes the actual code. |
 | Dependency-aware batch execution | Subtasks are grouped by their dependency graph. Each batch runs concurrently, but batches execute sequentially. Not one-at-a-time (too slow), not all-at-once (ignores ordering). |
 | Incremental reviews for large sections | Plan sections with 6+ subtasks get code review offers between batches. Catches issues before later batches build on flawed code. |
@@ -78,17 +103,18 @@ Reviews are user-driven:
 
 ## Skills
 
-### Core Workflow
-
 The core workflow skills use an `iterative:` prefix in their name (e.g., `/iterative:brainstorming`). The slash command menu shows skill names from all installed plugins — if another plugin also has a "brainstorming" skill, you'd see duplicate `/brainstorming` entries. The prefix makes ours immediately identifiable. Substring search still works — typing `/brain` finds `/iterative:brainstorming`.
+
+### Core Workflow
 
 | Skill | Output | Description |
 |-------|--------|-------------|
 | `iterative:brainstorming` | PRD | Collaborative exploration of problem space, broad directions, deep Q&A |
+| `iterative:answer-unknowns` | Updated PRD | Investigate open questions from PRD or user — parallel research, findings synthesis |
 | `iterative:tech-planning` | Tech Plan | Structure PRD into dependency-ordered subtasks with file paths, test scenarios, architecture decisions |
-| `plan-review` | Review Report | 4 specialized reviewers analyze PRDs and tech plans with cross-validation |
+| `plan-review` | Review Report | 4 specialized reviewers analyze PRDs and tech plans via agent team with cross-validation |
 | `iterative:implementing` | Code → PR | Dependency-aware batch execution with TDD, incremental and final code reviews, then wrapup |
-| `code-review` | Review Report | 5 specialized reviewers with severity ratings, full or quick mode |
+| `code-review` | Review Report | 5 specialized reviewers with severity ratings, full or quick mode, language-agnostic |
 
 ### Internal
 
@@ -101,7 +127,7 @@ The core workflow skills use an `iterative:` prefix in their name (e.g., `/itera
 
 | Skill | Description |
 |-------|-------------|
-| `fix-code-review-feedback` | Resolve PR review comments systematically |
+| `fix-code-review-feedback` | Resolve PR review comments systematically — evaluates validity before fixing, supports local agent feedback and GitHub PR threads |
 | `agent-browser` | Browser automation using Vercel's agent-browser CLI |
 
 ## Agents
@@ -152,10 +178,12 @@ See the [HZL repository](https://github.com/tmchow/hzl) for installation.
 
 This plugin draws inspiration from:
 
-- [superpowers](https://github.com/obra/superpowers) by Jesse Vincent — TDD workflows, git worktrees, execution patterns, SHA-based review scoping
-- [compound-engineering](https://github.com/EveryInc/compound-engineering-plugin) by Every — Brainstorming, document review, workflow orchestration, code simplicity analysis
-- [pr-review-toolkit](https://github.com/anthropics/claude-code-pr-review) by Anthropic — Confidence filtering, silent failure audit patterns, selective reviewer activation
-- [code-simplifier](https://github.com/anthropics/claude-code-code-simplifier) by Anthropic — Over-simplification guardrails, project convention awareness
+- [superpowers](https://github.com/obra/superpowers) by Jesse Vincent
+- [compound-engineering](https://github.com/EveryInc/compound-engineering-plugin) by [Kieran Klaassen](https://x.com/kieranklaassen) / Every
+- [pr-review-toolkit](https://github.com/anthropics/claude-code-pr-review) by Anthropic
+- [code-simplifier](https://github.com/anthropics/claude-code-code-simplifier) by Anthropic
+- [Shape Up](https://basecamp.com/shapeup) by Ryan Singer
+- [Shaping Skills](https://github.com/rjs/shaping-skills) by Ryan Singer
 
 ## License
 
