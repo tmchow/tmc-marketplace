@@ -70,7 +70,7 @@ Get the changed file list with `--name-only` to determine Full or Quick mode fro
 
 **Step 2: Spawn reviewers.**
 
-Create an agent team using `TeamCreate`, then spawn reviewers as teammates. In Full mode, spawn all 5. In Quick mode, spawn 2-3 based on change type (see Review Modes above). If `TeamCreate` fails because a team already exists (e.g., from an interrupted run), reuse that team — read its config, check which reviewers are already present, and spawn only the missing ones.
+Create an agent team (e.g. `TeamCreate` in Claude Code, `spawn_agent` in Codex), then spawn reviewers as teammates. In Full mode, spawn all 5. In Quick mode, spawn 2-3 based on change type (see Review Modes above). If the team already exists (e.g., from an interrupted run), reuse it — read its config, check which reviewers are already present, and spawn only the missing ones.
 
 Tell the user:
 
@@ -86,7 +86,7 @@ Spawn each reviewer with a prompt that includes the review context:
 >
 > You're on a review team with [list other active reviewers]. After your initial review, read what the other reviewers found and message them directly if you see cross-domain issues. Challenge each other's findings.
 >
-> Your job is to review and report findings — not to fix, remediate, or modify the code. Only report issues you're confident about. When done, send your findings to the team lead using SendMessage. Use the severity scale: Critical / High / Medium / Low.
+> Your job is to review and report findings — not to fix, remediate, or modify the code. Only report issues you're confident about. When done, send your findings to the team lead (e.g. `SendMessage` in Claude Code, `send_input` in Codex). Use the severity scale: Critical / High / Medium / Low.
 
 **Step 3: Collect findings.**
 
@@ -127,13 +127,13 @@ Continue until:
 
 **This skill only reviews.** Do not invoke other skills (implementing, tech-planning, etc.) after presenting results.
 
-When invoked standalone or from `implementation-wrapup`, use AskUserQuestion with options:
+When invoked standalone or from `implementation-wrapup`, ask the user to choose:
 - Fix issues and re-review (Recommended)
 - Fix issues and proceed to [name the actual next step based on context, e.g., "create a PR" if code is ready]
 - Continue without changes
 
 When invoked from `iterative:implementing`, return findings directly — implementing owns the review loop and decides whether to re-review or continue to the next section.
 
-## Fallback: If TeamCreate is Unavailable
+## Fallback: If Agent Teams/Swarms are Unavailable
 
-If `TeamCreate` is not in your tools, use the Task tool to spawn the reviewers in parallel as independent subagents instead of teammates. Each analyzes independently. Skip the cross-validation instruction. Everything else (Steps 1, 3, 4, output format) stays the same.
+If agent teams/swarms are not available, spawn the reviewers in parallel as independent subagents instead of teammates. Each analyzes independently. Skip the cross-validation instruction. Everything else (Steps 1, 3, 4, output format) stays the same.

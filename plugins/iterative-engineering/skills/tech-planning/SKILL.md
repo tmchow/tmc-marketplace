@@ -43,7 +43,7 @@ A plan is ready when an implementer can start working without asking clarifying 
 ### Phase 0: Detect Resume / Assess Input
 
 1. If user references an existing plan document or topic: load the document, summarize current state, and let the user direct what happens next. Build on existing content, update in place.
-2. If no PRD AND requirements are vague: use AskUserQuestion: A) Start with brainstorming first (recommended), B) Proceed with what we have. If brainstorming: invoke `iterative:brainstorming` skill.
+2. If no PRD AND requirements are vague: ask the user: A) Start with brainstorming first (recommended), B) Proceed with what we have. If brainstorming: invoke `iterative:brainstorming` skill.
 3. Otherwise: proceed to Phase 1.
 
 ### Phase 1: Gather Context (Q&A + Codebase Exploration)
@@ -71,10 +71,10 @@ A plan is ready when an implementer can start working without asking clarifying 
 
 ### Phase 4: Review and Handoff
 
-1. Use AskUserQuestion: A) Plan-review (recommended), B) Start implementing, C) I'll take it from here (exit).
+1. Ask the user to choose: A) Review the plan (recommended), B) Start implementing, C) I'll take it from here (exit).
 2. If review: invoke `plan-review` skill. Plan-review returns findings — tech-planning owns the fix loop.
 3. Fix issues identified by plan-review.
-4. Use AskUserQuestion: A) Another round of plan-review (recommended if significant changes), B) Start implementing, C) I'll take it from here (exit).
+4. Ask the user to choose: A) Another review round (recommended if significant changes), B) Start implementing, C) I'll take it from here (exit).
 5. Repeat steps 2-4 if user chooses another round.
 6. If user chooses implementing: invoke `iterative:implementing` skill (implementing handles task creation internally after reading the plan).
 
@@ -104,10 +104,10 @@ The tech plan's `**PRD:**` header links to the PRD document. If the PRD is updat
 
 ## Transition Points
 
-**Always use AskUserQuestion for transition points** — never just print options as text.
+**Always present options to the user at transition points** — never just print options as text.
 
-After technical plan is written, and after each review round, use AskUserQuestion with options:
-- Plan-review: 4 agents analyze for issues and improve (recommended on first pass)
+After technical plan is written, and after each review round, present options:
+- Review the plan — 4 agents analyze for issues and improve (recommended on first pass)
 - Start implementing
 - I'll take it from here (exit)
 

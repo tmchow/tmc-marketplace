@@ -9,7 +9,7 @@ Use this format to report progress during and after implementation.
 
 ### Setup
 - Workspace: [worktree/branch/main]
-- Task source: [HZL/TaskCreate]
+- Task source: [HZL/built-in tasks]
 - Execution mode: [A/B/C]
 - Parallel execution: [yes/no — which parents/subtasks ran concurrently]
 

@@ -26,7 +26,7 @@ Completes development with verification, optional review, and PR creation.
 When invoked from `iterative:implementing`, skip this phase — all code reviews are already complete.
 
 When invoked standalone:
-1. Use AskUserQuestion: A) Full code review (recommended), B) Quick review, C) Skip review.
+1. Ask the user to choose: A) Full code review (recommended), B) Quick review, C) Skip review.
 2. If review: invoke `code-review` skill (1+ rounds).
 3. Continue when review complete or skipped.
 
@@ -38,7 +38,7 @@ When invoked standalone:
 
 ### Phase 4: Present Options
 
-Use AskUserQuestion:
+Ask the user to choose:
 - A) Push + PR (recommended) — creates new PR, or shows existing if one exists
 - B) Push only
 - C) Keep branch, don't push

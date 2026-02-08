@@ -17,7 +17,7 @@ You receive:
 - Path to the technical plan document
 - Subtask number and title (e.g., "1.2 Add batched dependency lookup")
 - Parent task context
-- Task system being used (HZL or TaskCreate)
+- Task system being used (HZL or built-in tasks)
 - If HZL: the HZL task ID for this subtask
 
 ## Execution Process

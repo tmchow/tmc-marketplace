@@ -20,8 +20,8 @@ Ensures agent has an isolated workspace to avoid conflicts with human work.
 2. **Detect current state.** Check if in worktree (`git rev-parse --git-dir` contains `/worktrees/`), get current branch (`git branch --show-current`), get default branch (`git remote show origin | grep "HEAD branch"`).
 3. **Choose workspace** based on current state:
    - Already in worktree: confirm it's for this feature, then proceed
-   - On default branch: use AskUserQuestion — A) Create worktree (recommended), B) Create branch, C) Continue on main (requires explicit consent)
-   - On feature branch: use AskUserQuestion — A) Continue on this branch, B) Create new worktree
+   - On default branch: ask the user — A) Create worktree (recommended), B) Create branch, C) Continue on main (requires explicit consent)
+   - On feature branch: ask the user — A) Continue on this branch, B) Create new worktree
 4. **Execute choice.** If worktree: `git worktree add ../[repo]-[branch] -b [branch]`. If new branch: `git checkout -b [branch-name]`. If continue: proceed.
 5. **Verify.** Report: "Ready on branch [name] in [directory]"
 

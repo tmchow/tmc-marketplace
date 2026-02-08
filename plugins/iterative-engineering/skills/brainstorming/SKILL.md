@@ -31,13 +31,13 @@ Skip brainstorming when requirements are explicit, detailed, and the user knows 
 ### Phase 0: Detect Resume / Assess Clarity
 
 1. If user references an existing PRD or brainstorming topic: load the document (check both `docs/prd/` and `docs/brainstorms/` — treat PRDs and brainstorm documents synonymously), summarize current state, and let the user direct what happens next. Build on existing content, update in place.
-2. If requirements are already explicit and detailed: use AskUserQuestion: A) Skip to `iterative:tech-planning` (recommended), B) Brainstorm anyway.
+2. If requirements are already explicit and detailed: ask the user: A) Skip to creating a technical plan (recommended), B) Brainstorm anyway. If skipping: invoke `iterative:tech-planning` skill.
 3. Otherwise: proceed to Phase 1.
 
 ### Phase 1: Map the Space (2-3 questions)
 
 1. Explore the codebase lightly for relevant context.
-2. Ask the 2-3 BEST questions to understand the problem space (use AskUserQuestion, one at a time). Pick questions that will most differentiate possible approaches.
+2. Ask the 2-3 BEST questions to understand the problem space (one at a time). Pick questions that will most differentiate possible approaches.
 3. Don't try to cover everything — just enough to propose broad directions.
 4. Move to Phase 2 after 2-3 questions (do not extend).
 
@@ -45,7 +45,7 @@ Skip brainstorming when requirements are explicit, detailed, and the user knows 
 
 1. Present 2-3 high-level directions (1-2 sentences each). Keep them lightweight — these are steering choices, not final approaches.
 2. Include a brief trade-off for each (not full pros/cons yet). Lead with a recommendation.
-3. Use AskUserQuestion to let user pick a direction. This narrows the search space for deeper exploration.
+3. Ask the user to pick a direction. This narrows the search space for deeper exploration.
 
 ### Phase 3: Deep Exploration (Q&A within chosen direction)
 
@@ -64,10 +64,10 @@ Skip brainstorming when requirements are explicit, detailed, and the user knows 
 
 ### Phase 5: Review and Handoff
 
-1. Use AskUserQuestion: A) Plan-review (recommended), B) Continue to `iterative:tech-planning`, C) I'll take it from here (exit).
+1. Ask the user to choose: A) Review the PRD (recommended), B) Continue to technical planning, C) I'll take it from here (exit).
 2. If review: invoke `plan-review` skill. Plan-review returns findings — brainstorming owns the fix loop.
 3. Fix issues identified by plan-review.
-4. Use AskUserQuestion: A) Another round of plan-review (recommended if significant changes), B) Continue to `iterative:tech-planning`, C) I'll take it from here (exit).
+4. Ask the user to choose: A) Another review round (recommended if significant changes), B) Continue to technical planning, C) I'll take it from here (exit).
 5. Repeat steps 2-4 if user chooses another round.
 6. If user chooses tech-planning: invoke `iterative:tech-planning` skill.
 
@@ -172,11 +172,11 @@ The PRD should give enough context for someone to create a detailed technical pl
 
 ## Transition Points
 
-**Always use AskUserQuestion for transition points** — never just print options as text.
+**Always present options to the user at transition points** — never just print options as text.
 
-After PRD is created, and after each review round, use AskUserQuestion with options:
-- Plan-review: 4 agents analyze for issues and improve (recommended on first pass)
-- Continue to `iterative:tech-planning` skill
+After PRD is created, and after each review round, present options:
+- Review the PRD — 4 agents analyze for issues and improve (recommended on first pass)
+- Continue to technical planning
 - I'll take it from here (exit)
 
 **Never skip this step.** Do not proceed to tech-planning or announce "the PRD is ready" without presenting these options first.

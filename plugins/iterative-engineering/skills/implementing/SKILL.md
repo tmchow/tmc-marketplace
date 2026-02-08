@@ -11,7 +11,7 @@ Read the plan critically, create tasks, and implement with TDD, code review, and
 
 - After `iterative:tech-planning` skill completes a plan
 - When a plan document exists and is ready to implement
-- When tasks already exist (HZL or TaskCreate) from a prior session
+- When tasks already exist (HZL or built-in tasks) from a prior session
 - Can be invoked standalone with a plan document path
 
 ## Key Principles
@@ -26,17 +26,17 @@ Read the plan critically, create tasks, and implement with TDD, code review, and
 
 ### Phase 0: Detect Resume
 
-1. Check for in-progress HZL tasks or TaskCreate items
+1. Check for in-progress HZL tasks or built-in task items
 2. If resuming: load the plan document, summarize current state, show completed vs remaining subtasks, continue from next incomplete subtask (skip to Phase 2)
 3. If starting fresh: proceed to Phase 1
 
 ### Phase 1: Understand and Setup
 
-1. **Find and read the plan document completely.** Check conversation context for referenced plans, scan `docs/plans/` for recent plan files. If no plan found, ask user for path. If no plan exists, use AskUserQuestion: A) Create a tech plan first (recommended), B) I'll provide the plan path. If tech plan: invoke `iterative:tech-planning` skill.
+1. **Find and read the plan document completely.** Check conversation context for referenced plans, scan `docs/plans/` for recent plan files. If no plan found, ask user for path. If no plan exists, ask the user: A) Create a tech plan first (recommended), B) I'll provide the plan path. If tech plan: invoke `iterative:tech-planning` skill.
 2. **Review critically.** If anything is unclear or ambiguous, ask now. Do not skip this — better to clarify now than build the wrong thing.
 3. **Workspace isolation.** See Workspace Setup section.
 4. **Create tasks from the plan.** See Task Creation section.
-5. **Execution preference.** Use AskUserQuestion: A) Execute all tasks, report when done (default), B) Pause after each plan section for feedback, C) Pause after each subtask for feedback.
+5. **Execution preference.** Ask the user to choose: A) Execute all tasks, report when done (default), B) Pause after each plan section for feedback, C) Pause after each subtask for feedback.
 
 ### Phase 2: Execute (repeat per plan section)
 
@@ -46,7 +46,7 @@ Read the plan critically, create tasks, and implement with TDD, code review, and
    - Path to the tech plan document
    - Subtask number and title
    - Parent task context
-   - Task system (HZL or TaskCreate) and task ID if HZL
+   - Task system (HZL or built-in tasks) and task ID if HZL
 4. Worker reads subtask from plan, loads referenced patterns, implements, commits, and updates task status (see task-worker agent for details).
 5. **Wait for batch completion.** All subagents in the batch must finish before the next batch starts.
 6. **Incremental review (large sections only).** If the plan section has more than 5 subtasks, automatically run a quick code review after each batch — this catches issues before subsequent batches build on flawed code. Scope the review to `git diff <section-baseline-sha>..HEAD`. If issues are found, present them with severity acceptance before continuing. If clean, continue to the next batch silently.
@@ -60,9 +60,9 @@ Read the plan critically, create tasks, and implement with TDD, code review, and
 1. Verify: all tasks complete, all section-level code reviews passed.
 2. **Detect base branch.** `git rev-parse --verify origin/main >/dev/null 2>&1 && echo main || echo master`. Use this for all branch-level scoping in Phase 3.
 3. **Simplification pass.** Get changed files with `git diff --name-only $(git merge-base HEAD <base>)..HEAD`. Spawn the `code-simplifier` agent with this file list. The agent applies behavior-preserving simplifications, runs tests, and commits separately. This is a single bounded pass — not a refactor.
-4. **Final review offer.** Use AskUserQuestion: A) Full code review of complete work (recommended), B) Quick review, C) Skip to finish.
+4. **Final review offer.** Ask the user to choose: A) Full code review of complete work (recommended), B) Quick review, C) Skip to finish.
 5. If review: invoke `code-review` skill with scope `git diff $(git merge-base HEAD <base>)..HEAD` (all branch changes including simplification). Present findings with severity acceptance (see Severity Acceptance in Code Review section). Fix selected severities.
-6. Use AskUserQuestion: A) Another review round, B) Continue to `implementation-wrapup` skill (recommended), C) I'll handle PR/merge myself (exit).
+6. Ask the user to choose: A) Another review round, B) Wrap up and create PR (recommended), C) I'll handle PR/merge myself (exit).
 7. Repeat steps 5-6 if user chooses another round.
 
 ## Workspace Setup
@@ -77,8 +77,8 @@ Pull the latest from the default branch before creating any branch or worktree.
 | Situation | Action |
 |-----------|--------|
 | Already in a worktree | Confirm it's for this feature, then proceed |
-| On default branch | Use AskUserQuestion: A) Create worktree (recommended), B) Create branch, C) Continue on main (requires explicit consent) |
-| On a feature branch | Use AskUserQuestion: A) Continue on this branch, B) Create new worktree |
+| On default branch | Ask the user: A) Create worktree (recommended), B) Create branch, C) Continue on main (requires explicit consent) |
+| On a feature branch | Ask the user: A) Continue on this branch, B) Create new worktree |
 
 Invoke the `git-worktree` skill if a worktree is needed.
 
@@ -90,10 +90,10 @@ Task creation happens inside Phase 1, after the plan is read and clarified. This
 
 Check whether HZL is installed (e.g., `hzl status`) and the project uses HZL for task tracking (e.g., AGENTS.md/CLAUDE.md).
 
-- **HZL not detected** → Use TaskCreate automatically, no question needed
-- **HZL detected** → Use AskUserQuestion to let the user choose:
+- **HZL not detected** → Use built-in task tracking automatically, no question needed
+- **HZL detected** → Ask the user to choose:
   - HZL tasks (Recommended) — durable tracking with dependencies, persists across sessions
-  - Built-in tasks (TaskCreate) — lightweight, session-scoped
+  - Built-in tasks — lightweight, session-scoped
 
 ### Parsing the Plan
 
@@ -101,7 +101,7 @@ The plan's standardized subtask format (numbered, with dependencies and files) m
 - Plan sections → parent tasks
 - Numbered subtasks → child tasks
 - `Depends on` fields → task dependencies
-- `Files` fields → task links (HZL) or description references (TaskCreate)
+- `Files` fields → task links (HZL) or description references (built-in tasks)
 
 Show the proposed task structure to the user for approval before creating.
 
@@ -109,7 +109,7 @@ Show the proposed task structure to the user for approval before creating.
 
 - Always link to the technical plan document
   - HZL: `-l docs/plans/[plan].md`
-  - TaskCreate: include plan file path in description
+  - Built-in tasks: include plan file path in description
 - **Single parent:** description includes the plan overview — what's being built and why
 - **Multiple parents:** each describes its relationship to the feature and what subset of work it covers
 
@@ -139,7 +139,7 @@ Assess scope to choose between full and quick: substantial feature work (multipl
 
 ### Severity Acceptance
 
-When code-review returns findings, present them grouped by severity. Use AskUserQuestion with multiSelect enabled:
+When code-review returns findings, present them grouped by severity. Present options to the user (allow multiple selections):
 
 > "Which severity levels should be fixed?"
 > - Critical (N issues)
@@ -151,7 +151,7 @@ The user selects one or more severity levels to fix (or chooses "Other" to skip 
 
 ### Review Loop
 
-After fixes are applied, use AskUserQuestion: A) Re-review to verify fixes (recommended if critical/high were fixed), B) Continue without re-review. Repeat until the user chooses to continue.
+After fixes are applied, ask the user: A) Re-review to verify fixes (recommended if critical/high were fixed), B) Continue without re-review. Repeat until the user chooses to continue.
 
 By the time implementing hands off to `implementation-wrapup`, all code reviews are complete. Wrapup skips its own review offer and handles verification, PR, and cleanup.
 
@@ -160,12 +160,12 @@ By the time implementing hands off to `implementation-wrapup`, all code reviews 
 If reality diverges from the plan during implementation:
 
 - **Minor adjustments** (different file path, small API change): update the plan document in place and continue. Note the change in the progress report.
-- **Significant divergence** (missing requirement, wrong approach): stop and report the divergence. Use AskUserQuestion: A) Update the plan and continue, B) Continue as-is, C) Stop execution. If the divergence contradicts the PRD (not just the tech plan), update the PRD as well — it's the requirements source of truth for downstream validation.
+- **Significant divergence** (missing requirement, wrong approach): stop and report the divergence. Ask the user to choose: A) Update the plan and continue, B) Continue as-is, C) Stop execution. If the divergence contradicts the PRD (not just the tech plan), update the PRD as well — it's the requirements source of truth for downstream validation.
 - **Blocked by external dependency**: mark the subtask as blocked, skip to next unblocked subtask, and report.
 
 ## When Things Go Wrong
 
-**Stop and ask for clarification (plain text, not AskUserQuestion) when:**
+**Stop and ask for clarification (plain text, not structured options) when:**
 - Subtask instructions are unclear — explain what's ambiguous
 - Tests fail and fix isn't obvious — describe the failure and what was tried
 - Missing dependency or blocker — report what's missing
@@ -174,7 +174,7 @@ If reality diverges from the plan during implementation:
 
 **If a subtask fails:**
 1. Report the failure clearly — what was attempted and what went wrong
-2. Use AskUserQuestion: A) Retry with a different approach, B) Skip and continue to next subtask, C) Stop execution
+2. Ask the user to choose: A) Retry with a different approach, B) Skip and continue to next subtask, C) Stop execution
 
 ## Anti-Patterns to Avoid
 
@@ -191,16 +191,16 @@ If reality diverges from the plan during implementation:
 
 ## Transition Points
 
-**Always use AskUserQuestion for transition points** — never just print options as text.
+**Always present options to the user at transition points** — never just print options as text.
 
-After simplification pass completes (Phase 3 step 4), use AskUserQuestion with options:
+After simplification pass completes (Phase 3 step 4), present options:
 - Full code review of complete work (recommended)
 - Quick review
 - Skip to finish
 
-After review (or skip), use AskUserQuestion with options:
+After review (or skip), present options:
 - Another review round
-- Continue to `implementation-wrapup` skill (recommended)
+- Wrap up and create PR (recommended)
 - I'll handle PR/merge myself (exit)
 
 ## Additional Resources

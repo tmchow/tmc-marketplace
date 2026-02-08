@@ -96,5 +96,4 @@ Reason: [what went wrong]
 
 - Follow repo conventions from AGENTS.md/CLAUDE.md
 - Keep descriptions concise but informative
-- Don't include AI attribution in commits or PR descriptions (per project settings)
 - Don't include HZL task references

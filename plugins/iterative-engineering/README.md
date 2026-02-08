@@ -6,7 +6,7 @@ A plugin for Claude Code and Codex — iterative development workflows with brai
 
 - **Planning pays off** — Time spent planning yields better implementation. Rushing to code is often slower overall.
 - **Iteration improves quality** — Multiple review passes catch issues early. A review after a review can still find improvements.
-- **User drives every transition** — The workflow never auto-proceeds. Every stage transition, review acceptance, and decision point uses AskUserQuestion — the user always chooses what happens next.
+- **User drives every transition** — The workflow never auto-proceeds. Every stage transition, review acceptance, and decision point presents options to the user — the user always chooses what happens next.
 - **Opinionated defaults, user choice** — Recommend reviews, suggest worktrees, default to full coverage. But the user can skip, customize, or exit at any point.
 - **Skills are independently valuable** — Each skill works standalone. Run `/code-review` without the full pipeline, or `/iterative:brainstorming` to revisit requirements mid-implementation.
 
@@ -61,7 +61,7 @@ Each stage has a clear scope — what it produces and what it deliberately leave
 
 Reviews are user-driven:
 
-- **Offered, never forced** — Every review is presented via AskUserQuestion. The user can skip.
+- **Offered, never forced** — Every review is presented as a choice. The user can skip.
 - **Severity-based acceptance** — Findings grouped by severity (Critical / High / Medium / Low). User selects which levels to fix — not all-or-nothing.
 - **User-controlled loop** — After fixes, user chooses to re-review or continue. No automatic re-review.
 - **Scaled to scope** — Full review for substantial work, quick review for moderate changes, skip for trivial config edits.
@@ -144,7 +144,7 @@ Workflow agents run as isolated subagents. Each `task-worker` gets its own conte
 
 ## HZL Integration (Optional)
 
-This plugin supports [HZL](https://github.com/tmchow/hzl) for persistent task tracking across sessions and agents. Implementing detects HZL automatically and offers it as the recommended option. Without HZL, the workflow uses built-in task management (TaskCreate).
+This plugin supports [HZL](https://github.com/tmchow/hzl) for persistent task tracking across sessions and agents. Implementing detects HZL automatically and offers it as the recommended option. Without HZL, the workflow uses built-in task management.
 
 See the [HZL repository](https://github.com/tmchow/hzl) for installation.
 
