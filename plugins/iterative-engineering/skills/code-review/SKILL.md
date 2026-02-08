@@ -1,7 +1,6 @@
 ---
 name: code-review
-description: Multi-agent code review with 5 specialized reviewers. This skill should be used when the user says "review my code", "check these changes", or wants feedback before a PR. Supports full and quick modes, language-agnostic.
-allowed-tools: Glob, Grep, Read, Task
+description: Use when the user says "review my code", "check these changes", or wants feedback on code before creating a PR. Also use after completing a task during iterative implementation.
 ---
 
 # Code Review
@@ -10,22 +9,33 @@ Reviews code changes using specialized reviewers. Uses agent teams when availabl
 
 ## When to Use
 
-- After completing a parent task (during `iterative:implement` skill)
+- After completing a plan section (during `iterative:implementing` skill)
 - Before finishing work and creating a PR
 - When you want feedback on any code changes
 - Can be invoked standalone
+
+## Severity Scale
+
+All reviewers use the same 4-level scale:
+
+| Level | Meaning | Action |
+|-------|---------|--------|
+| **Critical** | Crashes, security holes, data loss, broken core functionality | Must fix before merge |
+| **High** | Incorrect behavior, significant logic gaps, inadequate error handling | Should fix |
+| **Medium** | Suboptimal patterns, minor gaps, moderate improvement opportunities | Fix if straightforward |
+| **Low** | Style, suggestions, edge cases unlikely to occur | User's discretion |
 
 ## Reviewers
 
 | Agent | Focus | Key Question |
 |-------|-------|--------------|
-| `correctness-reviewer` | Logic, edge cases, bugs, error handling | Does this work correctly? |
+| `correctness-reviewer` | Logic, edge cases, bugs, error handling, plan compliance | Does this work correctly and match the intent? |
 | `security-reviewer` | Vulnerabilities, auth, input validation, secrets | Is this safe? |
 | `performance-reviewer` | Algorithmic complexity, queries, memory, caching | Is this fast enough? |
 | `simplicity-reviewer` | YAGNI, over-engineering, unnecessary abstraction | Is this minimal? |
-| `testing-reviewer` | Coverage, test quality, edge cases, integration | Is this well-tested? |
+| `testing-reviewer` | Coverage, test quality, edge cases, plan test scenarios | Is this well-tested? |
 
-Each reviewer returns **max 5 issues** to keep feedback actionable.
+Each reviewer reports only issues they're confident about, using the severity scale above.
 
 ## Review Modes
 
@@ -33,127 +43,96 @@ Each reviewer returns **max 5 issues** to keep feedback actionable.
 Uses all 5 reviewers for comprehensive coverage.
 
 ### Quick Mode
-When explicitly requested, uses 2-3 reviewers based on change type:
-- Auth/security changes → security + correctness
-- Performance-sensitive → performance + correctness
-- New feature → correctness + testing
-- Refactoring → correctness + simplicity
+Uses 2-3 reviewers. Auto-detect from changed files when the caller doesn't specify a type:
 
-## Execution Mode
+| Changed files | Reviewers |
+|---------------|-----------|
+| Auth/security code | security + correctness |
+| Database/queries/migrations | performance + correctness |
+| New feature code | correctness + testing |
+| Refactoring (same tests, restructured code) | correctness + simplicity |
+| Test files only | correctness + testing |
+| Config/CI only | correctness (single reviewer — minimal review) |
+| Mixed or unclear | Default to full mode |
 
-**First, check if agent teams are enabled for this session.**
+## How to Run
 
-**When using Agent Teams, tell the user exactly this:**
+**Step 1: Determine scope.**
 
-> Using Agent Teams 🐝 — reviewers will run as teammates who can cross-validate findings.
+Identify what code to review and gather context:
 
-### Mode A: Agent Team (if enabled)
+- **From implementing (section-level):** The caller provides file paths and plan context (what was built, plan section reference, test scenarios from the plan). Use the plan's git commits or `git diff` since the section started.
+- **Standalone:** Run `git diff` against the base branch (main/master) to identify changed files. If no base branch diff, use unstaged changes.
+- **Explicit files:** If the caller specifies files, use those.
 
-**Step 1.** Identify code to review and determine Full/Quick mode (from argument, git diff, or ask user). Detect project context from CLAUDE.md, AGENTS.md, package.json, etc.
+Determine Full or Quick mode from argument, change analysis, or ask user.
 
-**Step 2.** Create agent team with reviewer teammates. Spawn each with a prompt that includes their review focus, the code scope, project context, max 5 issues with file:line and severity, and this cross-validation instruction:
+**Step 2: Spawn reviewers.**
 
-> "You are on a review team with other reviewers. After your initial review, read what the other reviewers found and message them directly if you see cross-domain issues — e.g., if security finds a vulnerability and testing confirms no coverage, or if performance and simplicity disagree. Challenge each other's findings."
+Create an agent team using `TeamCreate`, then spawn reviewers as teammates. In Full mode, spawn all 5. In Quick mode, spawn 2-3 based on change type (see Review Modes above). If `TeamCreate` fails because a team already exists (e.g., from an interrupted run), reuse that team — read its config, check which reviewers are already present, and spawn only the missing ones.
 
-**Step 3.** Let reviewers work and cross-validate. Brief one-line status is fine. Don't repeat status or narrate your thinking. Wait until discussion settles.
+Tell the user:
 
-**Step 4.** Synthesize and present. Collect final findings from all reviewers. **You must reformat all findings into the exact output format shown below — do NOT pass through raw reviewer text.** Then clean up the team.
+> Using Agent Team 🐝 — reviewers will run as teammates who can cross-validate findings.
 
-### Mode B: Parallel Subagents (fallback)
+Spawn each reviewer with a prompt that includes the review context:
 
-**Step 1.** Identify code to review and determine Full/Quick mode. Detect project context.
-
-**Step 2.** Spawn reviewer agents via Task tool in parallel. Each analyzes code independently.
-
-**Step 3.** Collect findings. Deduplicate overlapping issues.
-
-**Step 4.** **You must reformat all findings into the exact output format shown below — do NOT pass through raw agent text.**
-
-### Benefits of team mode
-
-- Reviewers message each other directly — cross-domain insights emerge from debate, not just lead synthesis
-- Security finds vulnerability, testing confirms no coverage — through direct conversation
-- Trade-offs surfaced through actual disagreement (performance vs simplicity)
-
-**Note:** Agent teams use more tokens than subagents. For small changes, subagent mode may be sufficient.
-
-## Output Format
-
-**Your output for Step 4 must look exactly like this example. Copy this structure.**
-
-```markdown
-## Code Review Results (Full)
-
-### Correctness
-
-| # | Location | Issue | Severity |
-|---|----------|-------|----------|
-| 1 | `task-service.ts:142` | Off-by-one in pagination — skips last page when total is exact multiple | High |
-| 2 | `claim.ts:87` | Race condition if two agents claim simultaneously without transaction | High |
-
-### Security
-
-| # | Location | Vulnerability | Severity |
-|---|----------|---------------|----------|
-| 1 | `auth.ts:34` | User-supplied ID used directly in SQL query — injection risk | Critical |
-
-### Performance
-
-| # | Location | Issue | Impact |
-|---|----------|-------|--------|
-| 1 | `list.ts:156` | N+1 query — fetches dependencies per task in loop | High at scale |
-
-### Simplicity
-
-| # | Location | Suggestion |
-|---|----------|------------|
-| 1 | `utils/format.ts` | Three formatting helpers do the same thing — consolidate |
-
-### Testing
-
-| # | Location | Gap |
-|---|----------|-----|
-| 1 | `claim.ts` | No test for concurrent claim scenario | High |
-
----
-
-**Summary:** 6 issues found. 1 critical, 2 high, 2 medium, 1 low.
-
-> **Cross-domain insight:** The SQL injection in `auth.ts:34` has no test coverage (flagged by both security and testing reviewers).
+> Review the following changes for [their focus area].
 >
-> **Fix order:** Critical/high security first → correctness bugs → add missing tests → simplicity cleanup.
-```
+> **Changed files:** [file list from git diff or caller]
+> **What was built:** [plan section summary — include if available from implementing]
+> **Plan test scenarios:** [relevant test scenarios from the plan — include if available, for correctness and testing reviewers]
+>
+> You're on a review team with [list other active reviewers]. After your initial review, read what the other reviewers found and message them directly if you see cross-domain issues. Challenge each other's findings.
+>
+> Your job is to review and report findings — not to fix, remediate, or modify the code. Only report issues you're confident about. When done, send your findings to the team lead using SendMessage. Use the severity scale: Critical / High / Medium / Low.
 
-**Rules:**
-- Start with `## Code Review Results` — nothing before it. No "here's what I found" or "let me synthesize."
-- One `### Section` per reviewer, each containing **only** a pipe-delimited markdown table.
-- Pipe tables use `| col | col |` with `|---|---|` separators. **Never** ASCII box-drawing (`┌─┬─┐`), key-value lists (`#: 1`, `Issue:`), or `────` separators.
-- Always include `file:line` location and severity (Critical/High/Medium/Low).
-- Column headers vary by reviewer (Issue/Severity, Vulnerability/Severity, Suggestion, Gap, etc.).
-- Single summary section after `---` with blockquotes. This is the only place for cross-domain insights and fix order.
-- Skip empty reviewer sections.
+**Step 3: Collect findings.**
+
+Wait for all reviewers to send their findings. When you receive a reviewer's message, do not output or echo its content — silently collect it. Only output once in Step 4 when assembling the final results. A brief one-line status like "All 5 reviewers have reported" is fine when ready to proceed.
+
+**Step 4: Synthesize and present.**
+
+Shut down all teammates (send shutdown requests), then delete the team. Assemble the final output:
+
+1. **Deduplicate.** Merge findings that multiple reviewers flagged — attribute to the most relevant reviewer, note cross-reviewer agreement.
+2. **Format.** Start with a `### Strengths` section highlighting what's well done (with `file:line` refs). Format each reviewer's findings as a table — one issue per row, same structure for every section. Use `### Reviewer Name` headers. Separate sections with clear whitespace.
+3. **Verdict.** End with a `---` separator followed by:
+
+> **Verdict:** Ready to merge / Ready with fixes / Not ready
+>
+> **Reasoning:** [1-2 sentences — overall quality assessment]
+>
+> **Fix order:** [If fixes needed — prioritized: critical first, then high, etc.]
+
+Do not include time estimates.
 
 ## Language-Agnostic
 
 This skill does NOT use language-specific reviewer agents (no Rails-reviewer, Python-reviewer, etc.).
 
-Instead, it:
-1. Detects project context from config files
-2. Adapts general review criteria to the language/framework
-3. Uses project conventions from CLAUDE.md/AGENTS.md
-
-This keeps the skill simple and avoids maintaining parallel reviewers per language.
+Instead, reviewers adapt their criteria to the language/framework based on project context (which teammates load automatically). This keeps the skill simple and avoids maintaining parallel reviewers per language.
 
 ## Multiple Rounds
 
-After fixing issues, run another round. Continue until:
-- No critical issues remain
+After fixing issues, run another round. Each round creates a fresh team (the previous team was deleted). Run the full Step 2–4 flow again.
+
+Continue until:
+- No critical or high issues remain
 - User chooses to proceed
 - Reasonable iteration limit reached
 
 ## After Review
 
-Use AskUserQuestion with options:
+**This skill only reviews.** Do not invoke other skills (implementing, tech-planning, etc.) after presenting results.
+
+When invoked standalone or from `implementation-wrapup`, use AskUserQuestion with options:
 - Fix issues and re-review (Recommended)
-- Fix issues and proceed to [name the actual next step based on context, e.g., "create a PR" if code is ready, "continue implementing" if mid-task]
+- Fix issues and proceed to [name the actual next step based on context, e.g., "create a PR" if code is ready]
 - Continue without changes
+
+When invoked from `iterative:implementing`, return findings directly — implementing owns the review loop and decides whether to re-review or continue to the next section.
+
+## Fallback: If TeamCreate is Unavailable
+
+If `TeamCreate` is not in your tools, use the Task tool to spawn the reviewers in parallel as independent subagents instead of teammates. Each analyzes independently. Skip the cross-validation instruction. Everything else (Steps 1, 3, 4, output format) stays the same.
