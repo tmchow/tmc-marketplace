@@ -76,9 +76,14 @@ A plan is ready when an implementer can start working without asking clarifying 
 1. Ask the user to choose: A) Review the plan (recommended), B) Start implementing, C) I'll take it from here (exit).
 2. If review: invoke `plan-review` skill. Plan-review returns findings — tech-planning owns the fix loop.
 3. Fix issues identified by plan-review.
-4. Ask the user to choose: A) Another review round (recommended if significant changes), B) Start implementing, C) I'll take it from here (exit).
+4. Ask the user to choose (see recommendation logic below): A) Another review round, B) Start implementing, C) I'll take it from here (exit).
 5. Repeat steps 2-4 if user chooses another round.
 6. If user chooses implementing: invoke `iterative:implementing` skill (implementing handles task creation internally after reading the plan).
+
+**Recommendation logic for step 4.** Shift the recommended option based on what the review found:
+- Review found Critical or High issues (now fixed) → recommend **another review round** to verify the fixes landed well
+- Review found only Medium/Low issues, or a round came back clean → recommend **start implementing** — further rounds will have diminishing returns
+- After 3+ rounds → recommend **start implementing** regardless, and note that additional passes are unlikely to surface significant issues
 
 ## PRD Alignment
 
@@ -111,7 +116,7 @@ The tech plan's `**PRD:**` header links to the PRD document. If the PRD is updat
 
 After technical plan is written, and after each review round, present options:
 - Review the plan — 4 agents analyze for issues (recommended on first pass)
-- Start implementing
+- Start implementing (recommended when prior review found only Medium/Low issues or after 3+ rounds)
 - I'll take it from here (exit)
 
 ## Additional Resources

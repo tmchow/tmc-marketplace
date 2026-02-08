@@ -121,7 +121,6 @@ After fixing issues, run another round. Each round creates a fresh team (the pre
 Continue until:
 - No critical or high issues remain
 - User chooses to proceed
-- Reasonable iteration limit reached
 
 ## After Review
 

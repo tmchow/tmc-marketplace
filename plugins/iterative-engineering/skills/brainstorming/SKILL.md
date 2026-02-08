@@ -69,10 +69,15 @@ Skip brainstorming when requirements are explicit, detailed, and the user knows 
 1. Ask the user to choose: A) Review the PRD (recommended), B) Investigate open questions (if PRD has open questions), C) Continue to technical planning, D) I'll take it from here (exit). Only show option B when the PRD has an Open Questions section with unresolved items.
 2. If review: invoke `plan-review` skill. Plan-review returns findings — brainstorming owns the fix loop.
 3. Fix issues identified by plan-review.
-4. Ask the user to choose: A) Another review round (recommended if significant changes), B) Investigate open questions (if applicable), C) Continue to technical planning, D) I'll take it from here (exit).
+4. Ask the user to choose (see recommendation logic below): A) Another review round, B) Investigate open questions (if applicable), C) Continue to technical planning, D) I'll take it from here (exit).
 5. Repeat steps 2-4 if user chooses another round.
 6. If user chooses investigate: invoke `iterative:answer-unknowns` skill with the PRD path. After investigation completes (findings presented and PRD updated with user-approved changes), return to step 4.
 7. If user chooses tech-planning: invoke `iterative:tech-planning` skill.
+
+**Recommendation logic for step 4.** Shift the recommended option based on what the review found:
+- Review found Critical or High issues (now fixed) → recommend **another review round** to verify the fixes landed well
+- Review found only Medium/Low issues, or a round came back clean → recommend **continue to technical planning** — further rounds will have diminishing returns
+- After 3+ rounds → recommend **continue to technical planning** regardless, and note that additional passes are unlikely to surface significant issues
 
 ## Question Techniques
 
@@ -154,7 +159,7 @@ The PRD should give enough context for someone to create a detailed technical pl
 After PRD is created, and after each review round, present options:
 - Review the PRD — 4 agents analyze for issues (recommended on first pass)
 - Investigate open questions — resolve unknowns before planning (only when PRD has open questions)
-- Continue to technical planning
+- Continue to technical planning (recommended when prior review found only Medium/Low issues or after 3+ rounds)
 - I'll take it from here (exit)
 
 **Never skip this step.** Do not proceed to tech-planning or announce "the PRD is ready" without presenting these options first.
