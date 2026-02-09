@@ -87,6 +87,18 @@ When asked to "cut a release" or "release a new version":
    ```
    Push the branch and open a PR. The `v<version>` tag is created automatically when the PR merges (via `.github/workflows/auto-tag.yml`).
 
+## Commit and PR Conventions
+
+Use [Conventional Commits](https://www.conventionalcommits.org/) for commit messages and PR titles:
+
+- `feat:` — new skills, agents, or capabilities
+- `fix:` — bug fixes, behavior corrections
+- `chore:` — maintenance, config, releases (`chore(release): 1.3.5`)
+- `docs:` — documentation-only changes
+- `refactor:` — restructuring without behavior change
+
+PR titles follow the same format. Keep them under 70 characters.
+
 ## Installation (for users)
 
 ```
