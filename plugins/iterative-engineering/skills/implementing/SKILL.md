@@ -64,9 +64,10 @@ Read the plan critically, create tasks, and implement with TDD, code review, and
 2. **Detect base branch.** `git rev-parse --verify origin/main >/dev/null 2>&1 && echo main || echo master`. Use this for all branch-level scoping in Phase 3.
 3. **Simplification pass.** Get changed files with `git diff --name-only $(git merge-base HEAD <base>)..HEAD`. Spawn the `code-simplifier` agent with this file list. The agent applies behavior-preserving simplifications, runs tests, and commits separately. This is a single bounded pass — not a refactor. **Wait for simplification to complete before proceeding** — the final review must see simplified code.
 4. **Final review offer.** Ask the user to choose: A) Full code review of complete work (recommended), B) Quick review, C) Skip to finish.
-5. If review: invoke `code-review` skill with scope `git diff $(git merge-base HEAD <base>)..HEAD` (all branch changes including simplification). Present findings with severity acceptance (see Severity Acceptance in Code Review section). Fix selected severities.
-6. Ask the user to choose: A) Another review round, B) Wrap up and create PR, C) I'll handle PR/merge myself (exit). Recommend **another round** if Critical/High issues were just fixed; recommend **wrap up** otherwise.
-7. Repeat steps 5-6 if user chooses another round.
+5. If review: invoke `code-review` skill with scope `git diff $(git merge-base HEAD <base>)..HEAD` (all branch changes including simplification).
+6. **Severity acceptance (separate interaction).** If the review found issues at any severity, present severity acceptance FIRST (see Severity Acceptance section). This is its own prompt — do not combine it with the next-step options. Fix selected severities. If the review found no issues, skip to step 7.
+7. **Next steps (after fixes are applied or review was clean).** Ask the user to choose: A) Another review round, B) Wrap up and create PR, C) I'll handle PR/merge myself (exit). Do not recommend wrap-up if fixes were just applied — recommend **another round** to verify. Recommend **wrap up** only when the review was clean or the user skipped all fixes.
+8. Repeat steps 5-7 if user chooses another round.
 
 ## Workspace Setup
 
@@ -142,7 +143,7 @@ Assess scope to choose between full and quick: substantial feature work (multipl
 
 ### Severity Acceptance
 
-When code-review returns findings, present them grouped by severity. Present options to the user (allow multiple selections):
+**This is its own interaction — do not combine it with next-step options.** When code-review returns findings, present ALL severity levels that have issues. The user picks which levels to fix:
 
 > "Which severity levels should be fixed?"
 > - Critical (N issues)
@@ -150,15 +151,7 @@ When code-review returns findings, present them grouped by severity. Present opt
 > - Medium (N issues)
 > - Low (N issues)
 
-The user selects one or more severity levels to fix (or chooses "Other" to skip all or provide custom direction). Fix only the selected severities.
-
-### Review Loop
-
-After fixes are applied, ask the user: A) Re-review to verify fixes, B) Continue without re-review. Shift the recommendation based on what was found:
-- Fixed Critical or High issues → recommend **re-review** to verify the fixes
-- Fixed only Medium/Low issues → recommend **continue** — further review will have diminishing returns
-
-Repeat until the user chooses to continue.
+Include every severity level that has findings — do not omit Low issues or pre-select only the highest severity. The user selects one or more severity levels to fix (or chooses "Other" to skip all or provide custom direction). Fix only the selected severities. Next-step options (another round, wrap up, exit) come AFTER fixes are applied, as a separate prompt.
 
 By the time implementing hands off to `implementation-wrapup`, all code reviews are complete. Wrapup skips its own review offer and handles verification, PR, and cleanup.
 
