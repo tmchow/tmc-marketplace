@@ -124,6 +124,7 @@ Reviews are user-driven:
 - **Offered, never forced** — Every review is presented as a choice. The user can skip.
 - **Severity-based acceptance** — Findings grouped by severity (Critical / High / Medium / Low). User selects which levels to fix — not all-or-nothing.
 - **User-controlled loop** — After fixes, user chooses to re-review or continue. No automatic re-review.
+- **Agent teams with fallback** — Reviewers run as an agent team so they can cross-validate findings (a YAGNI reviewer can push back on completeness suggestions). When agent teams aren't available, reviews automatically fall back to parallel subagents.
 - **Scaled to scope** — Full review for substantial work, quick review for moderate changes, skip for trivial config edits.
 
 ## Design Decisions
