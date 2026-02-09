@@ -5,6 +5,15 @@ All notable changes to the iterative-engineering plugin will be documented in th
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-02-08
+
+### Added
+
+- **Install script** — one-liner `curl | bash` installer for both Claude Code (plugin marketplace) and Codex (skill files). Includes `--uninstall`, retry logic, and idempotent operations.
+- **Codex support** — skills now installable to `~/.codex/skills/` via tarball extraction, with manifest-based cleanup on uninstall.
+
+---
+
 ## [1.2.0] - 2026-02-08
 
 ### Added
