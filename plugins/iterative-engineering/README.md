@@ -12,10 +12,44 @@ A plugin for Claude Code and Codex — iterative development workflows with brai
 
 ## Installation
 
+### Quick Install
+
 ```bash
+curl -fsSL "https://raw.githubusercontent.com/tmchow/tmc-marketplace/main/scripts/install.sh?$(date +%s)" | bash
+```
+
+Installs the Claude Code plugin and Codex skills. Safe to re-run (idempotent). Skips anything not detected (e.g., no Codex installed).
+
+To uninstall:
+
+```bash
+curl -fsSL "https://raw.githubusercontent.com/tmchow/tmc-marketplace/main/scripts/install.sh?$(date +%s)" | bash -s -- --uninstall
+```
+
+### Manual Install
+
+#### Claude Code
+
+Claude Code uses a [plugin marketplace](https://docs.anthropic.com/en/docs/claude-code/plugins) — the marketplace must be added before installing the plugin:
+
+```
 /plugin marketplace add tmchow/tmc-marketplace
 /plugin install iterative-engineering@tmc-marketplace
 ```
+
+Verify with `/plugin list`.
+
+#### Codex
+
+Download the skills into your Codex skills directory:
+
+```bash
+curl -sL https://github.com/tmchow/tmc-marketplace/archive/refs/heads/main.tar.gz \
+  | tar xz --strip-components=4 -C ~/.codex/skills/ \
+    tmc-marketplace-main/plugins/iterative-engineering/skills/
+```
+
+This extracts all skills (with their reference files) to `~/.codex/skills/`.
 
 ## The Workflow
 
