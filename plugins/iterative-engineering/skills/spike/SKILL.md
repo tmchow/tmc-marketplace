@@ -105,21 +105,7 @@ This skill resolves unknowns where the answer **needs to be built and experience
    - Remove the Progress section (fold relevant content into Findings)
    - Set Status to Complete
 
-2. **Propose upstream doc updates.** If a PRD exists, propose specific changes. The PRD must be self-sufficient — capture full rationale, not just pointers to the spike doc:
-
-   | What changed | PRD update |
-   |---|---|
-   | Requirement validated | Note increased confidence, no change needed unless wording should be more specific |
-   | Requirement changed | Update wording and priority. Full rationale in the PRD: what was tried, why it changed. Link to spike doc for traceability. |
-   | New requirement discovered | Add to Requirements with appropriate priority. Note discovered during spike. |
-   | Scope boundary confirmed or shifted | Update Scope / Boundaries with rationale. |
-   | New decision made | Add to Key Decisions with rationale. |
-   | Direction invalidated | Flag for user — this is a significant PRD change. See "When the spike invalidates the direction" below. |
-   | Open question resolved | Remove from Open Questions. Rationale captured in the affected section. |
-
-   If a tech plan exists, propose updates there too.
-
-   If no PRD or tech plan exists (standalone spike), skip to step 5.
+2. **Propose upstream doc updates.** If a PRD exists, propose specific changes using the mapping in `references/prd-update-guide.md`. If no PRD or tech plan exists (standalone spike), skip to step 5.
 
 3. **User approves** changes before they're applied. Present proposed changes clearly — what will change and why.
 
@@ -136,77 +122,27 @@ This skill resolves unknowns where the answer **needs to be built and experience
    - Spike something else
    - I'll take it from here (exit)
 
-## Multiple Spikes
+## Edge Cases
 
-When brainstorming identifies several spike-worthy questions:
+For handling unusual situations during spikes, consult `references/edge-cases.md`:
+- When the spike invalidates the PRD direction
+- Coordinating multiple spikes from brainstorming
+- When things go wrong (unclear goals, non-converging spikes, worktree failures)
 
-1. **Scope all spike items upfront.** Present the list. Identify dependencies between spikes (e.g., "we need to validate the interaction model before spiking the detail flow").
-2. **Recommend an order** based on dependencies, or ask the user to pick.
-3. **Execute one at a time.** Each spike: scope → setup → build → feedback → conclude → update PRD.
-4. **Each spike updates the PRD**, so later spikes benefit from earlier findings.
-5. **Exit ramp between spikes.** After each concludes: "Spike A complete. PRD updated. Ready to spike B, or return to brainstorming?" The user might learn enough from spike A to skip B entirely.
+## Anti-Patterns
 
-Each spike gets its own directory, its own doc, and — for in-codebase spikes — its own worktree and branch.
-
-## When the Spike Invalidates the Direction
-
-If the spike reveals that the PRD's chosen direction is fundamentally wrong — not just "R5 needs tweaking" but "Direction A doesn't work, we should go with B" — this is a substantial PRD rewrite that cascades across Chosen Direction, Requirements, Scope, and Boundaries.
-
-Don't try to patch the PRD inline during wrap-up. Instead:
-
-1. Document the findings in the spike doc: what was tried, why the direction failed.
-2. Flag it to the user: "This spike suggests the chosen direction may need to change. That's a bigger update than a requirement tweak."
-3. If invoked from brainstorming: recommend returning to brainstorming to revisit the direction with the spike findings as input.
-4. If standalone: present the finding and let the user decide how to proceed. Don't prescribe a specific workflow — they may want to update the PRD themselves, discuss with their team, or take a different approach entirely.
-
-## When Things Go Wrong
-
-**Stop and ask for clarification when:**
-- The validation goal is unclear — what exactly are we trying to learn?
-- The system state makes spiking impractical — explain why and suggest alternatives
-- The spike isn't converging after 2-3 iterations — the question may be too broad
-- Worktree creation fails — check disk space, branch conflicts, or existing worktrees. Don't retry blindly; diagnose the issue first.
-
-**If a spike doesn't help:**
-- Document what was tried and why it was inconclusive
-- Don't force conclusions — carry the uncertainty forward
-- The user may decide to: try a different approach to the spike, defer the question, or proceed with the uncertainty accepted
-
-## Anti-Patterns to Avoid
-
-| Anti-Pattern | Better Approach |
-|--------------|-----------------|
-| Building production-quality code in a spike | Deliberately rough — no tests, no error handling. It's throwaway. |
-| Spiking on the main or feature branch | In-codebase spikes always use a worktree. Static HTML prototypes go in `docs/spikes/` on the original branch. |
-| Putting HTML prototypes in the worktree | HTML prototypes are durable artifacts — they belong in `docs/spikes/YYYY-MM-DD-<topic>/prototypes/`, not the throwaway worktree. |
-| Open-ended "what do you think?" feedback | Targeted questions tied to the validation goal |
-| Updating PRD with "see spike doc" as rationale | Full reasoning in the PRD — it must be self-sufficient for downstream stages |
-| Forcing conclusions from an inconclusive spike | Document what was tried, carry the uncertainty forward |
-| Deleting the spike worktree before the spike is complete | Worktree persists until the user is done — the spike skill owns the lifecycle |
-| Scope creep — adding features beyond the validation goal | Build the minimum to answer the question. If new questions emerge, scope them as separate spikes. |
-| Spiking questions that research could answer | If the answer exists somewhere, use `iterative:research` instead |
+Consult `references/anti-patterns.md` for common mistakes. Key ones: don't build production-quality code in a spike, don't spike on the main branch, and don't put HTML prototypes in the worktree.
 
 ## Transition Points
 
-**Always present options to the user at transition points** — never just print options as text.
-
-After each spike concludes, present options:
-- Spike next item (if multiple were scoped)
-- Return to brainstorming (if invoked from brainstorming)
-- Continue to technical planning
-- Spike something else
-- I'll take it from here (exit)
-
-After each build-feedback round, present options:
-- Iterate — refine based on feedback
-- Try a different approach — keep current variant, build an alternative
-- Conclude — enough was learned
-- Abandon — the spike isn't helping
-- Pause — park and come back later
+**Always present options to the user at transition points** — never just print options as text. Present the options defined in Phase 3 step 5 (build-feedback rounds) and Phase 5 (handoff).
 
 ## Additional Resources
 
 ### Reference Files
 
-For templates and detailed guidelines, consult:
+For templates, detailed guidelines, and edge cases, consult:
 - **`references/spike-template.md`** — Spike document template with section descriptions and acceptance guidelines
+- **`references/prd-update-guide.md`** — Mapping of spike findings to PRD updates
+- **`references/anti-patterns.md`** — Common anti-patterns to avoid during spikes
+- **`references/edge-cases.md`** — Direction invalidation, multiple spikes, and error handling
