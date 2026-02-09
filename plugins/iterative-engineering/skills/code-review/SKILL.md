@@ -70,7 +70,7 @@ Get the changed file list with `--name-only` to determine Full or Quick mode fro
 
 **Step 2: Spawn reviewers.**
 
-Create an agent team (e.g. `TeamCreate` in Claude Code, `spawn_agent` in Codex), then spawn reviewers as teammates. In Full mode, spawn all 5. In Quick mode, spawn 2-3 based on change type (see Review Modes above). If the team already exists (e.g., from an interrupted run), reuse it — read its config, check which reviewers are already present, and spawn only the missing ones.
+Create an agent team (e.g. `TeamCreate` in Claude Code, `spawn_agent` in Codex), then spawn reviewers as teammates. **In Full mode, spawn all 5 reviewers — not just one or two.** In Quick mode, spawn 2-3 based on change type (see Review Modes above). If the team already exists (e.g., from an interrupted run), reuse it — read its config, check which reviewers are already present, and spawn only the missing ones.
 
 Tell the user:
 
