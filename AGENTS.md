@@ -81,12 +81,11 @@ When asked to "cut a release" or "release a new version":
    ./scripts/release.sh <major|minor|patch>
    ```
 
-4. **Commit, tag, push:**
+4. **Commit and open a PR:**
    ```bash
    git add -A && git commit -m "chore(release): <version>"
-   git tag v<version>
-   git push && git push --tags
    ```
+   Push the branch and open a PR. The `v<version>` tag is created automatically when the PR merges (via `.github/workflows/auto-tag.yml`).
 
 ## Installation (for users)
 
