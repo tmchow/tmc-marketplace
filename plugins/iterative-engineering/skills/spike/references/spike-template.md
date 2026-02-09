@@ -9,7 +9,7 @@ Use this template when creating spike documents. Update the Progress section as 
 
 **Date:** [date]
 **Status:** In Progress
-**Branch:** spike/[topic]
+**Branch:** spike/[topic, if applicable]
 **PRD:** [path, if exists]
 **Tech Plan:** [path, if exists]
 ```
@@ -88,16 +88,20 @@ When the spike concludes, fold relevant content into Findings and Decisions, the
 [Summary of PRD and/or tech plan changes made based on this spike.
 Each change should also be documented in the PRD itself with full rationale —
 the PRD should be self-sufficient for downstream stages without needing to
-read this spike doc.]
+read this spike doc.
+
+For standalone spikes: "Standalone spike — no upstream docs."]
 ```
 
 ### Spike Code (always include)
 
 ```markdown
 ## Spike Code
-**Worktree:** [path]
-**Branch:** spike/[topic]
+**Worktree:** [path, if applicable]
+**Branch:** spike/[topic, if applicable]
+**Prototypes:** docs/spikes/YYYY-MM-DD-<topic>/prototypes/ [if static HTML prototypes exist]
+**Variants:** [list of approach variants and where to find them, if multiple approaches explored]
 **Reusable:** No
 ```
 
-If any code is genuinely reusable (rare), describe what specifically and where. By default, spike code is throwaway.
+In-codebase spike code is throwaway by default. If any is genuinely reusable (rare), describe what specifically and where. Static HTML prototypes are preserved in the spike directory as reference artifacts.
