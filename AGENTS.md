@@ -74,7 +74,7 @@ When asked to "cut a release" or "release a new version":
    - `minor` — new skills, agents, or significant behavior changes
    - `patch` — bug fixes, doc updates, minor improvements
 
-2. **Write the changelog entry** in `CHANGELOG.md` (repo root). Keep it scannable. Include PR references inline on each line (e.g., `(#27)` — auto-links on GitHub). Add a version comparison link reference at the bottom of the file (e.g., `[1.3.5]: https://github.com/tmchow/tmc-marketplace/compare/v1.3.4...v1.3.5`). Make the version header a link using the reference (e.g., `## [1.3.5]`).
+2. **Write the changelog entry** in `CHANGELOG.md` (repo root). Keep it scannable. Link each line to its PR with inline markdown links (e.g., `([#27](https://github.com/tmchow/tmc-marketplace/pull/27))`). Add a version comparison link reference at the bottom of the file (e.g., `[1.3.5]: https://github.com/tmchow/tmc-marketplace/compare/v1.3.4...v1.3.5`). Make the version header a link using the reference (e.g., `## [1.3.5]`).
 
 3. **Run the release script** — bumps version in both `plugins/iterative-engineering/.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` (plugin entry only, not marketplace metadata):
    ```bash
