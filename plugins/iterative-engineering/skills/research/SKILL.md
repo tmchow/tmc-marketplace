@@ -69,7 +69,7 @@ Present the categorization to the user. They may recategorize or add questions.
    - New constraints discovered → add to Requirements (note they were discovered during research)
    - Scope implications → update Scope / Boundaries
 3. **Get user approval** before making any PRD changes.
-4. **Apply approved changes** to the PRD document.
+4. **Apply approved changes** to the PRD document. **Commit the updated PRD.**
 
 ### Phase 5: Handoff
 

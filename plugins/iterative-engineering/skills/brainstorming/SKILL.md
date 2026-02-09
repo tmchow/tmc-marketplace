@@ -60,9 +60,11 @@ Skip brainstorming when requirements are explicit, detailed, and the user knows 
 
 ### Phase 4: Document Findings
 
-1. Write PRD using the template in `references/prd-template.md`. Include sections when their inclusion criteria apply — skip the rest.
-2. Group requirements by priority in a single markdown table (columns: ID, Priority, Requirement). Priority values: Core, Must, Nice, Out. Be deliberate about priority — if everything is Must, nothing is.
-3. Save to `docs/prd/YYYY-MM-DD-<topic>-prd.md` (ensure directory exists).
+1. **Branch safety gate.** Before the first commit, check if on the default branch (`main`/`master`). If so, offer: A) Create a feature branch (recommended), B) Continue on default branch. This is a one-time check — once resolved, all subsequent commits in this session go to the chosen branch.
+2. Write PRD using the template in `references/prd-template.md`. Include sections when their inclusion criteria apply — skip the rest.
+3. Group requirements by priority in a single markdown table (columns: ID, Priority, Requirement). Priority values: Core, Must, Nice, Out. Be deliberate about priority — if everything is Must, nothing is.
+4. Save to `docs/prd/YYYY-MM-DD-<topic>-prd.md` (ensure directory exists).
+5. **Commit the PRD.** Don't leave it as an uncommitted change.
 
 ### Phase 5: Review and Handoff
 
@@ -82,11 +84,11 @@ Skip brainstorming when requirements are explicit, detailed, and the user knows 
    - E) I'll take it from here (exit)
    Only show B and C when the PRD has open questions that fit that resolution method. If active spikes exist (in-progress spike docs in `docs/spikes/`), mention them as a resume option alongside C.
 4. If review: invoke `plan-review` skill. Plan-review returns findings — brainstorming owns the fix loop.
-5. Fix issues identified by plan-review.
+5. Fix issues identified by plan-review. **Commit the updated PRD.**
 6. Ask the user to choose — same options as step 3, re-assessed with updated PRD context. **Do not mark any option as recommended** — the right next step depends on context the skill can't reliably judge. Just present the options and let the user decide.
 7. Repeat steps 4-6 if user chooses another round.
-8. If user chooses research: invoke `iterative:research` skill with the PRD path. After research completes (findings presented and PRD updated with user-approved changes), return to step 6.
-9. If user chooses spike: invoke `iterative:spike` skill. After the spike concludes (spike doc finalized, PRD updated with user-approved changes), return to step 6.
+8. If user chooses research: invoke `iterative:research` skill with the PRD path. After research completes (findings presented and PRD updated with user-approved changes), **commit the updated PRD** and return to step 6.
+9. If user chooses spike: invoke `iterative:spike` skill. After the spike concludes (spike doc finalized, PRD updated with user-approved changes), **commit the updated PRD** and return to step 6.
 10. If user chooses tech-planning: invoke `iterative:tech-planning` skill.
 
 **Open question classification criteria.** When assessing open questions in step 1, apply these criteria to determine which options to surface:

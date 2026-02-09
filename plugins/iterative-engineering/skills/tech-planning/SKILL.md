@@ -68,16 +68,18 @@ A plan is ready when an implementer can start working without asking clarifying 
 
 ### Phase 3: Write Technical Plan
 
-1. Create plan document using template in `references/tech-plan-template.md`.
-2. Every subtask must meet the Plan Quality Bar above.
-3. Reference actual file paths, existing patterns, and conventions from Phase 1.
-4. Save to `docs/plans/YYYY-MM-DD-<topic>-tech-plan.md` (ensure directory exists).
+1. **Branch safety gate.** Before the first commit, check if on the default branch (`main`/`master`). If so, offer: A) Create a feature branch (recommended), B) Continue on default branch. This is a one-time check — once resolved, all subsequent commits in this session go to the chosen branch. Skip if brainstorming already handled this (i.e., already on a feature branch).
+2. Create plan document using template in `references/tech-plan-template.md`.
+3. Every subtask must meet the Plan Quality Bar above.
+4. Reference actual file paths, existing patterns, and conventions from Phase 1.
+5. Save to `docs/plans/YYYY-MM-DD-<topic>-tech-plan.md` (ensure directory exists).
+6. **Commit the plan.** Don't leave it as an uncommitted change.
 
 ### Phase 4: Review and Handoff
 
 1. Ask the user to choose: A) Review the plan (recommended), B) Start implementing, C) I'll take it from here (exit).
 2. If review: invoke `plan-review` skill. Plan-review returns findings — tech-planning owns the fix loop.
-3. Fix issues identified by plan-review.
+3. Fix issues identified by plan-review. **Commit the updated plan.**
 4. Ask the user to choose (see recommendation logic below): A) Another review round, B) Start implementing, C) I'll take it from here (exit).
 5. Repeat steps 2-4 if user chooses another round.
 6. If user chooses implementing: invoke `iterative:implementing` skill (implementing handles task creation internally after reading the plan).
