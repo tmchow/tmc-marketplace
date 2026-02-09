@@ -60,9 +60,11 @@ Skip brainstorming when requirements are explicit, detailed, and the user knows 
 
 ### Phase 4: Document Findings
 
-1. Write PRD using the template in `references/prd-template.md`. Include sections when their inclusion criteria apply — skip the rest.
-2. Group requirements by priority (Core, Must-Have, Nice-to-Have, Out). Be deliberate about priority — if everything is Must-Have, nothing is.
-3. Save to `docs/prd/YYYY-MM-DD-<topic>-prd.md` (ensure directory exists).
+1. **Branch safety gate.** Before the first commit, check if on the default branch (`main`/`master`). If so, offer: A) Create a feature branch (recommended), B) Continue on default branch. This is a one-time check — once resolved, all subsequent commits in this session go to the chosen branch.
+2. Write PRD using the template in `references/prd-template.md`. Include sections when their inclusion criteria apply — skip the rest.
+3. Group requirements by priority in a single markdown table (columns: ID, Priority, Requirement). Priority values: Core, Must, Nice, Out. Be deliberate about priority — if everything is Must, nothing is.
+4. Save to `docs/prd/YYYY-MM-DD-<topic>-prd.md` (ensure directory exists).
+5. **Commit the PRD.** Don't leave it as an uncommitted change.
 
 ### Phase 5: Review and Handoff
 
@@ -74,19 +76,19 @@ Skip brainstorming when requirements are explicit, detailed, and the user knows 
    - Deferred: leave in Open Questions.
 
    Present one question at a time. Skip this step if no user-decision questions exist.
-3. Ask the user to choose — surface options based on what's relevant:
-   - A) Review the PRD (recommended on first pass)
+3. **First time presenting options: always recommend Review.** The PRD has never been reviewed — review is the right default. Present options:
+   - A) Review the PRD **(Recommended)** — the PRD hasn't been reviewed yet
    - B) Research open questions — when questions exist that can be answered by gathering information
    - C) Spike — when questions exist that need to be built and experienced to validate
    - D) Continue to technical planning
    - E) I'll take it from here (exit)
    Only show B and C when the PRD has open questions that fit that resolution method. If active spikes exist (in-progress spike docs in `docs/spikes/`), mention them as a resume option alongside C.
 4. If review: invoke `plan-review` skill. Plan-review returns findings — brainstorming owns the fix loop.
-5. Fix issues identified by plan-review.
-6. Ask the user to choose (see recommendation logic below) — same options as step 3, re-assessed with updated PRD context.
+5. Fix issues identified by plan-review. **Commit the updated PRD.**
+6. Ask the user to choose — same options as step 3, re-assessed with updated PRD context. **Do not mark any option as recommended** — the right next step depends on context the skill can't reliably judge. Just present the options and let the user decide.
 7. Repeat steps 4-6 if user chooses another round.
-8. If user chooses research: invoke `iterative:research` skill with the PRD path. After research completes (findings presented and PRD updated with user-approved changes), return to step 6.
-9. If user chooses spike: invoke `iterative:spike` skill. After the spike concludes (spike doc finalized, PRD updated with user-approved changes), return to step 6.
+8. If user chooses research: invoke `iterative:research` skill with the PRD path. After research completes (findings presented and PRD updated with user-approved changes), **commit the updated PRD** and return to step 6.
+9. If user chooses spike: invoke `iterative:spike` skill. After the spike concludes (spike doc finalized, PRD updated with user-approved changes), **commit the updated PRD** and return to step 6.
 10. If user chooses tech-planning: invoke `iterative:tech-planning` skill.
 
 **Open question classification criteria.** When assessing open questions in step 1, apply these criteria to determine which options to surface:
@@ -100,12 +102,7 @@ Skip brainstorming when requirements are explicit, detailed, and the user knows 
 
 This classification is a judgment call — present it as informed options, not a formal categorization step. The user picks what to do.
 
-**Recommendation logic for step 6.** Shift the recommended option based on what the review found:
-- Review found Critical or High issues (now fixed) → recommend **another review round** to verify the fixes landed well
-- Review found only Medium/Low issues, or a round came back clean → recommend **continue to technical planning** — further rounds will have diminishing returns
-- After 3+ rounds → recommend **continue to technical planning** regardless, and note that additional passes are unlikely to surface significant issues
-- If open questions remain that need research or spiking → mention these as options alongside the review recommendation
-- If deferred user decisions remain → note they'll carry forward as open questions into tech planning
+**After the first review (step 6), do not recommend a specific option.** Just present the choices and let the user decide. If deferred user decisions remain, note they'll carry forward as open questions into tech planning.
 
 ## Question Techniques
 
@@ -158,7 +155,7 @@ I'd lean toward **A** because [one sentence]. Which direction feels right?
 See `references/prd-template.md` for the full template with section descriptions and inclusion criteria.
 
 Key structural points:
-- **Requirements are grouped by priority:** Core (the whole point), Must-Have (required for v1), Nice-to-Have (include if straightforward), Out (explicitly excluded). Each requirement gets a persistent number (R1, R2...) for cross-referencing.
+- **Requirements are a single table** with columns ID, Priority, Requirement. Priority values: Core, Must, Nice, Out. Each requirement gets a persistent ID (R1, R2...) for cross-referencing.
 - **Scope is split into In Scope and Boundaries.** Boundaries are deliberate limits — active decisions that prevent scope creep, not oversights.
 - **Open Questions are tagged** with what they affect (specific requirements, scope, direction) so downstream stages know what depends on their resolution.
 - **Sections earn their inclusion.** Goal, Scope, Requirements, and Next Steps are always present. Other sections (Chosen Direction, Alternatives Considered, Key Decisions, Open Questions) are included when their criteria apply.
@@ -177,7 +174,7 @@ The PRD should give enough context for someone to create a detailed technical pl
 | Proposing overly complex solutions | Start simple, add complexity only if needed |
 | Making assumptions without validating | State assumptions explicitly and confirm |
 | Same depth for every PRD | Scale to scope — include sections when their criteria apply |
-| Everything is Must-Have | Use priority grouping honestly — if everything is Core, nothing is |
+| Everything is Must | Use priority honestly — if everything is Core, nothing is |
 | Leaving open questions unstructured | Tag each question with what it affects (requirement, scope, direction) |
 
 ## Transition Points
@@ -185,11 +182,13 @@ The PRD should give enough context for someone to create a detailed technical pl
 **Always present options to the user at transition points** — never just print options as text.
 
 After PRD is created, and after each review round, present options (surface based on relevance):
-- Review the PRD — 4 agents analyze for issues (recommended on first pass)
+- Review the PRD — 4 agents analyze for issues **(Recommended on first pass only)**
 - Research open questions — resolve unknowns through investigation (when researchable questions exist)
 - Spike — build and validate uncertain requirements (when questions need to be experienced)
-- Continue to technical planning (recommended when prior review found only Medium/Low issues or after 3+ rounds)
+- Continue to technical planning
 - I'll take it from here (exit)
+
+After the first review round, do not mark any option as recommended — just present the choices.
 
 **Never skip this step.** Do not proceed to tech-planning or announce "the PRD is ready" without presenting these options first.
 

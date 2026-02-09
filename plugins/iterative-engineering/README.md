@@ -124,6 +124,7 @@ Reviews are user-driven:
 - **Offered, never forced** — Every review is presented as a choice. The user can skip.
 - **Severity-based acceptance** — Findings grouped by severity (Critical / High / Medium / Low). User selects which levels to fix — not all-or-nothing.
 - **User-controlled loop** — After fixes, user chooses to re-review or continue. No automatic re-review.
+- **Agent teams with fallback** — Reviewers run as an agent team so they can cross-validate findings (a YAGNI reviewer can push back on completeness suggestions). When agent teams aren't available, reviews automatically fall back to parallel subagents.
 - **Scaled to scope** — Full review for substantial work, quick review for moderate changes, skip for trivial config edits.
 
 ## Design Decisions
@@ -137,6 +138,7 @@ Reviews are user-driven:
 | Dependency-aware batch execution | Subtasks are grouped by their dependency graph. Each batch runs concurrently, but batches execute sequentially. Not one-at-a-time (too slow), not all-at-once (ignores ordering). |
 | Incremental reviews for large sections | Plan sections with 6+ subtasks get code review offers between batches. Catches issues before later batches build on flawed code. |
 | Severity-based fix acceptance | Not all review findings warrant fixing. User picks which severity levels to address. Keeps the user in control of review scope. |
+| Docs committed at every checkpoint | PRDs, plans, and spike docs are committed incrementally — not left as uncommitted changes across workflow stages. A branch safety gate before the first commit prevents accidental commits to the default branch. |
 
 ## Skills
 

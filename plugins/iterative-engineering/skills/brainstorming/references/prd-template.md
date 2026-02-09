@@ -42,31 +42,18 @@ Boundaries are especially valuable when the feature could easily grow. If stakeh
 
 ### Requirements (always include)
 
-Group requirements by priority. Each requirement gets a number (R1, R2...) that persists for cross-referencing by tech planning and code review, even if the requirement moves between groups.
+Group requirements by priority in a single table. Each requirement gets a number (R1, R2...) that persists for cross-referencing by tech planning and code review, even if the requirement changes priority.
 
 ```markdown
 ## Requirements
 
-### Core
-The fundamental goal — without this, the feature has no point.
-
-R1. [Requirement — specific and verifiable]
-
-### Must-Have
-Required for v1 to be considered complete.
-
-R2. [Requirement]
-R3. [Requirement]
-
-### Nice-to-Have
-Include if straightforward; defer without guilt.
-
-R4. [Requirement]
-
-### Out
-Considered and explicitly excluded — not forgotten, decided against (for now).
-
-R5. [Requirement — brief rationale for exclusion]
+| ID | Priority | Requirement |
+|----|----------|-------------|
+| R1 | Core | [Requirement — specific and verifiable] |
+| R2 | Must | [Requirement] |
+| R3 | Must | [Requirement] |
+| R4 | Nice | [Requirement] |
+| R5 | Out | [Requirement — brief rationale for exclusion] |
 ```
 
 **Priority definitions:**
@@ -74,8 +61,8 @@ R5. [Requirement — brief rationale for exclusion]
 | Priority | Meaning | Implementation impact |
 |----------|---------|----------------------|
 | **Core** | The whole point of this work | Must be satisfied by the chosen direction |
-| **Must-Have** | Required for v1 completeness | Tech plan must cover these |
-| **Nice-to-Have** | Valuable but not essential | Include if straightforward, defer if not |
+| **Must** | Required for v1 completeness | Tech plan must cover these |
+| **Nice** | Valuable but not essential | Include if straightforward, defer if not |
 | **Out** | Explicitly excluded | Do not implement — documented to prevent scope creep |
 
 **Guidelines:**
@@ -139,7 +126,7 @@ Questions tagged with specific requirements or scope signal that those areas are
 |---------|----------------|
 | **Goal** | Always |
 | **Scope** (In Scope + Boundaries) | Always |
-| **Requirements** (grouped by priority) | Always |
+| **Requirements** (single table with priority column) | Always |
 | **Chosen Direction** | When meaningful alternatives were considered |
 | **Alternatives Considered** | When documenting rejected directions prevents relitigating |
 | **Key Decisions** | When decisions were made that aren't obvious from requirements |
