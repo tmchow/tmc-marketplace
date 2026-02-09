@@ -1,6 +1,6 @@
 # tmc-marketplace
 
-Claude Code plugins by Trevin Chow.
+Plugins for Claude Code and Codex by Trevin Chow.
 
 [trev.in](https://trev.in) · [LinkedIn](https://linkedin.com/in/trevin)
 
