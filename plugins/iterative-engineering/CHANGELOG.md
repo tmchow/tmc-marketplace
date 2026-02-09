@@ -5,6 +5,22 @@ All notable changes to the iterative-engineering plugin will be documented in th
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.3] - 2026-02-09
+
+### Fixed
+
+- **PRD requirements format** — single markdown table (`ID | Priority | Requirement`) instead of sub-headers per priority. Shorter labels: Must-Have → Must, Nice-to-Have → Nice.
+- **Review recommendations** — always recommend "Review the PRD" on first pass; no recommendation after first review round (let user decide).
+- **Tech plan line references** — reference code by function/class/pattern name, not line numbers that drift.
+- **Doc commits** — PRDs, plans, and research updates committed at every checkpoint instead of left uncommitted across workflow stages. Branch safety gate prevents accidental commits to default branch.
+- **Implementing resume** — Phase 0 no longer skips Phase 1 setup (task creation, HZL detection, workspace isolation) when prior conversation context exists but no tasks were created. Affects both HZL and built-in task tracking.
+
+### Changed
+
+- **README** — surfaced agent teams with fallback in Reviews section and added doc-commit design decision.
+
+---
+
 ## [1.3.2] - 2026-02-08
 
 ### Fixed
