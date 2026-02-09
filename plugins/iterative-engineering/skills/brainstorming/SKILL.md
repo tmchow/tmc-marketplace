@@ -61,7 +61,7 @@ Skip brainstorming when requirements are explicit, detailed, and the user knows 
 ### Phase 4: Document Findings
 
 1. Write PRD using the template in `references/prd-template.md`. Include sections when their inclusion criteria apply — skip the rest.
-2. Group requirements by priority (Core, Must-Have, Nice-to-Have, Out). Be deliberate about priority — if everything is Must-Have, nothing is.
+2. Group requirements by priority in a single markdown table (columns: ID, Priority, Requirement). Priority values: Core, Must, Nice, Out. Be deliberate about priority — if everything is Must, nothing is.
 3. Save to `docs/prd/YYYY-MM-DD-<topic>-prd.md` (ensure directory exists).
 
 ### Phase 5: Review and Handoff
@@ -158,7 +158,7 @@ I'd lean toward **A** because [one sentence]. Which direction feels right?
 See `references/prd-template.md` for the full template with section descriptions and inclusion criteria.
 
 Key structural points:
-- **Requirements are grouped by priority:** Core (the whole point), Must-Have (required for v1), Nice-to-Have (include if straightforward), Out (explicitly excluded). Each requirement gets a persistent number (R1, R2...) for cross-referencing.
+- **Requirements are a single table** with columns ID, Priority, Requirement. Priority values: Core, Must, Nice, Out. Each requirement gets a persistent ID (R1, R2...) for cross-referencing.
 - **Scope is split into In Scope and Boundaries.** Boundaries are deliberate limits — active decisions that prevent scope creep, not oversights.
 - **Open Questions are tagged** with what they affect (specific requirements, scope, direction) so downstream stages know what depends on their resolution.
 - **Sections earn their inclusion.** Goal, Scope, Requirements, and Next Steps are always present. Other sections (Chosen Direction, Alternatives Considered, Key Decisions, Open Questions) are included when their criteria apply.
@@ -177,7 +177,7 @@ The PRD should give enough context for someone to create a detailed technical pl
 | Proposing overly complex solutions | Start simple, add complexity only if needed |
 | Making assumptions without validating | State assumptions explicitly and confirm |
 | Same depth for every PRD | Scale to scope — include sections when their criteria apply |
-| Everything is Must-Have | Use priority grouping honestly — if everything is Core, nothing is |
+| Everything is Must | Use priority honestly — if everything is Core, nothing is |
 | Leaving open questions unstructured | Tag each question with what it affects (requirement, scope, direction) |
 
 ## Transition Points

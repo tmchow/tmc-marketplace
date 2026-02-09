@@ -93,7 +93,7 @@ The PRD is a living document and the source of truth for requirements. Codebase 
 
 - **Minor adjustments** (slightly different scope boundary, refined requirement wording): update the PRD in place and note the change when presenting the plan.
 - **Significant divergence** (different approach than chosen direction, requirement added/removed, scope change): stop and discuss with the user before proceeding. Update the PRD's Chosen Direction, Requirements, and/or Scope sections to reflect the new reality. The tech plan should never contradict the PRD.
-- **New requirements discovered** (codebase reveals constraints not in PRD): add them to the PRD's Requirements section with the appropriate priority (Core, Must-Have, Nice-to-Have) and a note that they were discovered during tech planning (e.g., "R6 added during tech planning — API requires backward compatibility").
+- **New requirements discovered** (codebase reveals constraints not in PRD): add them to the PRD's Requirements table with the appropriate priority (Core, Must, Nice) and a note that they were discovered during tech planning (e.g., "R6 added during tech planning — API requires backward compatibility").
 - **Open questions resolved** (codebase exploration answers a PRD question): remove the question from Open Questions and update the affected section. If the answer changes a requirement's priority or scope boundary, update those sections too.
 
 The tech plan's `**PRD:**` header links to the PRD document. If the PRD is updated during tech planning, this link ensures reviewers can find the authoritative requirements.
