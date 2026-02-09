@@ -4,25 +4,42 @@ Claude Code plugins by Trevin Chow.
 
 [trev.in](https://trev.in) · [LinkedIn](https://linkedin.com/in/trevin)
 
-## Installation
+## Quick Install
 
-### 1. Add the marketplace
+```bash
+curl -fsSL "https://raw.githubusercontent.com/tmchow/tmc-marketplace/main/scripts/install.sh?$(date +%s)" | bash
+```
+
+Installs the Claude Code plugin and Codex skills. Safe to re-run (idempotent). Skips anything not detected (e.g., no Codex installed).
+
+To uninstall:
+
+```bash
+curl -fsSL "https://raw.githubusercontent.com/tmchow/tmc-marketplace/main/scripts/install.sh?$(date +%s)" | bash -s -- --uninstall
+```
+
+## Manual Install
+
+### Claude Code
 
 ```
 /plugin marketplace add tmchow/tmc-marketplace
-```
-
-### 2. Install a plugin
-
-```
 /plugin install iterative-engineering@tmc-marketplace
 ```
 
-### 3. Verify installation
+Verify with `/plugin list`.
 
+### Codex
+
+Download the skills into your Codex skills directory:
+
+```bash
+curl -sL https://github.com/tmchow/tmc-marketplace/archive/refs/heads/main.tar.gz \
+  | tar xz --strip-components=4 -C ~/.codex/skills/ \
+    tmc-marketplace-main/plugins/iterative-engineering/skills/
 ```
-/plugin list
-```
+
+This extracts all skills (with their reference files) to `~/.codex/skills/`.
 
 ## Plugins
 
