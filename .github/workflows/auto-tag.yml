@@ -1,0 +1,43 @@
+name: Auto-tag releases
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read version from plugin.json
+        id: version
+        run: |
+          VERSION=$(python3 -c "import json; print(json.load(open('plugins/iterative-engineering/.claude-plugin/plugin.json'))['version'])")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Check tag and changelog
+        id: check
+        run: |
+          TAG="v${{ steps.version.outputs.version }}"
+          VERSION="${{ steps.version.outputs.version }}"
+
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists, skipping"
+            echo "should_tag=false" >> "$GITHUB_OUTPUT"
+          elif ! grep -q "\[${VERSION}\]" plugins/iterative-engineering/CHANGELOG.md; then
+            echo "No changelog entry for $VERSION, skipping"
+            echo "should_tag=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_tag=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create tag
+        if: steps.check.outputs.should_tag == 'true'
+        run: |
+          TAG="v${{ steps.version.outputs.version }}"
+          git tag "$TAG"
+          git push origin "$TAG"
+          echo "Created tag $TAG"
