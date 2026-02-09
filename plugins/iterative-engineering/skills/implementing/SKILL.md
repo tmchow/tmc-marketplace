@@ -54,13 +54,15 @@ Read the plan critically, create tasks, and implement with TDD, code review, and
 8. **Repeat** steps 3-7 for remaining batches.
 9. Update plan document progress (mark completed items).
 10. Mark section complete in task system.
-11. **Final code review.** Run after all subtasks in the plan section are complete, regardless of whether incremental reviews occurred (see When to Review table for trivial exceptions). Scope: `git diff <section-baseline-sha>..HEAD`. Pass the baseline SHA and plan context to the `code-review` skill.
+11. **Section code review.** Run after all subtasks in the plan section are complete, regardless of whether incremental reviews occurred (see When to Review table for trivial exceptions). **Skip if this is the only section in the plan** — Phase 3's final review will cover the same code plus simplification changes, so a section-level review would be redundant. For multi-section plans: scope to `git diff <section-baseline-sha>..HEAD`. Pass the baseline SHA and plan context to the `code-review` skill. **Wait for the review to complete and fixes to land before moving on.** Do not run anything else in parallel with code review — it needs to see the final code.
 
 ### Phase 3: Finish
 
+**Phase 3 steps are strictly sequential. Do not parallelize them** — each step depends on the output of the previous one.
+
 1. Verify: all tasks complete, all section-level code reviews passed.
 2. **Detect base branch.** `git rev-parse --verify origin/main >/dev/null 2>&1 && echo main || echo master`. Use this for all branch-level scoping in Phase 3.
-3. **Simplification pass.** Get changed files with `git diff --name-only $(git merge-base HEAD <base>)..HEAD`. Spawn the `code-simplifier` agent with this file list. The agent applies behavior-preserving simplifications, runs tests, and commits separately. This is a single bounded pass — not a refactor.
+3. **Simplification pass.** Get changed files with `git diff --name-only $(git merge-base HEAD <base>)..HEAD`. Spawn the `code-simplifier` agent with this file list. The agent applies behavior-preserving simplifications, runs tests, and commits separately. This is a single bounded pass — not a refactor. **Wait for simplification to complete before proceeding** — the final review must see simplified code.
 4. **Final review offer.** Ask the user to choose: A) Full code review of complete work (recommended), B) Quick review, C) Skip to finish.
 5. If review: invoke `code-review` skill with scope `git diff $(git merge-base HEAD <base>)..HEAD` (all branch changes including simplification). Present findings with severity acceptance (see Severity Acceptance in Code Review section). Fix selected severities.
 6. Ask the user to choose: A) Another review round, B) Wrap up and create PR, C) I'll handle PR/merge myself (exit). Recommend **another round** if Critical/High issues were just fixed; recommend **wrap up** otherwise.
@@ -132,7 +134,7 @@ Show the proposed task structure to the user for approval before creating.
 
 | Trigger | Review Level |
 |---------|-------------|
-| **Final section review** (after all subtasks in a plan section complete) | Full or Quick — based on scope of changes |
+| **Section review** (after all subtasks in a plan section complete) | Full or Quick — based on scope of changes. **Skip if single-section plan** — Phase 3 final review covers it |
 | **Incremental batch review** (sections with 6+ subtasks) | Quick review — lightweight check between batches |
 | **Trivial section** (config, single-line, renaming only) | Skip review — note in progress report |
 
@@ -192,6 +194,7 @@ If reality diverges from the plan during implementation:
 | Committing feature subtask without writing tests | TDD: write tests first from plan's test scenarios, then implement |
 | Skipping Phase 1 because of prior conversation context | Prior context ≠ setup complete. If no tasks exist, run Phase 1 — HZL detection, task creation, workspace isolation |
 | Pushing through when blocked | Stop and ask for help |
+| Running code review in parallel with simplification or other code changes | Code review must see final code. Simplifier → wait → review. Never parallelize steps that change code with steps that review it |
 | Full code review on trivial changes | Scale review to complexity — skip for config changes |
 | Modifying the plan silently | Report divergence and get user agreement |
 | Applying TDD rigidly to config/refactoring subtasks | TDD for feature work, verify for non-feature work |
