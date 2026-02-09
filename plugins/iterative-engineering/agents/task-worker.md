@@ -49,7 +49,18 @@ You receive:
 - Run the plan's `**Verify:**` step to confirm it works
 - No failing test required, but run existing tests to verify nothing broke
 
-### 3. Complete
+### 3. Verify Tests (feature subtasks only)
+
+Before committing, verify that tests were actually written:
+
+- Check that the test file listed in the plan's `**Files:**` field exists
+- Check that each test scenario from the plan's `**Test scenarios:**` has a corresponding test case
+- Run the tests and confirm they pass
+- If no tests were written for a feature subtask: **stop and write the tests before committing**. This is a hard gate — feature subtasks do not ship without tests.
+
+Non-feature subtasks (config, refactoring, infrastructure) skip this gate but still run existing tests to verify nothing broke.
+
+### 4. Complete
 
 - Stage only files related to this subtask: `git add [files]`
 - Commit with conventional format: `git commit -m "feat(scope): [subtask description]"`
@@ -64,7 +75,8 @@ Return concise completion status:
 Completed: [subtask title]
 Commit: [sha]
 Files: [list of modified files]
-Tests: [pass count]
+Tests: [pass count] ([N] new tests written, [M] plan scenarios covered)
+Test file: [path to test file, or "N/A — non-feature subtask"]
 HZL: updated (if applicable)
 ```
 
@@ -91,5 +103,6 @@ Stop and report if:
 - Plan description is unclear or ambiguous
 - Referenced files or dependencies are missing
 - Tests fail and fix isn't obvious
+- Feature subtask has no test file specified in the plan — ask the lead for the test file path before proceeding
 - Subtask seems larger than expected
 - Conflicts with other code

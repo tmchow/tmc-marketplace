@@ -47,13 +47,14 @@ Read the plan critically, create tasks, and implement with TDD, code review, and
    - Subtask number and title
    - Parent task context
    - Task system (HZL or built-in tasks) and task ID if HZL
-4. Worker reads subtask from plan, loads referenced patterns, implements, commits, and updates task status (see task-worker agent for details).
+4. Worker reads subtask from plan, loads referenced patterns, implements with TDD (tests first), commits, and updates task status (see task-worker agent for details).
 5. **Wait for batch completion.** All subagents in the batch must finish before the next batch starts.
-6. **Incremental review (large sections only).** If the plan section has more than 5 subtasks, automatically run a quick code review after each batch — this catches issues before subsequent batches build on flawed code. Scope the review to `git diff <section-baseline-sha>..HEAD`. If issues are found, present them with severity acceptance before continuing. If clean, continue to the next batch silently.
-7. **Repeat** steps 3-6 for remaining batches.
-8. Update plan document progress (mark completed items).
-9. Mark section complete in task system.
-10. **Final code review.** Run after all subtasks in the plan section are complete, regardless of whether incremental reviews occurred (see When to Review table for trivial exceptions). Scope: `git diff <section-baseline-sha>..HEAD`. Pass the baseline SHA and plan context to the `code-review` skill.
+6. **Test verification gate.** After each batch completes, verify that feature subtasks produced test files. For each completed feature subtask, check: does the test file listed in the plan's `**Files:**` field exist, and does it contain tests matching the plan's `**Test scenarios:**`? If a feature subtask committed without tests, flag it immediately — do not continue to the next batch until resolved.
+7. **Incremental review (large sections only).** If the plan section has more than 5 subtasks, automatically run a quick code review after each batch — this catches issues before subsequent batches build on flawed code. Scope the review to `git diff <section-baseline-sha>..HEAD`. If issues are found, present them with severity acceptance before continuing. If clean, continue to the next batch silently.
+8. **Repeat** steps 3-7 for remaining batches.
+9. Update plan document progress (mark completed items).
+10. Mark section complete in task system.
+11. **Final code review.** Run after all subtasks in the plan section are complete, regardless of whether incremental reviews occurred (see When to Review table for trivial exceptions). Scope: `git diff <section-baseline-sha>..HEAD`. Pass the baseline SHA and plan context to the `code-review` skill.
 
 ### Phase 3: Finish
 
@@ -188,6 +189,7 @@ If reality diverges from the plan during implementation:
 | Skipping clarification to start faster | Ask questions now — building the wrong thing is slower |
 | Creating tasks before understanding the plan | Read and clarify the plan, then create tasks |
 | Committing with failing tests | Only commit when tests pass |
+| Committing feature subtask without writing tests | TDD: write tests first from plan's test scenarios, then implement |
 | Pushing through when blocked | Stop and ask for help |
 | Full code review on trivial changes | Scale review to complexity — skip for config changes |
 | Modifying the plan silently | Report divergence and get user agreement |
