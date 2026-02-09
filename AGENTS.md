@@ -65,6 +65,29 @@ See the [skills documentation](https://code.claude.com/docs/en/skills) for more 
 }
 ```
 
+## Releasing a New Version
+
+When asked to "cut a release" or "release a new version":
+
+1. **Determine bump type** from changes since last tag (`git log --oneline $(git describe --tags --abbrev=0 2>/dev/null || echo HEAD~10)..HEAD`):
+   - `major` — breaking changes, major reorganization
+   - `minor` — new skills, agents, or significant behavior changes
+   - `patch` — bug fixes, doc updates, minor improvements
+
+2. **Write the changelog entry** in `plugins/iterative-engineering/CHANGELOG.md`. Keep it scannable.
+
+3. **Run the release script** — bumps version in both `plugins/iterative-engineering/.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` (plugin entry only, not marketplace metadata):
+   ```bash
+   ./scripts/release.sh <major|minor|patch>
+   ```
+
+4. **Commit, tag, push:**
+   ```bash
+   git add -A && git commit -m "chore(release): <version>"
+   git tag v<version>
+   git push && git push --tags
+   ```
+
 ## Installation (for users)
 
 ```
