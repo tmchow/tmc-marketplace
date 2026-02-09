@@ -66,21 +66,28 @@ Skip brainstorming when requirements are explicit, detailed, and the user knows 
 
 ### Phase 5: Review and Handoff
 
-1. **Classify open questions.** If the PRD has an Open Questions section, read the questions and assess which resolution method fits each (see classification criteria below). Use this to determine which options to surface in step 2.
-2. Ask the user to choose — surface options based on what's relevant:
+1. **Classify open questions.** If the PRD has an Open Questions section, read the questions and assess which resolution method fits each (see classification criteria below). Use this to determine which steps and options to surface next.
+2. **Surface user decisions.** If any questions were classified as "user decision needed," present them before the main options — the brainstorming context is fresh and it's a good moment to decide. For each question:
+   - Assess the question: if natural options exist, present as multiple choice (use interactive tool-based presentation when available). If the question is truly open-ended, ask free-form.
+   - Include a "Decide later" option — the user shouldn't be forced to decide now.
+   - Answered: update the PRD — remove from Open Questions, apply the decision to the relevant section (requirement, scope, boundary, etc.).
+   - Deferred: leave in Open Questions.
+
+   Present one question at a time. Skip this step if no user-decision questions exist.
+3. Ask the user to choose — surface options based on what's relevant:
    - A) Review the PRD (recommended on first pass)
    - B) Research open questions — when questions exist that can be answered by gathering information
    - C) Spike — when questions exist that need to be built and experienced to validate
    - D) Continue to technical planning
    - E) I'll take it from here (exit)
    Only show B and C when the PRD has open questions that fit that resolution method. If active spikes exist (in-progress spike docs in `docs/spikes/`), mention them as a resume option alongside C.
-3. If review: invoke `plan-review` skill. Plan-review returns findings — brainstorming owns the fix loop.
-4. Fix issues identified by plan-review.
-5. Ask the user to choose (see recommendation logic below) — same options as step 2, re-assessed with updated PRD context.
-6. Repeat steps 3-5 if user chooses another round.
-7. If user chooses research: invoke `iterative:research` skill with the PRD path. After research completes (findings presented and PRD updated with user-approved changes), return to step 5.
-8. If user chooses spike: invoke `iterative:spike` skill. After the spike concludes (spike doc finalized, PRD updated with user-approved changes), return to step 5.
-9. If user chooses tech-planning: invoke `iterative:tech-planning` skill.
+4. If review: invoke `plan-review` skill. Plan-review returns findings — brainstorming owns the fix loop.
+5. Fix issues identified by plan-review.
+6. Ask the user to choose (see recommendation logic below) — same options as step 3, re-assessed with updated PRD context.
+7. Repeat steps 4-6 if user chooses another round.
+8. If user chooses research: invoke `iterative:research` skill with the PRD path. After research completes (findings presented and PRD updated with user-approved changes), return to step 6.
+9. If user chooses spike: invoke `iterative:spike` skill. After the spike concludes (spike doc finalized, PRD updated with user-approved changes), return to step 6.
+10. If user chooses tech-planning: invoke `iterative:tech-planning` skill.
 
 **Open question classification criteria.** When assessing open questions in step 1, apply these criteria to determine which options to surface:
 
@@ -93,11 +100,12 @@ Skip brainstorming when requirements are explicit, detailed, and the user knows 
 
 This classification is a judgment call — present it as informed options, not a formal categorization step. The user picks what to do.
 
-**Recommendation logic for step 5.** Shift the recommended option based on what the review found:
+**Recommendation logic for step 6.** Shift the recommended option based on what the review found:
 - Review found Critical or High issues (now fixed) → recommend **another review round** to verify the fixes landed well
 - Review found only Medium/Low issues, or a round came back clean → recommend **continue to technical planning** — further rounds will have diminishing returns
 - After 3+ rounds → recommend **continue to technical planning** regardless, and note that additional passes are unlikely to surface significant issues
 - If open questions remain that need research or spiking → mention these as options alongside the review recommendation
+- If deferred user decisions remain → note they'll carry forward as open questions into tech planning
 
 ## Question Techniques
 
