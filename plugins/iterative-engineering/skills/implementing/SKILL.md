@@ -65,8 +65,8 @@ Read the plan critically, create tasks, and implement with TDD, code review, and
 3. **Simplification pass.** Get changed files with `git diff --name-only $(git merge-base HEAD <base>)..HEAD`. Spawn the `code-simplifier` agent with this file list. The agent applies behavior-preserving simplifications, runs tests, and commits separately. This is a single bounded pass — not a refactor. **Wait for simplification to complete before proceeding** — the final review must see simplified code.
 4. **Final review offer.** Ask the user to choose: A) Full code review of complete work (recommended), B) Quick review, C) Skip to finish.
 5. If review: invoke `code-review` skill with scope `git diff $(git merge-base HEAD <base>)..HEAD` (all branch changes including simplification).
-6. **Severity acceptance (separate interaction).** If the review found issues at any severity, present severity acceptance FIRST (see Severity Acceptance section). This is its own prompt — do not combine it with the next-step options. Fix selected severities. If the review found no issues, skip to step 7.
-7. **Next steps (after fixes are applied or review was clean).** Ask the user to choose: A) Another review round, B) Wrap up and create PR, C) I'll handle PR/merge myself (exit). Do not recommend wrap-up if fixes were just applied — recommend **another round** to verify. Recommend **wrap up** only when the review was clean or the user skipped all fixes.
+6. **Severity acceptance (separate prompt).** If the review found issues at any severity, present severity acceptance (see Severity Acceptance section). This is its own prompt — do not combine it with next-step options, and do not skip it even when all issues are Medium/Low. "Clean" means zero findings at any severity. If no findings, skip to step 7.
+7. **Next steps (separate prompt, after fixes land or user skipped fixes).** Ask the user to choose: A) Another review round, B) Wrap up and create PR, C) I'll handle PR/merge myself (exit). Do not recommend wrap-up if fixes were just applied — recommend **another round** to verify. Recommend **wrap up** only when zero findings or user chose to skip all fixes.
 8. Repeat steps 5-7 if user chooses another round.
 
 ## Workspace Setup
@@ -143,15 +143,32 @@ Assess scope to choose between full and quick: substantial feature work (multipl
 
 ### Severity Acceptance
 
-**This is its own interaction — do not combine it with next-step options.** When code-review returns findings, present ALL severity levels that have issues. The user picks which levels to fix:
+**This is its own prompt — do not combine it with next-step options.** Present severity acceptance whenever the review has findings at ANY severity, including Medium/Low-only reviews. Do not interpret "no Critical/High" as "clean" — clean means zero findings.
 
-> "Which severity levels should be fixed?"
-> - Critical (N issues)
-> - High (N issues)
-> - Medium (N issues)
-> - Low (N issues)
+**When Critical or High issues exist:**
 
-Include every severity level that has findings — do not omit Low issues or pre-select only the highest severity. The user selects one or more severity levels to fix (or chooses "Other" to skip all or provide custom direction). Fix only the selected severities. Next-step options (another round, wrap up, exit) come AFTER fixes are applied, as a separate prompt.
+> Review found issues. How would you like to handle them?
+> - **Fix Critical + High (Recommended)** — N Critical, N High
+> - **Choose which severity levels to fix** — select from all levels
+> - **Skip fixes**
+
+If the user accepts the recommendation, fix Critical + High. If they choose, present a multi-select of severity levels that have findings:
+
+> Which severity levels should be fixed? (select one or more)
+> - [ ] Critical (N issues)
+> - [ ] High (N issues)
+> - [ ] Medium (N issues)
+> - [ ] Low (N issues)
+
+**When only Medium/Low issues exist (no Critical/High):**
+
+> Review found N Medium and N Low issues. How would you like to handle them?
+> - **Choose which severity levels to fix** — select from Medium, Low
+> - **Proceed without fixes (Recommended)**
+
+If the user chooses to fix, present the multi-select of severity levels with findings.
+
+Fix only the selected severities. Next-step options come AFTER fixes land, as a separate prompt (Phase 3 step 7).
 
 By the time implementing hands off to `implementation-wrapup`, all code reviews are complete. Wrapup skips its own review offer and handles verification, PR, and cleanup.
 
