@@ -22,9 +22,10 @@ If requirements are vague and no PRD exists, offer to start with `iterative:brai
 1. **Understand before structuring** — Explore the codebase and ask questions before writing the plan
 2. **Decisions, not code** — Capture architecture choices, query strategies, component boundaries, trade-offs. Leave method names, signatures, and implementation code to the implementer
 3. **Concrete test scenarios** — Specific inputs, expected outputs, edge cases to cover. Not full test code, not "test that it works"
-4. **Right-sized subtasks** — Scoped to a single atomic commit, typically touching 2-3 files. Not too big (5+ files, multiple unrelated changes), not too small (single line, no meaningful test)
-5. **Dependencies clear** — Explicit ordering of what depends on what
-6. **Verification built-in** — Each subtask has a way to confirm it works
+4. **Test files are explicit** — Every feature subtask must include the test file path in its `**Files:**` field. Test scenarios without a target test file get skipped during implementation
+5. **Right-sized subtasks** — Scoped to a single atomic commit, typically touching 2-3 files. Not too big (5+ files, multiple unrelated changes), not too small (single line, no meaningful test)
+6. **Dependencies clear** — Explicit ordering of what depends on what
+7. **Verification built-in** — Each subtask has a way to confirm it works
 
 ## Plan Quality Bar
 
@@ -33,6 +34,7 @@ Every plan must contain:
 - **File paths** — Which files to create or modify
 - **Decisions with rationale** — Architecture choices, query strategies, data flow, what was considered and rejected
 - **Test scenarios** — Specific inputs, expected outputs, edge cases — not "verify it works"
+- **Test file paths** — Every feature subtask includes the test file in `**Files:**` — no test file = tests won't get written
 - **Existing patterns to follow** — Reference actual code in the codebase that the implementer should use as a model
 - **What and why, not how** — Describe what each subtask accomplishes and the key decisions driving it. Don't pre-write the implementation
 
@@ -61,7 +63,7 @@ A plan is ready when an implementer can start working without asking clarifying 
 1. Identify major components (become parent tasks, typically 2-5).
 2. Break each into subtasks (2-5 per parent, one commit each).
 3. Use the standardized subtask format (see template) — every subtask has the same fields so it can be directly converted into tasks.
-4. For each subtask, define: dependencies on other subtasks (always present, even if "none"), files to create or modify, what the subtask accomplishes and key decisions, test scenarios with specific inputs and expected outputs, how to verify it works.
+4. For each subtask, define: dependencies on other subtasks (always present, even if "none"), files to create or modify (including test files for feature subtasks), what the subtask accomplishes and key decisions, test scenarios with specific inputs and expected outputs, how to verify it works.
 5. Number subtasks as Parent.Subtask (1.1, 1.2, 2.1) for cross-referencing.
 
 ### Phase 3: Write Technical Plan
@@ -106,6 +108,7 @@ The tech plan's `**PRD:**` header links to the PRD document. If the PRD is updat
 | Vague descriptions ("implement the feature") | Specific: what to build, which files, what decisions, what edge cases |
 | Pre-writing implementation code in the plan | Describe what to build and the decisions; the implementer writes the code |
 | Test descriptions without specifics ("test that it works") | Concrete scenarios: specific inputs, expected outputs, edge cases |
+| Test scenarios without a test file in `Files:` | Every feature subtask includes the test file path — no test file = tests won't get written |
 | Planning without referencing existing code patterns | Ground every subtask in actual file paths and existing conventions |
 | Over-planning hypothetical scenarios | Plan only what's needed; defer decisions that can wait |
 | Diverging from the PRD without updating it | Update the PRD when approach changes — it's the requirements source of truth |

@@ -35,13 +35,15 @@ Every subtask uses the same standardized format so it can be directly converted 
 [What this subtask accomplishes — the change, approach, key decisions,
 rationale. Free-form but specific enough to act on without clarifying questions.]
 
-**Test scenarios:**
+**Test scenarios:** (`path/to/test.test.ts`)
 - [Input/condition] → [expected output/behavior]
 - [Edge case] → [expected handling]
 - [Error case] → [expected error]
 
 **Verify:** [How to confirm it works]
 ```
+
+**Important:** Feature subtasks must include the test file path in both `**Files:**` and `**Test scenarios:**`. The parenthetical after "Test scenarios:" tells the implementer exactly where to write the tests. Without it, test scenarios get skipped.
 
 ```markdown
 #### 1.2 [Action-oriented title]
@@ -62,7 +64,7 @@ rationale. Free-form but specific enough to act on without clarifying questions.
 - **Depends on** — Always present. Use subtask numbers (e.g., `1.1, 2.3`) or `none`. These become task dependencies during conversion
 - **Files** — File paths to create or modify. Become task links during conversion
 - **Description** — Everything the implementer needs: what, why, approach, patterns to follow. Reference PRD requirement numbers (e.g., "Satisfies requirement #2") when a subtask directly fulfills a PRD requirement — this enables downstream validation during code review
-- **Test scenarios** — Concrete inputs → expected outputs
+- **Test scenarios** — Concrete inputs → expected outputs. Parenthetical names the test file (e.g., `**Test scenarios:** (path/to/test.test.ts)`)
 - **Verify** — How to confirm the subtask works
 
 ### Closing Sections
@@ -121,7 +123,7 @@ Standalone method rather than extending `getSubtasks()` — keeps it
 unchanged and composable for other callers. The existing `getBlockedByMap()`
 only covers `ready` status which is too narrow — need all non-terminal statuses.
 
-**Test scenarios:**
+**Test scenarios:** (`packages/hzl-core/src/services/task-service.test.ts`)
 - Empty input → empty map
 - Tasks with no dependencies → empty map
 - Tasks with incomplete dependencies → map of task_id to blocking dep IDs
@@ -148,6 +150,7 @@ Before the plan is complete, verify every subtask has:
 - [ ] Description specific enough to act on without clarifying questions
 - [ ] Key decisions with rationale (approach, query strategy, data flow)
 - [ ] Concrete test scenarios with specific inputs and expected outputs
+- [ ] Test file path in `Files:` and parenthetical in `Test scenarios:` (feature subtasks)
 - [ ] Reference to existing patterns to follow (where applicable)
 
 And the plan overall has:
