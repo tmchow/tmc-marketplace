@@ -5,6 +5,18 @@ All notable changes to the iterative-engineering plugin will be documented in th
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] - 2026-02-08
+
+### Changed
+
+- **Spike skill** — restructured for clarity and reliability.
+
+### Infrastructure
+
+- **Auto-tag releases** — `v<version>` tag created automatically when release PRs merge.
+
+---
+
 ## [1.3.0] - 2026-02-08
 
 ### Added
