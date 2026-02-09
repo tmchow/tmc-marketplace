@@ -1,6 +1,6 @@
 {
   "name": "iterative-engineering",
-  "version": "1.3.3",
+  "version": "1.3.4",
   "description": "Iterative development workflows. 13 agents, 11 skills for brainstorming, research, spiking, tech planning, multi-agent reviews, TDD execution, and PR feedback resolution.",
   "author": {
     "name": "Trevin Chow",
