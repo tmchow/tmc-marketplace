@@ -35,7 +35,7 @@ Every plan must contain:
 - **Decisions with rationale** — Architecture choices, query strategies, data flow, what was considered and rejected
 - **Test scenarios** — Specific inputs, expected outputs, edge cases — not "verify it works"
 - **Test file paths** — Every feature subtask includes the test file in `**Files:**` — no test file = tests won't get written
-- **Existing patterns to follow** — Reference actual code in the codebase that the implementer should use as a model
+- **Existing patterns to follow** — Reference actual code in the codebase that the implementer should use as a model. Reference by function/class/pattern name, never by line number — line numbers drift as code changes
 - **What and why, not how** — Describe what each subtask accomplishes and the key decisions driving it. Don't pre-write the implementation
 
 A plan is ready when an implementer can start working without asking clarifying questions. They know what to build, where to build it, what decisions have been made, and what edge cases to handle. They write the code.
@@ -110,6 +110,7 @@ The tech plan's `**PRD:**` header links to the PRD document. If the PRD is updat
 | Test descriptions without specifics ("test that it works") | Concrete scenarios: specific inputs, expected outputs, edge cases |
 | Test scenarios without a test file in `Files:` | Every feature subtask includes the test file path — no test file = tests won't get written |
 | Planning without referencing existing code patterns | Ground every subtask in actual file paths and existing conventions |
+| Referencing code by line number (`file.ts:42`) | Reference by function/class/pattern name — line numbers drift as code changes |
 | Over-planning hypothetical scenarios | Plan only what's needed; defer decisions that can wait |
 | Diverging from the PRD without updating it | Update the PRD when approach changes — it's the requirements source of truth |
 
