@@ -26,9 +26,9 @@ Read the plan critically, create tasks, and implement with TDD, code review, and
 
 ### Phase 0: Detect Resume
 
-1. Check for in-progress HZL tasks or built-in task items
-2. If resuming: load the plan document, summarize current state, show completed vs remaining subtasks, continue from next incomplete subtask (skip to Phase 2)
-3. If starting fresh: proceed to Phase 1
+1. Check for in-progress HZL tasks or built-in task items related to this plan.
+2. If tasks exist and work is in progress: load the plan document, summarize current state, show completed vs remaining subtasks, continue from next incomplete subtask (skip to Phase 2).
+3. If no tasks exist: proceed to Phase 1 — **even if you have prior conversation context.** Having discussed the plan in a previous session is not the same as having set up tasks and workspace. Phase 1 setup (task creation, HZL detection, workspace isolation) must run before any implementation begins.
 
 ### Phase 1: Understand and Setup
 
@@ -190,6 +190,7 @@ If reality diverges from the plan during implementation:
 | Creating tasks before understanding the plan | Read and clarify the plan, then create tasks |
 | Committing with failing tests | Only commit when tests pass |
 | Committing feature subtask without writing tests | TDD: write tests first from plan's test scenarios, then implement |
+| Skipping Phase 1 because of prior conversation context | Prior context ≠ setup complete. If no tasks exist, run Phase 1 — HZL detection, task creation, workspace isolation |
 | Pushing through when blocked | Stop and ask for help |
 | Full code review on trivial changes | Scale review to complexity — skip for config changes |
 | Modifying the plan silently | Report divergence and get user agreement |
