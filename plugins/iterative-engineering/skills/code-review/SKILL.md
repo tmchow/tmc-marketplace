@@ -106,7 +106,7 @@ Shut down all teammates (send shutdown requests), then delete the team. Assemble
 >
 > **Fix order:** [If fixes needed — prioritized: critical first, then high, etc.]
 
-Do not include time estimates.
+Do not include time estimates. **When invoked from `iterative:implementing`:** omit the `**Fix order:**` line — implementing handles prioritization through its own severity acceptance flow.
 
 ## Language-Agnostic
 
