@@ -23,6 +23,17 @@ When brainstorming identifies several spike-worthy questions:
 
 Each spike gets its own directory, its own doc, and — for in-codebase spikes — its own worktree and branch.
 
+## Cleanup Issues
+
+**Worktree has uncommitted changes at cleanup time:**
+- Don't silently discard. Ask the user: "The spike worktree has uncommitted changes. These are throwaway by design — OK to delete, or do you want to review first?"
+- If the user wants to keep something, they can cherry-pick or copy files to the original branch before cleanup.
+
+**Spike doc references a worktree that no longer exists:**
+- The worktree may have been manually removed or lost. Flag the inconsistency during Phase 0 resume detection.
+- If the spike is still in progress, offer to recreate the worktree from the spike branch (if it still exists) or start fresh.
+- If the spike is being concluded, proceed with Phase 4 — the worktree isn't needed for documentation.
+
 ## When Things Go Wrong
 
 **Stop and ask for clarification when:**
