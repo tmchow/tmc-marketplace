@@ -35,12 +35,12 @@ All reviewers use the same 4-level scale:
 | `simplicity-reviewer` | YAGNI, over-engineering, unnecessary abstraction | Is this minimal? |
 | `testing-reviewer` | Coverage, test quality, edge cases, plan test scenarios | Is this well-tested? |
 
-In Full mode, the orchestrator also runs **external model CLIs** inline (Gemini, Codex, Claude) for independent, model-diverse perspectives. See External Reviewers below.
+In Full mode, the orchestrator can also run **external model CLIs** inline (Gemini, Codex, Claude) for independent, model-diverse perspectives (experimental, opt-in). See External Reviewers below.
 
 ## Review Modes
 
 ### Full Mode (default)
-Uses all 5 built-in reviewers. Optionally includes external model CLIs (Gemini, Codex, Claude) for model-diverse independent review — the user is asked before running them. Full mode always runs the 5 built-in reviewers regardless of external CLI availability.
+Uses all 5 built-in reviewers. Optionally includes external model CLIs (experimental, opt-in) for model-diverse independent review — the user selects which CLIs to include. Full mode always runs the 5 built-in reviewers regardless of external CLI availability.
 
 ### Quick Mode
 Uses 2-3 reviewers. Auto-detect from changed files when the caller doesn't specify a type:
@@ -55,9 +55,9 @@ Uses 2-3 reviewers. Auto-detect from changed files when the caller doesn't speci
 | Config/CI only | correctness (single reviewer — minimal review) |
 | Mixed or unclear | Default to full mode |
 
-## External Reviewers
+## External Reviewers (Experimental)
 
-External reviewers invoke a **different model's CLI** for an independent code review, providing model diversity. The value is that different model families have different blind spots — a finding confirmed across models is higher confidence than one from a single model.
+External reviewers invoke a **different model's CLI** for an independent code review, providing model diversity. The value is that different model families have different blind spots — a finding confirmed across models is higher confidence than one from a single model. This feature is experimental; CLI availability and behavior may vary.
 
 The orchestrator runs external CLIs **directly** (not via subagents) — this ensures Bash calls happen in the main agent context where the user can approve them normally, avoiding permission issues with subagent CLI access.
 
@@ -125,18 +125,18 @@ If uncertain, keep all three — each invocation is safe (sandboxed, read-only, 
 
 **If 2+ CLIs available:** Use the interactive question tool with multi-select, listing each available CLI as an option:
 
-> **Add external model reviews?** The 5 built-in reviewers always run.
+> **Add external model reviews? (Experimental)** The 5 built-in reviewers always run.
 >
-> - **Gemini** — Independent review from Google's model
-> - **Codex** — Independent review from OpenAI's model
+> - **Gemini** — Experimental. Independent review from Google's model
+> - **Codex** — Experimental. Independent review from OpenAI's model. Can take 5+ minutes
 
 The user can select any combination (both, one, or neither).
 
 **If 1 CLI available:** Use a simple yes/no question for that CLI:
 
-> **Also run {CLI name} for independent review?** The 5 built-in reviewers always run.
+> **Also run {CLI name} for independent review? (Experimental)** The 5 built-in reviewers always run.
 >
-> - **Yes** — Add an independent perspective from {model family}
+> - **Yes** — Experimental. Add an independent perspective from {model family}. {If Codex, add: "Can take 5+ minutes."}
 > - **No** — Continue with the 5 built-in reviewers
 
 Run only the CLIs the user selected. If none selected, skip to Step 3.
@@ -246,10 +246,13 @@ Continue until:
 
 **This skill only reviews.** Do not invoke other skills (implementing, tech-planning, etc.) after presenting results.
 
-When invoked standalone or from `implementation-wrapup`, ask the user to choose:
-- Fix issues and re-review (Recommended)
-- Fix issues and proceed to [name the actual next step based on context, e.g., "create a PR" if code is ready]
-- Continue without changes
+When invoked standalone or from `implementation-wrapup`, use the interactive question tool to ask the user:
+
+> **How would you like to proceed?**
+>
+> - **Fix issues and re-review** (Recommended) — Address findings, then run another review round
+> - **Fix issues and proceed** — Address findings, then move to the next step (e.g., "create a PR" if code is ready)
+> - **Continue without changes** — Accept the code as-is
 
 When invoked from `iterative:implementing`, return findings directly — implementing owns the review loop and decides whether to re-review or continue to the next section.
 

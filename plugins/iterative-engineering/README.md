@@ -197,9 +197,9 @@ The core workflow skills use an `iterative:` prefix in their name (e.g., `/itera
 
 Built-in reviewers use diff-anchored scoping — primary focus on changed lines, with pre-existing issues tagged separately for independent triage. They run as teammates who can cross-validate findings. When agent teams are unavailable, reviews fall back to parallel subagent execution.
 
-### External Reviewers (Code Review)
+### External Reviewers (Code Review, Experimental)
 
-In Full mode, the orchestrator can run external model CLIs directly (opt-in) for independent, model-diverse perspectives:
+In Full mode, the orchestrator can run external model CLIs directly (opt-in) for independent, model-diverse perspectives. This feature is experimental; CLI availability and behavior may vary. Codex reviews can take 5+ minutes.
 
 | CLI | Invocation | Safety mode |
 |-----|------------|-------------|

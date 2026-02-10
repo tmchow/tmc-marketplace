@@ -18,9 +18,9 @@ Five reviewers run natively on the host platform, each focused on a specific dom
 
 Built-in reviewers run as an agent team, enabling cross-validation: reviewers can read each other's findings and challenge them.
 
-## External Reviewers (Model Diversity)
+## External Reviewers (Experimental)
 
-Five reviewers powered by the same model share the same training data, reasoning patterns, and blind spots. External reviewers address this by invoking a different model family's CLI for an independent review.
+Five reviewers powered by the same model share the same training data, reasoning patterns, and blind spots. External reviewers address this by invoking a different model family's CLI for an independent review. This feature is experimental; CLI availability and behavior may vary. Codex reviews can take 5+ minutes.
 
 Three external CLIs are supported:
 
