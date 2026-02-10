@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.2] - 2026-02-10
+
+### Fixed
+
+- **Per-CLI opt-in selection** — external reviewer question is now multi-select, allowing users to choose individual CLIs (e.g., Gemini only, Codex only, or both) instead of all-or-nothing. Falls back to yes/no when only 1 CLI is available. ([#40](https://github.com/tmchow/tmc-marketplace/pull/40))
+- **Invalid Codex CLI flags** — removed `--sandbox read-only` (not a valid flag; `codex review` is inherently read-only) and unreachable `codex exec` fallback. ([#40](https://github.com/tmchow/tmc-marketplace/pull/40))
+- **Codex prompt argument conflict** — `codex review --base` and `--uncommitted` are mutually exclusive with custom prompts. Codex now uses its built-in review logic; shared prompt template limited to Gemini and Claude. ([#40](https://github.com/tmchow/tmc-marketplace/pull/40))
+- **Removed `timeout` wrapper** — `timeout` is not available on macOS by default. Each CLI already has its own safety mode. ([#40](https://github.com/tmchow/tmc-marketplace/pull/40))
+- **Reduced git command overhead** — scope detection now uses exactly 2-3 Bash calls (merge-base once, then file list + diff in parallel) instead of 6+. ([#40](https://github.com/tmchow/tmc-marketplace/pull/40))
+- **Avoided `/tmp` permission prompts** — prompts passed via command argument or heredoc stdin instead of temp files. ([#40](https://github.com/tmchow/tmc-marketplace/pull/40))
+- **External reviewers marked experimental** — sections labeled "Experimental" across all docs with Codex timing warning (5+ minutes). ([#41](https://github.com/tmchow/tmc-marketplace/pull/41))
+- **Post-review prompt now interactive** — "How would you like to proceed?" uses the interactive question tool instead of free-form text output. ([#41](https://github.com/tmchow/tmc-marketplace/pull/41))
+
+---
+
 ## [1.4.1] - 2026-02-10
 
 ### Fixed
@@ -131,6 +146,8 @@ Initial release — 11 skills, 13 agents. ([#10](https://github.com/tmchow/tmc-m
 Core workflow: brainstorming → research → spike → tech planning → implementing, with multi-agent reviews at each stage.
 
 <!-- Version comparison links -->
+[1.4.1]: https://github.com/tmchow/tmc-marketplace/compare/v1.4.0...v1.4.1
+[1.4.2]: https://github.com/tmchow/tmc-marketplace/compare/v1.4.1...v1.4.2
 [1.4.1]: https://github.com/tmchow/tmc-marketplace/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.3.5...v1.4.0
 [1.3.5]: https://github.com/tmchow/tmc-marketplace/compare/v1.3.4...v1.3.5
