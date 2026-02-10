@@ -143,30 +143,28 @@ Assess scope to choose between full and quick: substantial feature work (multipl
 
 ### Severity Acceptance
 
-**This is its own prompt — do not combine it with next-step options.** Present severity acceptance whenever the review has findings at ANY severity, including Medium/Low-only reviews. Do not interpret "no Critical/High" as "clean" — clean means zero findings.
+**This is its own prompt — do not combine it with next-step options.** Present severity acceptance whenever the review has findings at ANY severity, including Medium/Low-only reviews. Do not interpret "no Critical/High" as "clean" — clean means zero findings. **Use the interactive question tool** (e.g., `AskUserQuestion` in Claude Code) for all severity acceptance prompts — do not print options as text.
 
 **When Critical or High issues exist:**
 
-> Review found issues. How would you like to handle them?
-> - **Fix Critical + High (Recommended)** — N Critical, N High
-> - **Choose which severity levels to fix** — select from all levels
-> - **Skip fixes**
+Present an interactive choice:
+- **Fix Critical + High (Recommended)** — N Critical, N High
+- **Choose which severity levels to fix** — select from all levels
+- **Skip fixes**
 
-If the user accepts the recommendation, fix Critical + High. If they choose, present a multi-select of severity levels that have findings:
-
-> Which severity levels should be fixed? (select one or more)
-> - [ ] Critical (N issues)
-> - [ ] High (N issues)
-> - [ ] Medium (N issues)
-> - [ ] Low (N issues)
+If the user accepts the recommendation, fix Critical + High. If they choose, present an interactive multi-select of severity levels that have findings:
+- Critical (N issues)
+- High (N issues)
+- Medium (N issues)
+- Low (N issues)
 
 **When only Medium/Low issues exist (no Critical/High):**
 
-> Review found N Medium and N Low issues. How would you like to handle them?
-> - **Choose which severity levels to fix** — select from Medium, Low
-> - **Proceed without fixes (Recommended)**
+Present an interactive choice:
+- **Choose which severity levels to fix** — select from Medium, Low
+- **Proceed without fixes (Recommended)**
 
-If the user chooses to fix, present the multi-select of severity levels with findings.
+If the user chooses to fix, present the interactive multi-select of severity levels with findings.
 
 Fix only the selected severities. Next-step options come AFTER fixes land, as a separate prompt (Phase 3 step 7).
 
