@@ -103,7 +103,7 @@ Same review process: the 4 plan reviewers analyze via agent team, the user fixes
 
 Implementing executes the tech plan with dependency-aware batching. Subtasks are grouped by their dependency graph — each batch runs concurrently via worker subagents, but batches execute sequentially to respect ordering. Each worker reads its subtask from the plan, loads referenced patterns, implements with TDD, and commits.
 
-Code review happens throughout. Large plan sections (6+ subtasks) get automatic incremental reviews between batches to catch issues before later batches build on flawed code. Every section gets a code review when complete, using 5 specialized reviewers (correctness, security, performance, simplicity, testing) via agent team with cross-validation. Severity-based fix acceptance keeps the user in control — they pick which levels to address, not all-or-nothing.
+Code review happens throughout. Large plan sections (6+ subtasks) get automatic incremental reviews between batches to catch issues before later batches build on flawed code. Every section gets a code review when complete, using 5 built-in reviewers (correctness, security, performance, simplicity, testing) via agent team with cross-validation. In full mode, external reviewers from different model families (Gemini, Codex, Claude) provide independent perspectives — each self-identifies and skips when sharing the host platform's model family. Severity-based fix acceptance keeps the user in control — they pick which levels to address, not all-or-nothing.
 
 After all sections finish, a code-simplifier agent makes a single bounded pass of behavior-preserving cleanup on changed files, followed by a final code review of all branch changes. Wrapup verifies tests pass and creates the PR.
 
@@ -154,7 +154,7 @@ The core workflow skills use an `iterative:` prefix in their name (e.g., `/itera
 | `iterative:tech-planning` | Tech Plan | Structure PRD into dependency-ordered subtasks with file paths, test scenarios, architecture decisions |
 | `plan-review` | Review Report | 4 specialized reviewers analyze PRDs and tech plans via agent team with cross-validation |
 | `iterative:implementing` | Code → PR | Dependency-aware batch execution with TDD, incremental and final code reviews, then wrapup |
-| `code-review` | Review Report | 5 specialized reviewers with severity ratings, full or quick mode, language-agnostic |
+| `code-review` | Review Report | 5 built-in + external model-diverse reviewers, severity ratings, full or quick mode, diff-anchored scoping |
 
 ### Internal
 
@@ -185,7 +185,7 @@ The core workflow skills use an `iterative:` prefix in their name (e.g., `/itera
 
 ### Review Agents (Code Review)
 
-5 specialized reviewers analyze code via agent team:
+5 built-in reviewers analyze code via agent team:
 
 | Agent | Focus |
 |-------|-------|
@@ -195,7 +195,19 @@ The core workflow skills use an `iterative:` prefix in their name (e.g., `/itera
 | `simplicity-reviewer` | YAGNI, over-engineering, unnecessary abstraction |
 | `testing-reviewer` | Coverage, test quality, edge cases, plan test scenarios |
 
-Review agents run as teammates who can cross-validate findings — a security reviewer can flag missing test coverage, a YAGNI reviewer can push back on completeness suggestions. When agent teams are unavailable, reviews fall back to parallel subagent execution.
+Built-in reviewers use diff-anchored scoping — primary focus on changed lines, with pre-existing issues tagged separately for independent triage. They run as teammates who can cross-validate findings. When agent teams are unavailable, reviews fall back to parallel subagent execution.
+
+### External Reviewers (Code Review)
+
+3 external reviewers invoke competing model CLIs for independent, model-diverse perspectives:
+
+| Agent | CLI | Purpose |
+|-------|-----|---------|
+| `gemini-reviewer` | Google Gemini | Independent review via `gemini --sandbox -p` |
+| `codex-reviewer` | OpenAI Codex | Independent review via `codex review --base` |
+| `claude-reviewer` | Anthropic Claude | Independent review via `claude -p --max-turns 3` |
+
+Each self-identifies whether it shares a model family with the host platform and skips itself (e.g., `claude-reviewer` skips in Claude Code, `codex-reviewer` skips in Codex). Each also checks CLI availability and skips gracefully if not installed. Full mode only — never spawned in quick mode. See [Code Review Strategy](./docs/CODE_REVIEW_STRATEGY.md) for design details.
 
 ### Workflow Agents
 
