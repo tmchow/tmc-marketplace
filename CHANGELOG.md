@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-02-10
+
+### Added
+
+- **External plan reviewers (Gemini, Codex, Claude)** — opt-in external CLI reviewers for document reviews (PRDs, brainstorms, tech plans), providing model-diverse perspectives alongside the 4 built-in reviewers. All reviewer sources selected via single multi-select prompt. ([#45](https://github.com/tmchow/tmc-marketplace/pull/45))
+- **Document-type-aware persona** — external review prompt adapts perspective by document type: product strategy lens for PRDs/brainstorms, engineering leadership lens for tech plans. ([#45](https://github.com/tmchow/tmc-marketplace/pull/45))
+- **Plan review strategy doc** — `docs/PLAN_REVIEW_STRATEGY.md` documenting the ensemble review architecture, safety model, and design decisions for plan review. ([#45](https://github.com/tmchow/tmc-marketplace/pull/45))
+
+### Changed
+
+- **Plan-review flow restructured** — all reviewer sources are now opt-in. Step 2 determines reviewers via multi-select, Step 2a spawns built-in team (if selected), Step 2b runs external CLIs (if selected). ([#45](https://github.com/tmchow/tmc-marketplace/pull/45))
+- **Codex plan-review invocation** — uses `codex exec --sandbox read-only` for non-interactive execution (base `codex` starts interactive TUI that hangs from agent Bash tools). ([#45](https://github.com/tmchow/tmc-marketplace/pull/45))
+
+### Removed
+
+- **Unused output template** — deleted `references/review-output-template.md` (was never referenced from SKILL.md). Essential formatting rules inlined into Step 4. ([#45](https://github.com/tmchow/tmc-marketplace/pull/45))
+
+---
+
 ## [1.5.0] - 2026-02-10
 
 ### Changed
@@ -162,6 +181,7 @@ Initial release — 11 skills, 13 agents. ([#10](https://github.com/tmchow/tmc-m
 Core workflow: brainstorming → research → spike → tech planning → implementing, with multi-agent reviews at each stage.
 
 <!-- Version comparison links -->
+[1.6.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.4.2...v1.5.0
 [1.4.2]: https://github.com/tmchow/tmc-marketplace/compare/v1.4.1...v1.4.2
 [1.4.1]: https://github.com/tmchow/tmc-marketplace/compare/v1.4.0...v1.4.1
