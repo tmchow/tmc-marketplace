@@ -154,7 +154,3 @@ When invoked from `iterative:implementing`, return findings directly — impleme
 ## Fallback: If Agent Teams/Swarms are Unavailable
 
 If agent teams/swarms are not available, spawn the reviewers in parallel as independent subagents instead of teammates. Each analyzes independently. Skip the cross-validation instruction. Everything else (Steps 1, 3, 4, output format) stays the same. External reviewers work identically in both modes — they call external CLIs regardless of team vs. subagent setup.
-
-## Reference
-
-For design rationale behind the ensemble architecture, external reviewer strategy, and diff-anchored scoping, see `docs/CODE_REVIEW_STRATEGY.md`.
