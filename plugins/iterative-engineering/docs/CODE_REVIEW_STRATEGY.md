@@ -34,7 +34,7 @@ Three external CLIs are supported:
 
 The orchestrator runs external CLIs **directly** via Bash, not via subagents. This ensures CLI commands execute in the main agent context where the user can approve Bash access normally, avoiding permission issues that occur when subagents try to invoke CLIs.
 
-In Full mode, the user is asked whether to include external CLIs (opt-in). If yes, the orchestrator runs available CLIs in parallel alongside the built-in reviewer team. The orchestrating skill reconciles findings from both sources during synthesis.
+In Full mode, the user selects which external CLIs to include (multi-select when 2+ are available, yes/no for a single CLI). The orchestrator runs the selected CLIs in parallel alongside the built-in reviewer team. The orchestrating skill reconciles findings from both sources during synthesis.
 
 ### Self-Identification
 
