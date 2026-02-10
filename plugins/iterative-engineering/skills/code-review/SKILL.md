@@ -64,7 +64,7 @@ The orchestrator runs external CLIs **directly** (not via subagents) — this en
 | CLI | Invocation | Safety mode |
 |-----|------------|-------------|
 | Google Gemini | `gemini --sandbox -p` | Read-only sandbox |
-| OpenAI Codex | `codex review --base` / `codex exec` | Read-only sandbox |
+| OpenAI Codex | `codex review --base` | Review-only command |
 | Anthropic Claude | `claude -p --max-turns 3` | Bounded turns, no session persistence |
 
 External CLIs are Full mode only — never run in Quick mode. If all CLIs are unavailable or skipped, the 5 built-in reviewers still provide comprehensive coverage.
@@ -73,14 +73,19 @@ External CLIs are Full mode only — never run in Quick mode. If all CLIs are un
 
 **Step 1: Determine scope.**
 
-Identify what code to review using the appropriate git diff range:
+Determine the diff range, then gather the file list and diff. This requires exactly 2-3 Bash calls — do not run extra commands (no `git log`, no filtered diffs, no repeated merge-base computation).
 
-- **From implementing (section-level):** The caller provides a baseline SHA (captured at section start) and plan context. Use `git diff <baseline-sha>..HEAD` to scope to only the section's changes. Get changed files with `git diff --name-only <baseline-sha>..HEAD`.
-- **From implementing (final/branch-level):** The caller provides a merge-base scope. Use `git diff $(git merge-base HEAD <base>)..HEAD` for all branch changes.
-- **Standalone:** Detect base branch (`git rev-parse --verify origin/main >/dev/null 2>&1 && echo main || echo master`). Use `git diff $(git merge-base HEAD <base>)..HEAD` to identify changed files. If no commits on branch, fall back to unstaged changes (`git diff`).
-- **Explicit files:** If the caller specifies files, use those.
+**Get the diff range** (1 Bash call):
 
-Get the changed file list with `--name-only` to determine Full or Quick mode from change analysis. The full diff content is what reviewers analyze.
+- **From implementing (section-level):** The caller provides a baseline SHA. The range is `<baseline-sha>..HEAD`.
+- **From implementing (final/branch-level):** The caller provides the base branch. Compute merge-base: `git merge-base HEAD <base>`. The range is `<merge-base-sha>..HEAD`.
+- **Standalone:** Detect base branch and compute merge-base in one call: `git merge-base HEAD $(git rev-parse --verify origin/main >/dev/null 2>&1 && echo origin/main || echo origin/master)`. The range is `<merge-base-sha>..HEAD`. If no commits on branch, fall back to unstaged changes (range is empty, use `git diff`).
+- **Explicit files:** If the caller specifies files, use those directly.
+
+**Get file list and diff** (2 parallel Bash calls using the range from above):
+
+1. `git diff --name-only <range>` — file list, used to determine Full or Quick mode
+2. `git diff <range>` — full diff content, what reviewers analyze
 
 **Step 2a: Spawn built-in reviewers (team members).**
 
@@ -104,37 +109,52 @@ Spawn each built-in reviewer with a prompt that includes the review context:
 
 **Step 2b: Run external model CLIs (inline, opt-in).**
 
-In Full mode, ask the user whether to include external model CLIs for independent review:
+In Quick mode, skip this step entirely. In Full mode:
 
-> Include external model reviews (Gemini, Codex, Claude CLIs) for model-diverse perspectives? These run in sandbox/read-only mode alongside the built-in reviewers.
+**1. Self-identification.** Determine your own model family. Exclude the matching CLI:
 
-If the user declines, skip to Step 3. In Quick mode, always skip this step — external CLIs are Full mode only.
+- If you are Claude → exclude the `claude` CLI
+- If you are Codex/GPT → exclude the `codex` CLI
+- If you are Gemini → exclude the `gemini` CLI
 
-**1. Self-identification.** Determine your own model family. Skip the matching CLI:
+If uncertain, keep all three — each invocation is safe (sandboxed, read-only, or turn-bounded).
 
-- If you are Claude → skip the `claude` CLI
-- If you are Codex/GPT → skip the `codex` CLI
-- If you are Gemini → skip the `gemini` CLI
+**2. Check availability.** Run `which` for each non-excluded CLI in parallel. Drop any CLI that isn't installed. Do not attempt to install missing CLIs or fall back to reviewing the code yourself.
 
-If uncertain, run all three — each invocation is safe (sandboxed, read-only, time-bounded).
+**3. Ask the user.** If no CLIs remain after steps 1-2, skip to Step 3 silently. Otherwise, ask the user which external CLIs to include. The 5 built-in reviewers always run regardless of this choice.
 
-**2. Check availability.** Run `which gemini`, `which codex`, and `which claude` in parallel. Drop any CLI that isn't installed. Do not attempt to install missing CLIs or fall back to reviewing the code yourself.
+**If 2+ CLIs available:** Use the interactive question tool with multi-select, listing each available CLI as an option:
 
-**3. Write prompt and invoke.** For each available, non-skipped CLI, write the review prompt to a temp file and invoke the CLI. Run all available CLIs in parallel via separate Bash calls:
+> **Add external model reviews?** The 5 built-in reviewers always run.
+>
+> - **Gemini** — Independent review from Google's model
+> - **Codex** — Independent review from OpenAI's model
 
-| CLI | Command |
-|-----|---------|
-| Gemini | `timeout 180 gemini --sandbox -p "$(cat /tmp/gemini-review-prompt.txt)"` |
-| Codex (branch) | `timeout 180 codex review --base <branch> --sandbox read-only - < /tmp/codex-review-instructions.txt` |
-| Codex (uncommitted) | `timeout 180 codex review --uncommitted --sandbox read-only - < /tmp/codex-review-instructions.txt` |
-| Codex (SHA range) | `timeout 180 codex exec --sandbox read-only - < /tmp/codex-review-prompt.txt` |
-| Claude | `cat /tmp/claude-review-prompt.txt | timeout 180 claude -p --max-turns 3 --output-format json --no-session-persistence` |
+The user can select any combination (both, one, or neither).
 
-For Codex, prefer `codex review --base <branch>` when scope is branch-level, or `--uncommitted` when there are no commits yet (both handle diff internally). Fall back to `codex exec` for SHA-range scopes (embed scope in prompt). For Claude JSON output, parse the `result` field.
+**If 1 CLI available:** Use a simple yes/no question for that CLI:
 
-All CLIs run in sandbox/read-only mode with 180-second timeouts. If a CLI times out, errors, or produces no output, note it and move on. Do not retry on any error.
+> **Also run {CLI name} for independent review?** The 5 built-in reviewers always run.
+>
+> - **Yes** — Add an independent perspective from {model family}
+> - **No** — Continue with the 5 built-in reviewers
 
-**Review prompt template** (shared across all CLIs). Replace `{diff_scope}` with the actual scope from Step 1 (e.g., `$(git merge-base HEAD main)..HEAD`) before writing to the temp file:
+Run only the CLIs the user selected. If none selected, skip to Step 3.
+
+**4. Invoke CLIs.** Do not write temp files (writing to `/tmp` triggers permission prompts). Run the user-selected CLIs in parallel via separate Bash calls:
+
+| CLI | Invocation |
+|-----|------------|
+| Gemini | `gemini --sandbox -p "<prompt>"` |
+| Codex (branch) | `codex review --base <branch>` |
+| Codex (uncommitted) | `codex review --uncommitted` |
+| Claude | `claude -p --max-turns 3 --output-format json --no-session-persistence <<'PROMPT' ... PROMPT` |
+
+For Gemini, pass the review prompt as the `-p` string argument. For Claude, pipe the review prompt via heredoc stdin; parse the `result` field from JSON output. For Codex, no custom prompt is needed; `--base` and `--uncommitted` are mutually exclusive with the prompt argument, so Codex uses its built-in review logic and handles diff scoping internally.
+
+All CLIs run in read-only or review-only mode. If a CLI errors or produces no output, note it and move on. Do not retry on any error.
+
+**Review prompt template** (Gemini and Claude). Replace `{diff_scope}` with the actual scope from Step 1 (e.g., `$(git merge-base HEAD main)..HEAD`) before passing to the CLI:
 
 ~~~
 You are a senior engineer performing an independent code review. Be thorough, actionable, and objective.
@@ -181,9 +201,9 @@ Fix: <specific remediation, not generic advice>
 If you notice significant issues in unchanged code unrelated to the diff, report them at the end under a "PRE-EXISTING ISSUES" header using the same format.
 ~~~
 
-For Codex via `codex review --base`, omit the SCOPE section — Codex scopes the diff internally via its flags.
+The review prompt template is used for Gemini and Claude only. Codex uses its built-in review logic (no custom prompt accepted with `--base` or `--uncommitted`).
 
-**4. Parse results.** For each CLI that returned output, extract findings and reformat into the standard reviewer format (Location, Issue, Fix, Severity). Tag findings with their source (e.g., "Gemini", "Codex", "Claude"). Tag any pre-existing issues with **[Pre-existing]**.
+**5. Parse results.** For each CLI that returned output, extract findings and reformat into the standard reviewer format (Location, Issue, Fix, Severity). Tag findings with their source (e.g., "Gemini", "Codex", "Claude"). Tag any pre-existing issues with **[Pre-existing]**.
 
 **Step 3: Collect findings.**
 

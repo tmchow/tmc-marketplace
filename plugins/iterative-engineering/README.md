@@ -204,7 +204,7 @@ In Full mode, the orchestrator can run external model CLIs directly (opt-in) for
 | CLI | Invocation | Safety mode |
 |-----|------------|-------------|
 | Google Gemini | `gemini --sandbox -p` | Read-only sandbox |
-| OpenAI Codex | `codex review --base` / `codex exec` | Read-only sandbox |
+| OpenAI Codex | `codex review --base` | Review-only command |
 | Anthropic Claude | `claude -p --max-turns 3` | Bounded turns, no session persistence |
 
 The orchestrator self-identifies its model family and skips the matching CLI (e.g., `claude` is skipped in Claude Code, `codex` is skipped in Codex). CLIs that aren't installed are skipped gracefully. Full mode only — never run in quick mode. See [Code Review Strategy](./docs/CODE_REVIEW_STRATEGY.md) for design details.

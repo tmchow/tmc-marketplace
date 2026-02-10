@@ -27,14 +27,14 @@ Three external CLIs are supported:
 | CLI | Invocation | Safety mode |
 |-----|------------|-------------|
 | Google Gemini | `gemini --sandbox -p` | Read-only sandbox |
-| OpenAI Codex | `codex review --base` / `codex exec` | Read-only sandbox |
+| OpenAI Codex | `codex review --base` | Review-only command |
 | Anthropic Claude | `claude -p --max-turns 3` | Bounded turns, no session persistence |
 
 ### Execution Model
 
 The orchestrator runs external CLIs **directly** via Bash, not via subagents. This ensures CLI commands execute in the main agent context where the user can approve Bash access normally, avoiding permission issues that occur when subagents try to invoke CLIs.
 
-In Full mode, the user is asked whether to include external CLIs (opt-in). If yes, the orchestrator runs available CLIs in parallel alongside the built-in reviewer team. The orchestrating skill reconciles findings from both sources during synthesis.
+In Full mode, the user selects which external CLIs to include (multi-select when 2+ are available, yes/no for a single CLI). The orchestrator runs the selected CLIs in parallel alongside the built-in reviewer team. The orchestrating skill reconciles findings from both sources during synthesis.
 
 ### Self-Identification
 
@@ -49,8 +49,8 @@ CLIs that aren't installed are also skipped (checked via `which`).
 
 External reviewers run in the same working directory on the same branch. Rather than embedding diffs in prompts (which bloats context and loses full-file visibility), each CLI gathers the diff itself:
 
-- **Gemini/Claude**: The prompt includes a `SCOPE` section with the `git diff` command to run. The CLI executes it, reads modified files for full context, then reviews.
-- **Codex**: Uses `codex review --base <branch>` which handles diff scoping natively. Falls back to `codex exec` with a scope instruction for SHA-range reviews.
+- **Gemini/Claude**: A shared review prompt includes a `SCOPE` section with the `git diff` command to run. The CLI executes it, reads modified files for full context, then reviews.
+- **Codex**: Uses `codex review --base <branch>` with its built-in review logic. The `--base` flag is mutually exclusive with custom prompts, so Codex handles both scoping and review criteria internally.
 
 ### Safety
 
@@ -59,7 +59,7 @@ Each CLI runs in its most restrictive read-only mode:
 | CLI | Safety flag | Effect |
 |-----|------------|--------|
 | Gemini | `--sandbox` | Cannot write files or execute destructive commands |
-| Codex | `--sandbox read-only` | Cannot write files or execute destructive commands |
+| Codex | `codex review` | Review-only command; does not modify files or execute code |
 | Claude | `--max-turns 3` | Bounded cost; no explicit sandbox but prompt-constrained |
 
 ### Graceful Degradation
@@ -120,9 +120,9 @@ The skill orchestrator (not the individual reviewers) synthesizes all findings:
 
 **Diff-anchored, not file-anchored.** Reviewers focus on what changed, flag what's caused by the changes, and separately tag what's pre-existing. This keeps reviews actionable for the PR author while not discarding useful observations.
 
-## Shared Prompt Design (External Reviewers)
+## Shared Prompt Design (Gemini and Claude)
 
-All three external CLIs use the same prompt template, derived from Google's Gemini CLI code-review extension with adaptations for our ensemble context:
+Gemini and Claude use a shared review prompt template, derived from Google's Gemini CLI code-review extension with adaptations for our ensemble context. Codex uses its built-in review logic (the `--base` flag is mutually exclusive with custom prompts).
 
 - **Intent-first methodology.** Summarize the change's purpose before looking for issues.
 - **Constraint-heavy.** Over half the prompt is about what NOT to do (don't explain code, don't nitpick style, don't say "check" or "verify").
