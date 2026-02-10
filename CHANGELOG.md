@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.1] - 2026-02-10
+
+### Fixed
+
+- **External reviewer Bash permissions** — external reviewer agents (gemini-reviewer, codex-reviewer, claude-reviewer) couldn't invoke their CLIs because subagents can't get interactive Bash permission approval. Replaced the 3 agent files with inline CLI execution in the code-review skill, where Bash calls happen in the main agent context. ([#38](https://github.com/tmchow/tmc-marketplace/pull/38))
+- **External reviewers now opt-in** — in Full mode, the user is asked whether to include external model CLIs before running them, rather than launching automatically. ([#38](https://github.com/tmchow/tmc-marketplace/pull/38))
+- **Missing Codex `--uncommitted` path** — added `codex review --uncommitted` for standalone/no-commits-yet scenarios. ([#38](https://github.com/tmchow/tmc-marketplace/pull/38))
+
+---
+
 ## [1.4.0] - 2026-02-09
 
 ### Added
@@ -121,6 +131,7 @@ Initial release — 11 skills, 13 agents. ([#10](https://github.com/tmchow/tmc-m
 Core workflow: brainstorming → research → spike → tech planning → implementing, with multi-agent reviews at each stage.
 
 <!-- Version comparison links -->
+[1.4.1]: https://github.com/tmchow/tmc-marketplace/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.3.5...v1.4.0
 [1.3.5]: https://github.com/tmchow/tmc-marketplace/compare/v1.3.4...v1.3.5
 [1.3.4]: https://github.com/tmchow/tmc-marketplace/compare/v1.3.3...v1.3.4

@@ -13,7 +13,7 @@
       "name": "iterative-engineering",
       "source": "./plugins/iterative-engineering",
       "description": "Iterative development workflow - brainstorming, planning, multi-agent reviews, TDD execution, and PR feedback resolution",
-      "version": "1.4.0"
+      "version": "1.4.1"
     }
   ]
 }
