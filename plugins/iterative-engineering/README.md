@@ -103,7 +103,7 @@ Same review process: the 4 plan reviewers analyze via agent team, the user fixes
 
 Implementing executes the tech plan with dependency-aware batching. Subtasks are grouped by their dependency graph — each batch runs concurrently via worker subagents, but batches execute sequentially to respect ordering. Each worker reads its subtask from the plan, loads referenced patterns, implements with TDD, and commits.
 
-Code review happens throughout. Large plan sections (6+ subtasks) get automatic incremental reviews between batches to catch issues before later batches build on flawed code. Every section gets a code review when complete, using 5 built-in reviewers (correctness, security, performance, simplicity, testing) via agent team with cross-validation. In full mode, external reviewers from different model families (Gemini, Codex, Claude) provide independent perspectives — each self-identifies and skips when sharing the host platform's model family. Severity-based fix acceptance keeps the user in control — they pick which levels to address, not all-or-nothing.
+Code review happens throughout. Large plan sections (6+ subtasks) get automatic incremental reviews between batches to catch issues before later batches build on flawed code. Every section gets a code review when complete, using 5 built-in reviewers (correctness, security, performance, simplicity, testing) via agent team with cross-validation. In full mode, external model CLIs (Gemini, Codex, Claude) can optionally provide independent perspectives — the orchestrator self-identifies and skips the matching model family's CLI. Severity-based fix acceptance keeps the user in control — they pick which levels to address, not all-or-nothing.
 
 After all sections finish, a code-simplifier agent makes a single bounded pass of behavior-preserving cleanup on changed files, followed by a final code review of all branch changes. Wrapup verifies tests pass and creates the PR.
 
@@ -199,15 +199,15 @@ Built-in reviewers use diff-anchored scoping — primary focus on changed lines,
 
 ### External Reviewers (Code Review)
 
-3 external reviewers invoke competing model CLIs for independent, model-diverse perspectives:
+In Full mode, the orchestrator can run external model CLIs directly (opt-in) for independent, model-diverse perspectives:
 
-| Agent | CLI | Purpose |
-|-------|-----|---------|
-| `gemini-reviewer` | Google Gemini | Independent review via `gemini --sandbox -p` |
-| `codex-reviewer` | OpenAI Codex | Independent review via `codex review --base` |
-| `claude-reviewer` | Anthropic Claude | Independent review via `claude -p --max-turns 3` |
+| CLI | Invocation | Safety mode |
+|-----|------------|-------------|
+| Google Gemini | `gemini --sandbox -p` | Read-only sandbox |
+| OpenAI Codex | `codex review --base` / `codex exec` | Read-only sandbox |
+| Anthropic Claude | `claude -p --max-turns 3` | Bounded turns, no session persistence |
 
-Each self-identifies whether it shares a model family with the host platform and skips itself (e.g., `claude-reviewer` skips in Claude Code, `codex-reviewer` skips in Codex). Each also checks CLI availability and skips gracefully if not installed. Full mode only — never spawned in quick mode. See [Code Review Strategy](./docs/CODE_REVIEW_STRATEGY.md) for design details.
+The orchestrator self-identifies its model family and skips the matching CLI (e.g., `claude` is skipped in Claude Code, `codex` is skipped in Codex). CLIs that aren't installed are skipped gracefully. Full mode only — never run in quick mode. See [Code Review Strategy](./docs/CODE_REVIEW_STRATEGY.md) for design details.
 
 ### Workflow Agents
 

@@ -34,16 +34,13 @@ All reviewers use the same 4-level scale:
 | `performance-reviewer` | Algorithmic complexity, queries, memory, caching | Is this fast enough? |
 | `simplicity-reviewer` | YAGNI, over-engineering, unnecessary abstraction | Is this minimal? |
 | `testing-reviewer` | Coverage, test quality, edge cases, plan test scenarios | Is this well-tested? |
-| `gemini-reviewer` | Independent review via Google Gemini CLI | What did the other reviewers miss? |
-| `codex-reviewer` | Independent review via OpenAI Codex CLI | What did the other reviewers miss? |
-| `claude-reviewer` | Independent review via Anthropic Claude Code CLI | What did the other reviewers miss? |
 
-The last three are **external reviewers** — they invoke a different model's CLI for an independent perspective. All three are spawned in Full mode; each self-identifies and skips if it shares a model family with the host platform (see External Reviewers below).
+In Full mode, the orchestrator also runs **external model CLIs** inline (Gemini, Codex, Claude) for independent, model-diverse perspectives. See External Reviewers below.
 
 ## Review Modes
 
 ### Full Mode (default)
-Uses all 5 built-in reviewers plus available external reviewers for comprehensive coverage. External reviewers that aren't installed gracefully skip — Full mode always runs the 5 built-in reviewers regardless.
+Uses all 5 built-in reviewers. Optionally includes external model CLIs (Gemini, Codex, Claude) for model-diverse independent review — the user is asked before running them. Full mode always runs the 5 built-in reviewers regardless of external CLI availability.
 
 ### Quick Mode
 Uses 2-3 reviewers. Auto-detect from changed files when the caller doesn't specify a type:
@@ -62,11 +59,15 @@ Uses 2-3 reviewers. Auto-detect from changed files when the caller doesn't speci
 
 External reviewers invoke a **different model's CLI** for an independent code review, providing model diversity. The value is that different model families have different blind spots — a finding confirmed across models is higher confidence than one from a single model.
 
-### Spawn All Three
+The orchestrator runs external CLIs **directly** (not via subagents) — this ensures Bash calls happen in the main agent context where the user can approve them normally, avoiding permission issues with subagent CLI access.
 
-In Full mode, spawn all three external reviewers (`gemini-reviewer`, `codex-reviewer`, `claude-reviewer`). Each agent self-identifies whether it shares a model family with the host platform and skips itself if so. Each also checks whether its CLI is installed and skips if unavailable. No platform detection or external reviewer selection is needed — the agents handle it themselves.
+| CLI | Invocation | Safety mode |
+|-----|------------|-------------|
+| Google Gemini | `gemini --sandbox -p` | Read-only sandbox |
+| OpenAI Codex | `codex review --base` / `codex exec` | Read-only sandbox |
+| Anthropic Claude | `claude -p --max-turns 3` | Bounded turns, no session persistence |
 
-External reviewers are Full mode only — they are never spawned in Quick mode. If all external reviewers skip, Full mode still runs the 5 built-in reviewers as normal.
+External CLIs are Full mode only — never run in Quick mode. If all CLIs are unavailable or skipped, the 5 built-in reviewers still provide comprehensive coverage.
 
 ## How to Run
 
@@ -101,21 +102,98 @@ Spawn each built-in reviewer with a prompt that includes the review context:
 >
 > Your job is to review and report findings — not to fix, remediate, or modify the code. Only report issues you're confident about. Tag any pre-existing issues (unrelated to the current changes) with **[Pre-existing]**. When done, send your findings to the team lead (e.g. `SendMessage` in Claude Code, `send_input` in Codex). Use the severity scale: Critical / High / Medium / Low.
 
-**Step 2b: Launch external reviewers (parallel subagents).**
+**Step 2b: Run external model CLIs (inline, opt-in).**
 
-In Full mode, launch all 3 external reviewers (`gemini-reviewer`, `codex-reviewer`, `claude-reviewer`) as independent parallel subagents via the Task tool — **not** as team members. They run concurrently alongside the built-in team but are not part of it. Provide each with the diff scope and changed files list. Each external reviewer handles its own CLI invocation, self-identification, and graceful skipping.
+In Full mode, ask the user whether to include external model CLIs for independent review:
 
-External reviewers are Full mode only — they are never launched in Quick mode. If an external reviewer reports that its CLI is unavailable or that it shares a model family with the host platform, acknowledge and continue with the remaining findings.
+> Include external model reviews (Gemini, Codex, Claude CLIs) for model-diverse perspectives? These run in sandbox/read-only mode alongside the built-in reviewers.
+
+If the user declines, skip to Step 3. In Quick mode, always skip this step — external CLIs are Full mode only.
+
+**1. Self-identification.** Determine your own model family. Skip the matching CLI:
+
+- If you are Claude → skip the `claude` CLI
+- If you are Codex/GPT → skip the `codex` CLI
+- If you are Gemini → skip the `gemini` CLI
+
+If uncertain, run all three — each invocation is safe (sandboxed, read-only, time-bounded).
+
+**2. Check availability.** Run `which gemini`, `which codex`, and `which claude` in parallel. Drop any CLI that isn't installed. Do not attempt to install missing CLIs or fall back to reviewing the code yourself.
+
+**3. Write prompt and invoke.** For each available, non-skipped CLI, write the review prompt to a temp file and invoke the CLI. Run all available CLIs in parallel via separate Bash calls:
+
+| CLI | Command |
+|-----|---------|
+| Gemini | `timeout 180 gemini --sandbox -p "$(cat /tmp/gemini-review-prompt.txt)"` |
+| Codex (branch) | `timeout 180 codex review --base <branch> --sandbox read-only - < /tmp/codex-review-instructions.txt` |
+| Codex (uncommitted) | `timeout 180 codex review --uncommitted --sandbox read-only - < /tmp/codex-review-instructions.txt` |
+| Codex (SHA range) | `timeout 180 codex exec --sandbox read-only - < /tmp/codex-review-prompt.txt` |
+| Claude | `cat /tmp/claude-review-prompt.txt | timeout 180 claude -p --max-turns 3 --output-format json --no-session-persistence` |
+
+For Codex, prefer `codex review --base <branch>` when scope is branch-level, or `--uncommitted` when there are no commits yet (both handle diff internally). Fall back to `codex exec` for SHA-range scopes (embed scope in prompt). For Claude JSON output, parse the `result` field.
+
+All CLIs run in sandbox/read-only mode with 180-second timeouts. If a CLI times out, errors, or produces no output, note it and move on. Do not retry on any error.
+
+**Review prompt template** (shared across all CLIs). Replace `{diff_scope}` with the actual scope from Step 1 (e.g., `$(git merge-base HEAD main)..HEAD`) before writing to the temp file:
+
+~~~
+You are a senior engineer performing an independent code review. Be thorough, actionable, and objective.
+
+SCOPE:
+Review the changes in this repository. Retrieve the diff by running:
+git diff {diff_scope}
+
+METHODOLOGY:
+1. Run the git diff command above to retrieve the changes.
+2. Summarize the intent of the changes in 1-2 sentences.
+3. Read the modified files for full context (not just the diff hunks).
+4. Analyze the changes for issues.
+
+FOCUS AREAS:
+- Correctness: logic errors, edge cases, off-by-one errors, null/error handling, incorrect conditions
+- Security: injection vulnerabilities, auth gaps, input validation, secrets exposure, OWASP top 10
+- Performance: algorithmic complexity, N+1 queries, resource leaks, unnecessary allocations, blocking operations
+- Real-world failures: partial failures, network issues, race conditions, timeout handling, corrupted state recovery
+- API contract mismatches: incorrect library/framework usage, wrong assumptions about method behavior, misread documentation
+
+CONSTRAINTS:
+- ONLY comment on lines that represent actual changes in the diff (lines with + or -)
+- ONLY report issues with a demonstrable bug, vulnerability, or significant improvement opportunity
+- Do NOT say "check", "confirm", "verify", or "ensure" — state the issue directly
+- Do NOT explain what the code does — the author knows their code
+- Do NOT comment on style, formatting, or naming preferences
+- If a similar issue exists in multiple locations, state it once and list the other locations
+- If no issues are found, say: "No issues found. Code looks clean."
+
+SEVERITY SCALE:
+- CRITICAL: Security vulnerabilities, system-breaking bugs, data loss, complete logic failure
+- HIGH: Incorrect behavior in common cases, performance bottlenecks, resource leaks, major architectural issues
+- MEDIUM: Missing validation, edge case gaps, logic that could be simplified, typographical code errors
+- LOW: Refactoring opportunities, minor improvements
+
+OUTPUT FORMAT:
+For each issue, use exactly this format:
+
+<NUMBER>. [<SEVERITY>] <file_path>:<line_number> — <one-line summary>
+<why this is an issue and what could go wrong>
+Fix: <specific remediation, not generic advice>
+
+If you notice significant issues in unchanged code unrelated to the diff, report them at the end under a "PRE-EXISTING ISSUES" header using the same format.
+~~~
+
+For Codex via `codex review --base`, omit the SCOPE section — Codex scopes the diff internally via its flags.
+
+**4. Parse results.** For each CLI that returned output, extract findings and reformat into the standard reviewer format (Location, Issue, Fix, Severity). Tag findings with their source (e.g., "Gemini", "Codex", "Claude"). Tag any pre-existing issues with **[Pre-existing]**.
 
 **Step 3: Collect findings.**
 
-Wait for findings from both sources: built-in reviewers report via team messages, external reviewers return via subagent results. When you receive a reviewer's message or subagent result, do not output or echo its content — silently collect it. Only output once in Step 4 when assembling the final results. A brief one-line status like "All reviewers have reported" is fine when ready to proceed.
+Wait for findings from all sources: built-in reviewers report via team messages, external CLI results are available from the Bash output in Step 2b. When you receive a reviewer's message, do not output or echo its content — silently collect it. Only output once in Step 4 when assembling the final results. A brief one-line status like "All reviewers have reported" is fine when ready to proceed.
 
 **Step 4: Synthesize and present.**
 
-Shut down the built-in reviewer teammates (send shutdown requests), wait for confirmations, then delete the team using the coding agent's team management tools (e.g. `TeamDelete` in Claude Code, `delete_agent` in Codex). External subagents terminate on their own when they return results. **Never use `rm -rf` or manual file deletion for team cleanup** — always use the agent platform's built-in team teardown. If teardown fails (e.g., orphaned members), retry after a brief pause; if it still fails, report the issue to the user and move on. Assemble the final output:
+Shut down the built-in reviewer teammates (send shutdown requests), wait for confirmations, then delete the team using the coding agent's team management tools (e.g. `TeamDelete` in Claude Code, `delete_agent` in Codex). **Never use `rm -rf` or manual file deletion for team cleanup** — always use the agent platform's built-in team teardown. If teardown fails (e.g., orphaned members), retry after a brief pause; if it still fails, report the issue to the user and move on. Assemble the final output:
 
-1. **Reconcile.** Merge findings from two streams: the built-in team's collaborative results and the external reviewers' independent results. When multiple reviewers flagged the same issue, attribute to the most relevant reviewer and note cross-reviewer agreement. When an external reviewer independently flags the same issue as a built-in reviewer, note the cross-model agreement — these findings were produced by truly independent processes, which strengthens confidence.
+1. **Reconcile.** Merge findings from two sources: the built-in team's collaborative results and any external CLI results. When multiple reviewers flagged the same issue, attribute to the most relevant reviewer and note cross-reviewer agreement. When an external CLI independently flags the same issue as a built-in reviewer, note the cross-model agreement — these findings were produced by truly independent processes, which strengthens confidence.
 2. **Separate pre-existing findings.** Pull out all findings tagged **[Pre-existing]** into a separate list. These do not count toward the verdict.
 3. **Format.** Start with a `### Strengths` section highlighting what's well done (with `file:line` refs). Format each reviewer's findings as a table — one issue per row, same structure for every section. Use `### Reviewer Name` headers. Separate sections with clear whitespace. If there are pre-existing findings, add a `### Pre-existing Issues` section at the end (before the verdict) with a note that these are outside the current changes and can be addressed separately.
 4. **Verdict.** End with a `---` separator followed by:
@@ -157,4 +235,4 @@ When invoked from `iterative:implementing`, return findings directly — impleme
 
 ## Fallback: If Agent Teams/Swarms are Unavailable
 
-If agent teams/swarms are not available, spawn the built-in reviewers in parallel as independent subagents instead of teammates. Each analyzes independently. Skip the cross-validation instruction. External reviewers are always subagents regardless, so their behavior is unchanged in fallback mode — only built-in reviewers change (team members → subagents). Everything else (Steps 1, 3, 4, output format) stays the same.
+If agent teams/swarms are not available, spawn the built-in reviewers in parallel as independent subagents instead of teammates. Each analyzes independently. Skip the cross-validation instruction. External CLIs are always run inline regardless, so their behavior is unchanged in fallback mode — only built-in reviewers change (team members → subagents). Everything else (Steps 1, 3, 4, output format) stays the same.
