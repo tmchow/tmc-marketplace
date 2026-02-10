@@ -27,7 +27,7 @@ Three external CLIs are supported:
 | CLI | Invocation | Safety mode |
 |-----|------------|-------------|
 | Google Gemini | `gemini --sandbox -p` | Read-only sandbox |
-| OpenAI Codex | `codex review --base` / `codex exec` | Read-only sandbox |
+| OpenAI Codex | `codex review --base` | Review-only command |
 | Anthropic Claude | `claude -p --max-turns 3` | Bounded turns, no session persistence |
 
 ### Execution Model
@@ -50,7 +50,7 @@ CLIs that aren't installed are also skipped (checked via `which`).
 External reviewers run in the same working directory on the same branch. Rather than embedding diffs in prompts (which bloats context and loses full-file visibility), each CLI gathers the diff itself:
 
 - **Gemini/Claude**: The prompt includes a `SCOPE` section with the `git diff` command to run. The CLI executes it, reads modified files for full context, then reviews.
-- **Codex**: Uses `codex review --base <branch>` which handles diff scoping natively. Falls back to `codex exec` with a scope instruction for SHA-range reviews.
+- **Codex**: Uses `codex review --base <branch>` which handles diff scoping natively.
 
 ### Safety
 
@@ -59,7 +59,7 @@ Each CLI runs in its most restrictive read-only mode:
 | CLI | Safety flag | Effect |
 |-----|------------|--------|
 | Gemini | `--sandbox` | Cannot write files or execute destructive commands |
-| Codex | `--sandbox read-only` | Cannot write files or execute destructive commands |
+| Codex | `codex review` | Review-only command; does not modify files or execute code |
 | Claude | `--max-turns 3` | Bounded cost; no explicit sandbox but prompt-constrained |
 
 ### Graceful Degradation

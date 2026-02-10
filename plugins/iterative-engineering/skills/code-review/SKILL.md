@@ -64,7 +64,7 @@ The orchestrator runs external CLIs **directly** (not via subagents) — this en
 | CLI | Invocation | Safety mode |
 |-----|------------|-------------|
 | Google Gemini | `gemini --sandbox -p` | Read-only sandbox |
-| OpenAI Codex | `codex review --base` / `codex exec` | Read-only sandbox |
+| OpenAI Codex | `codex review --base` | Review-only command |
 | Anthropic Claude | `claude -p --max-turns 3` | Bounded turns, no session persistence |
 
 External CLIs are Full mode only — never run in Quick mode. If all CLIs are unavailable or skipped, the 5 built-in reviewers still provide comprehensive coverage.
@@ -134,15 +134,14 @@ If the user declines, skip to Step 3.
 
 | CLI | Invocation |
 |-----|------------|
-| Gemini | `timeout 180 gemini --sandbox -p "<prompt>"` |
-| Codex (branch) | `timeout 180 codex review --base <branch> --sandbox read-only - <<'PROMPT' ... PROMPT` |
-| Codex (uncommitted) | `timeout 180 codex review --uncommitted --sandbox read-only - <<'PROMPT' ... PROMPT` |
-| Codex (SHA range) | `timeout 180 codex exec --sandbox read-only - <<'PROMPT' ... PROMPT` |
-| Claude | `timeout 180 claude -p --max-turns 3 --output-format json --no-session-persistence <<'PROMPT' ... PROMPT` |
+| Gemini | `gemini --sandbox -p "<prompt>"` |
+| Codex (branch) | `codex review --base <branch> - <<'PROMPT' ... PROMPT` |
+| Codex (uncommitted) | `codex review --uncommitted - <<'PROMPT' ... PROMPT` |
+| Claude | `claude -p --max-turns 3 --output-format json --no-session-persistence <<'PROMPT' ... PROMPT` |
 
-For Gemini, pass the prompt as the `-p` string argument. For Codex and Claude, pipe via heredoc stdin. For Codex, prefer `codex review --base <branch>` when scope is branch-level, or `--uncommitted` when there are no commits yet (both handle diff internally). Fall back to `codex exec` for SHA-range scopes (embed scope in prompt). For Claude JSON output, parse the `result` field.
+For Gemini, pass the prompt as the `-p` string argument. For Codex and Claude, pipe via heredoc stdin. For Codex, use `codex review --base <branch>` for branch-level scope, or `--uncommitted` when there are no commits yet (both handle diff internally). For Claude JSON output, parse the `result` field.
 
-All CLIs run in sandbox/read-only mode with 180-second timeouts. If a CLI times out, errors, or produces no output, note it and move on. Do not retry on any error.
+All CLIs run in read-only or review-only mode. If a CLI errors or produces no output, note it and move on. Do not retry on any error.
 
 **Review prompt template** (shared across all CLIs). Replace `{diff_scope}` with the actual scope from Step 1 (e.g., `$(git merge-base HEAD main)..HEAD`) before passing to the CLI:
 
