@@ -123,7 +123,7 @@ This skill resolves unknowns where the answer **needs to be built and experience
 
 1. If **multiple spikes were scoped** (e.g., brainstorming identified several spike-worthy questions): "Spike complete. PRD updated. Ready to spike [next item], or done with spiking?"
 2. If invoked from **brainstorming**: return to brainstorming's Phase 5 transition (brainstorming presents its own options with updated PRD context).
-3. If invoked **standalone**: present options:
+3. If invoked **standalone**: present an interactive choice (e.g., `AskUserQuestion` in Claude Code):
    - Continue to technical planning
    - Spike something else
    - I'll take it from here (exit)
@@ -142,7 +142,7 @@ Consult `references/anti-patterns.md` for common mistakes. Key ones: don't build
 
 ## Transition Points
 
-**Always present options to the user at transition points** — never just print options as text. Present the options defined in Phase 3 step 5 (build-feedback rounds) and Phase 5 (handoff).
+**Always present options to the user at transition points using the interactive question tool** (e.g., `AskUserQuestion` in Claude Code) — never just print options as text or end the turn without presenting a choice. Present the options defined in Phase 3 step 5 (build-feedback rounds) and Phase 5 (handoff).
 
 ## Additional Resources
 

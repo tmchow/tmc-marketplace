@@ -144,7 +144,7 @@ Continue until:
 
 **This skill only reviews.** Do not invoke other skills (implementing, tech-planning, etc.) after presenting results.
 
-When invoked standalone or from `implementation-wrapup`, ask the user to choose:
+When invoked standalone or from `implementation-wrapup`, present an interactive choice to the user (e.g., `AskUserQuestion` in Claude Code):
 - Fix issues and re-review (Recommended)
 - Fix issues and proceed to [name the actual next step based on context, e.g., "create a PR" if code is ready]
 - Continue without changes

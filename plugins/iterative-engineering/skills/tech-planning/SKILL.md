@@ -77,10 +77,10 @@ A plan is ready when an implementer can start working without asking clarifying 
 
 ### Phase 4: Review and Handoff
 
-1. Ask the user to choose: A) Review the plan (recommended), B) Start implementing, C) I'll take it from here (exit).
+1. Present an interactive choice to the user (e.g., `AskUserQuestion` in Claude Code): A) Review the plan (recommended), B) Start implementing, C) I'll take it from here (exit).
 2. If review: invoke `plan-review` skill. Plan-review returns findings — tech-planning owns the fix loop.
 3. Fix issues identified by plan-review. **Commit the updated plan.**
-4. Ask the user to choose (see recommendation logic below): A) Another review round, B) Start implementing, C) I'll take it from here (exit).
+4. Present an interactive choice (e.g., `AskUserQuestion`) — see recommendation logic below: A) Another review round, B) Start implementing, C) I'll take it from here (exit).
 5. Repeat steps 2-4 if user chooses another round.
 6. If user chooses implementing: invoke `iterative:implementing` skill (implementing handles task creation internally after reading the plan).
 
@@ -118,7 +118,7 @@ The tech plan's `**PRD:**` header links to the PRD document. If the PRD is updat
 
 ## Transition Points
 
-**Always present options to the user at transition points** — never just print options as text.
+**Always present options to the user at transition points using the interactive question tool** (e.g., `AskUserQuestion` in Claude Code) — never just print options as text or end the turn without presenting a choice.
 
 After technical plan is written, and after each review round, present options:
 - Review the plan — 4 agents analyze for issues (recommended on first pass)
