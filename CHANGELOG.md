@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-02-09
+
+### Added
+
+- **External reviewers (Gemini, Codex, Claude)** — 3 new agents invoke competing model provider CLIs for independent, model-diverse code review perspectives. Each self-identifies and skips when sharing the host platform's model provider. Full mode only. ([#35](https://github.com/tmchow/tmc-marketplace/pull/35))
+- **Diff-anchored three-tier scoping** — all 5 built-in reviewers now follow primary/secondary/pre-existing scope tiers, with pre-existing issues tagged separately and excluded from merge verdicts. ([#35](https://github.com/tmchow/tmc-marketplace/pull/35))
+- **Code review strategy doc** — `docs/CODE_REVIEW_STRATEGY.md` documenting the ensemble review architecture, execution model, and design principles. ([#35](https://github.com/tmchow/tmc-marketplace/pull/35))
+- **Fix execution strategy** — after code review, fixes are applied in severity order (Critical → High → Medium → Low) with re-review between severity tiers. ([#36](https://github.com/tmchow/tmc-marketplace/pull/36))
+
+### Fixed
+
+- **Interactive question enforcement** — all user-facing prompts across skills now use the interactive question tool (AskUserQuestion) instead of plain-text prompts that get lost in output. ([#36](https://github.com/tmchow/tmc-marketplace/pull/36))
+
+---
+
 ## [1.3.5] - 2026-02-09
 
 ### Fixed
@@ -106,6 +121,7 @@ Initial release — 11 skills, 13 agents. ([#10](https://github.com/tmchow/tmc-m
 Core workflow: brainstorming → research → spike → tech planning → implementing, with multi-agent reviews at each stage.
 
 <!-- Version comparison links -->
+[1.4.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.3.5...v1.4.0
 [1.3.5]: https://github.com/tmchow/tmc-marketplace/compare/v1.3.4...v1.3.5
 [1.3.4]: https://github.com/tmchow/tmc-marketplace/compare/v1.3.3...v1.3.4
 [1.3.3]: https://github.com/tmchow/tmc-marketplace/compare/v1.3.2...v1.3.3
