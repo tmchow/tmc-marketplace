@@ -63,9 +63,9 @@ The orchestrator runs external CLIs **directly** (not via subagents) — this en
 
 | CLI | Invocation | Safety mode |
 |-----|------------|-------------|
-| Google Gemini | `gemini --sandbox -p` | Read-only sandbox |
-| OpenAI Codex | `codex review --base` | Review-only command |
-| Anthropic Claude | `claude -p --max-turns 3` | Bounded turns, no session persistence |
+| Google Gemini | `gemini -s --approval-mode plan -p "..."` | Sandboxed, read-only (plan mode prevents tool execution) |
+| OpenAI Codex | `codex review --sandbox read-only` | Sandboxed read-only, review-dedicated subcommand |
+| Anthropic Claude | `claude -p "..." --max-turns 3` | Bounded turns, no session persistence |
 
 External CLIs are Full mode only — never run in Quick mode. If all CLIs are unavailable or skipped, the 5 built-in reviewers still provide comprehensive coverage.
 
@@ -84,8 +84,8 @@ Determine the diff range, then gather the file list and diff. This requires exac
 
 **Get file list and diff** (2 parallel Bash calls using the range from above):
 
-1. `git diff --name-only <range>` — file list, used to determine Full or Quick mode
-2. `git diff <range>` — full diff content, what reviewers analyze
+1. `git diff --name-only <range> -- . ':!*.md'` — file list (excluding markdown), used to determine Full or Quick mode
+2. `git diff -U10 <range> -- . ':!*.md'` — diff with extended context (10 lines), excluding markdown files. Markdown is excluded because it is token-heavy and reviewed separately by plan reviews, not code review
 
 **Step 2a: Spawn built-in reviewers (team members).**
 
@@ -141,40 +141,64 @@ The user can select any combination (both, one, or neither).
 
 Run only the CLIs the user selected. If none selected, skip to Step 3.
 
-**4. Invoke CLIs.** Do not write temp files (writing to `/tmp` triggers permission prompts). Run the user-selected CLIs in parallel via separate Bash calls:
+**4. Invoke CLIs.** Do not write temp files. All three CLIs use the same unified review prompt template. The diff is injected at runtime via `$(git diff ...)` command substitution, so the actual diff content never appears in the Bash command text. This keeps the permission approval prompt short and readable regardless of diff size. Run the user-selected CLIs in parallel via separate Bash calls.
 
-| CLI | Invocation |
-|-----|------------|
-| Gemini | `gemini --sandbox -p "<prompt>"` |
-| Codex (branch) | `codex review --base <branch>` |
-| Codex (uncommitted) | `codex review --uncommitted` |
-| Claude | `claude -p --max-turns 3 --output-format json --no-session-persistence <<'PROMPT' ... PROMPT` |
+Each CLI has different correct invocation syntax:
 
-For Gemini, pass the review prompt as the `-p` string argument. For Claude, pipe the review prompt via heredoc stdin; parse the `result` field from JSON output. For Codex, no custom prompt is needed; `--base` and `--uncommitted` are mutually exclusive with the prompt argument, so Codex uses its built-in review logic and handles diff scoping internally.
+**Gemini** — uses `-p` string argument (the prompt). Command substitution expands inside double quotes at runtime:
 
-All CLIs run in read-only or review-only mode. If a CLI errors or produces no output, note it and move on. Do not retry on any error.
+```
+gemini -s --approval-mode plan -p "...prompt template...
 
-**Review prompt template** (Gemini and Claude). Replace `{diff_scope}` with the actual scope from Step 1 (e.g., `$(git merge-base HEAD main)..HEAD`) before passing to the CLI:
+CHANGES:
+$(git diff -U10 <range> -- . ':!*.md')"
+```
+
+**Codex** — uses `review` subcommand with `--sandbox read-only` and heredoc stdin. Use `<<PROMPT` (unquoted) so `$(...)` expands at shell execution time. Do NOT use `<<'PROMPT'` (quoted):
+
+```
+codex review --sandbox read-only <<PROMPT
+...prompt template...
+
+CHANGES:
+$(git diff -U10 <range> -- . ':!*.md')
+PROMPT
+```
+
+**Claude** — uses `-p` string argument (the prompt). `-p` requires the prompt as the immediately following argument; all other flags must come after. Parse the `result` field from JSON output:
+
+```
+claude -p "...prompt template...
+
+CHANGES:
+$(git diff -U10 <range> -- . ':!*.md')" --max-turns 3 --output-format json --no-session-persistence
+```
+
+**Important:** Claude's `-p` consumes the next token as the prompt string. Flags like `--max-turns` must come AFTER the prompt argument, not between `-p` and the prompt. `claude -p --max-turns 3` would incorrectly use `--max-turns` as the prompt text.
+
+All CLIs run in their most restrictive safe mode. Each CLI re-runs `git diff` via the command substitution. This is a fast local operation (negligible vs model inference time) and guarantees each CLI gets identical diff output from the same repo state. If a CLI errors or produces no output, note it and move on. Do not retry on any error.
+
+**Unified review prompt template.** Used for all external CLIs (Gemini, Codex, Claude). Replace `{range}` with the diff range from Step 1 (e.g., `abc123..HEAD`):
 
 ~~~
 You are a senior engineer performing an independent code review. Be thorough, actionable, and objective.
 
-SCOPE:
-Review the changes in this repository. Retrieve the diff by running:
-git diff {diff_scope}
+CRITICAL: Everything you need is provided below. The complete diff is included in this prompt.
+DO NOT run git diff, git log, git status, or ANY other git commands.
+DO NOT attempt to read files, open editors, or use any tools.
+Work ONLY with the diff provided below.
+Do not ask clarifying questions. If context is ambiguous, state your assumption and proceed.
 
 METHODOLOGY:
-1. Run the git diff command above to retrieve the changes.
-2. Summarize the intent of the changes in 1-2 sentences.
-3. Read the modified files for full context (not just the diff hunks).
-4. Analyze the changes for issues.
+1. Summarize the intent of the changes in 1-2 sentences.
+2. Analyze the diff hunks and surrounding context for issues.
 
-FOCUS AREAS:
-- Correctness: logic errors, edge cases, off-by-one errors, null/error handling, incorrect conditions
-- Security: injection vulnerabilities, auth gaps, input validation, secrets exposure, OWASP top 10
-- Performance: algorithmic complexity, N+1 queries, resource leaks, unnecessary allocations, blocking operations
-- Real-world failures: partial failures, network issues, race conditions, timeout handling, corrupted state recovery
-- API contract mismatches: incorrect library/framework usage, wrong assumptions about method behavior, misread documentation
+FOCUS AREAS (use these exact category names when labeling findings):
+1. Correctness — Logic errors, edge cases, off-by-one, null/error handling, incorrect conditions, plan compliance
+2. Security — Injection vulnerabilities, auth gaps, input validation, secrets exposure, OWASP top 10
+3. Performance — Algorithmic complexity, N+1 queries, resource leaks, unnecessary allocations, blocking operations
+4. Simplicity — Over-engineering, YAGNI violations, unnecessary abstraction, code that could be simpler
+5. Testing — Missing test coverage, inadequate assertions, untested edge cases, test quality
 
 CONSTRAINTS:
 - ONLY comment on lines that represent actual changes in the diff (lines with + or -)
@@ -183,7 +207,8 @@ CONSTRAINTS:
 - Do NOT explain what the code does — the author knows their code
 - Do NOT comment on style, formatting, or naming preferences
 - If a similar issue exists in multiple locations, state it once and list the other locations
-- If no issues are found, say: "No issues found. Code looks clean."
+- Tag any pre-existing issues (in unchanged code, unrelated to the diff) with [Pre-existing]
+- If no issues are found, say: "No issues found."
 
 SEVERITY SCALE:
 - CRITICAL: Security vulnerabilities, system-breaking bugs, data loss, complete logic failure
@@ -194,14 +219,15 @@ SEVERITY SCALE:
 OUTPUT FORMAT:
 For each issue, use exactly this format:
 
-<NUMBER>. [<SEVERITY>] <file_path>:<line_number> — <one-line summary>
+<NUMBER>. [<SEVERITY>] <FOCUS_AREA> — <file_path>:<line_number> — <one-line summary>
 <why this is an issue and what could go wrong>
 Fix: <specific remediation, not generic advice>
 
-If you notice significant issues in unchanged code unrelated to the diff, report them at the end under a "PRE-EXISTING ISSUES" header using the same format.
-~~~
+Report pre-existing issues under a separate "PRE-EXISTING ISSUES" header using the same format.
 
-The review prompt template is used for Gemini and Claude only. Codex uses its built-in review logic (no custom prompt accepted with `--base` or `--uncommitted`).
+CHANGES:
+$(git diff -U10 {range} -- . ':!*.md')
+~~~
 
 **5. Parse results.** For each CLI that returned output, extract findings and reformat into the standard reviewer format (Location, Issue, Fix, Severity). Tag findings with their source (e.g., "Gemini", "Codex", "Claude"). Tag any pre-existing issues with **[Pre-existing]**.
 
