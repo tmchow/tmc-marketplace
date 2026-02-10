@@ -1,6 +1,6 @@
 ---
 name: code-review
-description: Use when the user says "review my code", "check these changes", or wants feedback on code before creating a PR. Also use after completing a task during iterative implementation.
+description: This skill should be used when the user says "review my code", "check these changes", or wants feedback on code before creating a PR. Also used after completing a task during iterative implementation.
 ---
 
 # Code Review
@@ -11,7 +11,7 @@ Reviews code changes using specialized reviewers. Uses agent teams when availabl
 
 - After completing a plan section (during `iterative:implementing` skill)
 - Before finishing work and creating a PR
-- When you want feedback on any code changes
+- When feedback is needed on any code changes
 - Can be invoked standalone
 
 ## Severity Scale
@@ -64,7 +64,7 @@ External reviewers invoke a **different model's CLI** for an independent code re
 
 ### Spawn All Three
 
-In Full mode, spawn all three external reviewers (`gemini-reviewer`, `codex-reviewer`, `claude-reviewer`). Each agent self-identifies whether it shares a model family with the host platform and skips itself if so. Each also checks whether its CLI is installed and skips if unavailable. You do not need to detect the platform or decide which external reviewers to spawn — they handle it themselves.
+In Full mode, spawn all three external reviewers (`gemini-reviewer`, `codex-reviewer`, `claude-reviewer`). Each agent self-identifies whether it shares a model family with the host platform and skips itself if so. Each also checks whether its CLI is installed and skips if unavailable. No platform detection or external reviewer selection is needed — the agents handle it themselves.
 
 External reviewers are Full mode only — they are never spawned in Quick mode. If all external reviewers skip, Full mode still runs the 5 built-in reviewers as normal.
 
@@ -154,3 +154,7 @@ When invoked from `iterative:implementing`, return findings directly — impleme
 ## Fallback: If Agent Teams/Swarms are Unavailable
 
 If agent teams/swarms are not available, spawn the reviewers in parallel as independent subagents instead of teammates. Each analyzes independently. Skip the cross-validation instruction. Everything else (Steps 1, 3, 4, output format) stays the same. External reviewers work identically in both modes — they call external CLIs regardless of team vs. subagent setup.
+
+## Reference
+
+For design rationale behind the ensemble architecture, external reviewer strategy, and diff-anchored scoping, see `docs/CODE_REVIEW_STRATEGY.md`.

@@ -119,7 +119,7 @@ If you notice significant issues in unchanged code unrelated to the changes, rep
 
 When using Path A (`codex review --base`), omit the `SCOPE` section — Codex scopes the diff internally via its flags. When using Path B (`codex exec`), include the `SCOPE` section with the appropriate git diff command.
 
-## Step 3: Parse and Relay Results
+## Step 2: Parse and Relay Results
 
 Read Codex's output. For each finding, reformat into the standard reviewer output:
 
@@ -134,7 +134,7 @@ If Codex found no issues, report: "Codex found no issues. Code looks clean from 
 
 If Codex's output is malformed, extract whatever findings you can and note that the output was partially unparseable. Do not invent or supplement findings of your own.
 
-## Step 4: Send Findings
+## Step 3: Send Findings
 
 Send formatted findings to the team lead via `SendMessage`. Include a one-line header:
 
