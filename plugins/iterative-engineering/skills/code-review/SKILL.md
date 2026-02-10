@@ -73,14 +73,19 @@ External CLIs are Full mode only — never run in Quick mode. If all CLIs are un
 
 **Step 1: Determine scope.**
 
-Identify what code to review using the appropriate git diff range:
+Determine the diff range, then gather the file list and diff. This requires exactly 2-3 Bash calls — do not run extra commands (no `git log`, no filtered diffs, no repeated merge-base computation).
 
-- **From implementing (section-level):** The caller provides a baseline SHA (captured at section start) and plan context. Use `git diff <baseline-sha>..HEAD` to scope to only the section's changes. Get changed files with `git diff --name-only <baseline-sha>..HEAD`.
-- **From implementing (final/branch-level):** The caller provides a merge-base scope. Use `git diff $(git merge-base HEAD <base>)..HEAD` for all branch changes.
-- **Standalone:** Detect base branch (`git rev-parse --verify origin/main >/dev/null 2>&1 && echo main || echo master`). Use `git diff $(git merge-base HEAD <base>)..HEAD` to identify changed files. If no commits on branch, fall back to unstaged changes (`git diff`).
-- **Explicit files:** If the caller specifies files, use those.
+**Get the diff range** (1 Bash call):
 
-Get the changed file list with `--name-only` to determine Full or Quick mode from change analysis. The full diff content is what reviewers analyze.
+- **From implementing (section-level):** The caller provides a baseline SHA. The range is `<baseline-sha>..HEAD`.
+- **From implementing (final/branch-level):** The caller provides the base branch. Compute merge-base: `git merge-base HEAD <base>`. The range is `<merge-base-sha>..HEAD`.
+- **Standalone:** Detect base branch and compute merge-base in one call: `git merge-base HEAD $(git rev-parse --verify origin/main >/dev/null 2>&1 && echo origin/main || echo origin/master)`. The range is `<merge-base-sha>..HEAD`. If no commits on branch, fall back to unstaged changes (range is empty, use `git diff`).
+- **Explicit files:** If the caller specifies files, use those directly.
+
+**Get file list and diff** (2 parallel Bash calls using the range from above):
+
+1. `git diff --name-only <range>` — file list, used to determine Full or Quick mode
+2. `git diff <range>` — full diff content, what reviewers analyze
 
 **Step 2a: Spawn built-in reviewers (team members).**
 
@@ -125,21 +130,21 @@ If uncertain, keep all three — each invocation is safe (sandboxed, read-only, 
 
 If the user declines, skip to Step 3.
 
-**4. Write prompt and invoke.** For each available CLI, write the review prompt to a temp file and invoke the CLI. Run all available CLIs in parallel via separate Bash calls:
+**4. Invoke CLIs.** Pass the review prompt directly to each CLI via command argument or heredoc stdin. Do not write temp files (writing to `/tmp` triggers permission prompts). Run all available CLIs in parallel via separate Bash calls:
 
-| CLI | Command |
-|-----|---------|
-| Gemini | `timeout 180 gemini --sandbox -p "$(cat /tmp/gemini-review-prompt.txt)"` |
-| Codex (branch) | `timeout 180 codex review --base <branch> --sandbox read-only - < /tmp/codex-review-instructions.txt` |
-| Codex (uncommitted) | `timeout 180 codex review --uncommitted --sandbox read-only - < /tmp/codex-review-instructions.txt` |
-| Codex (SHA range) | `timeout 180 codex exec --sandbox read-only - < /tmp/codex-review-prompt.txt` |
-| Claude | `cat /tmp/claude-review-prompt.txt | timeout 180 claude -p --max-turns 3 --output-format json --no-session-persistence` |
+| CLI | Invocation |
+|-----|------------|
+| Gemini | `timeout 180 gemini --sandbox -p "<prompt>"` |
+| Codex (branch) | `timeout 180 codex review --base <branch> --sandbox read-only - <<'PROMPT' ... PROMPT` |
+| Codex (uncommitted) | `timeout 180 codex review --uncommitted --sandbox read-only - <<'PROMPT' ... PROMPT` |
+| Codex (SHA range) | `timeout 180 codex exec --sandbox read-only - <<'PROMPT' ... PROMPT` |
+| Claude | `timeout 180 claude -p --max-turns 3 --output-format json --no-session-persistence <<'PROMPT' ... PROMPT` |
 
-For Codex, prefer `codex review --base <branch>` when scope is branch-level, or `--uncommitted` when there are no commits yet (both handle diff internally). Fall back to `codex exec` for SHA-range scopes (embed scope in prompt). For Claude JSON output, parse the `result` field.
+For Gemini, pass the prompt as the `-p` string argument. For Codex and Claude, pipe via heredoc stdin. For Codex, prefer `codex review --base <branch>` when scope is branch-level, or `--uncommitted` when there are no commits yet (both handle diff internally). Fall back to `codex exec` for SHA-range scopes (embed scope in prompt). For Claude JSON output, parse the `result` field.
 
 All CLIs run in sandbox/read-only mode with 180-second timeouts. If a CLI times out, errors, or produces no output, note it and move on. Do not retry on any error.
 
-**Review prompt template** (shared across all CLIs). Replace `{diff_scope}` with the actual scope from Step 1 (e.g., `$(git merge-base HEAD main)..HEAD`) before writing to the temp file:
+**Review prompt template** (shared across all CLIs). Replace `{diff_scope}` with the actual scope from Step 1 (e.g., `$(git merge-base HEAD main)..HEAD`) before passing to the CLI:
 
 ~~~
 You are a senior engineer performing an independent code review. Be thorough, actionable, and objective.
