@@ -63,9 +63,9 @@ The orchestrator runs external CLIs **directly** (not via subagents) — this en
 
 | CLI | Invocation | Safety mode |
 |-----|------------|-------------|
-| Google Gemini | `gemini --sandbox -p` | Read-only sandbox |
-| OpenAI Codex | `codex review --base` | Review-only command |
-| Anthropic Claude | `claude -p --max-turns 3` | Bounded turns, no session persistence |
+| Google Gemini | `gemini -s -p "..."` | Sandboxed (diff inlined, no tool access needed) |
+| OpenAI Codex | `codex review --sandbox read-only` | Sandboxed read-only, review-dedicated subcommand |
+| Anthropic Claude | `claude -p "..." --max-turns 3` | Bounded turns, no session persistence |
 
 External CLIs are Full mode only — never run in Quick mode. If all CLIs are unavailable or skipped, the 5 built-in reviewers still provide comprehensive coverage.
 
@@ -73,19 +73,28 @@ External CLIs are Full mode only — never run in Quick mode. If all CLIs are un
 
 **Step 1: Determine scope.**
 
-Determine the diff range, then gather the file list and diff. This requires exactly 2-3 Bash calls — do not run extra commands (no `git log`, no filtered diffs, no repeated merge-base computation).
+Compute the diff range, file list, and diff in a **single Bash call**. This minimizes permission prompts. Do not run extra commands (no `git log`, no filtered diffs, no separate merge-base computation).
 
-**Get the diff range** (1 Bash call):
+Chain everything into one command using `&&` and labeled output markers (`BASE:`, `FILES:`, `DIFF:`) so you can parse each section from the output:
 
-- **From implementing (section-level):** The caller provides a baseline SHA. The range is `<baseline-sha>..HEAD`.
-- **From implementing (final/branch-level):** The caller provides the base branch. Compute merge-base: `git merge-base HEAD <base>`. The range is `<merge-base-sha>..HEAD`.
-- **Standalone:** Detect base branch and compute merge-base in one call: `git merge-base HEAD $(git rev-parse --verify origin/main >/dev/null 2>&1 && echo origin/main || echo origin/master)`. The range is `<merge-base-sha>..HEAD`. If no commits on branch, fall back to unstaged changes (range is empty, use `git diff`).
-- **Explicit files:** If the caller specifies files, use those directly.
+- **From implementing (section-level):** The caller provides a baseline SHA. Use it directly as the range.
+- **From implementing (final/branch-level):** The caller provides the base branch. Compute merge-base inline.
+- **Standalone:** Detect base branch and compute merge-base inline.
+- **Explicit files:** If the caller specifies files, skip the merge-base and use those directly.
 
-**Get file list and diff** (2 parallel Bash calls using the range from above):
+**Standalone example** (single Bash call):
 
-1. `git diff --name-only <range>` — file list, used to determine Full or Quick mode
-2. `git diff <range>` — full diff content, what reviewers analyze
+```
+BASE=$(git merge-base HEAD $(git rev-parse --verify origin/main 2>/dev/null && echo origin/main || echo origin/master)) && echo "BASE:$BASE" && echo "FILES:" && git diff --name-only ${BASE}..HEAD -- . ':!*.md' && echo "DIFF:" && git diff -U10 ${BASE}..HEAD -- . ':!*.md'
+```
+
+**From implementing example** (single Bash call, caller provides base branch):
+
+```
+BASE=$(git merge-base HEAD <base-branch>) && echo "BASE:$BASE" && echo "FILES:" && git diff --name-only ${BASE}..HEAD -- . ':!*.md' && echo "DIFF:" && git diff -U10 ${BASE}..HEAD -- . ':!*.md'
+```
+
+Parse the output: `BASE:` gives the merge-base SHA (needed for external CLI `{range}`), `FILES:` gives the file list (used to determine Full or Quick mode), `DIFF:` gives the diff with extended context. Markdown files are excluded because they are token-heavy and reviewed separately by plan reviews. If no commits exist on the branch, fall back to unstaged changes (`git diff -U10 -- . ':!*.md'`).
 
 **Step 2a: Spawn built-in reviewers (team members).**
 
@@ -141,67 +150,79 @@ The user can select any combination (both, one, or neither).
 
 Run only the CLIs the user selected. If none selected, skip to Step 3.
 
-**4. Invoke CLIs.** Do not write temp files (writing to `/tmp` triggers permission prompts). Run the user-selected CLIs in parallel via separate Bash calls:
+**4. Invoke CLIs.** All three CLIs use the same unified review prompt template. Both the template and the diff are loaded via `$(...)` command substitution, so the permission approval prompt stays short regardless of prompt or diff size.
 
-| CLI | Invocation |
-|-----|------------|
-| Gemini | `gemini --sandbox -p "<prompt>"` |
-| Codex (branch) | `codex review --base <branch>` |
-| Codex (uncommitted) | `codex review --uncommitted` |
-| Claude | `claude -p --max-turns 3 --output-format json --no-session-persistence <<'PROMPT' ... PROMPT` |
+**Stage the prompt template locally.** Before invoking any CLI, use the **Write** tool to write the prompt template below to `.external-review-prompt.txt` in the repo root. This avoids permission prompts: the plugin directory (`~/.claude/plugins/...`) is outside the project sandbox, and any tool accessing it triggers a permission dialog with no global-approve option. The repo root already has read/write permission. Clean up this file in Step 4.
 
-For Gemini, pass the review prompt as the `-p` string argument. For Claude, pipe the review prompt via heredoc stdin; parse the `result` field from JSON output. For Codex, no custom prompt is needed; `--base` and `--uncommitted` are mutually exclusive with the prompt argument, so Codex uses its built-in review logic and handles diff scoping internally.
+```
+You are a senior engineer reviewing code. Be thorough and actionable.
 
-All CLIs run in read-only or review-only mode. If a CLI errors or produces no output, note it and move on. Do not retry on any error.
-
-**Review prompt template** (Gemini and Claude). Replace `{diff_scope}` with the actual scope from Step 1 (e.g., `$(git merge-base HEAD main)..HEAD`) before passing to the CLI:
-
-~~~
-You are a senior engineer performing an independent code review. Be thorough, actionable, and objective.
-
-SCOPE:
-Review the changes in this repository. Retrieve the diff by running:
-git diff {diff_scope}
+The complete diff is below. DO NOT run any commands, read files, or use tools. State assumptions; do not ask questions.
 
 METHODOLOGY:
-1. Run the git diff command above to retrieve the changes.
-2. Summarize the intent of the changes in 1-2 sentences.
-3. Read the modified files for full context (not just the diff hunks).
-4. Analyze the changes for issues.
+1. Summarize the intent in 1-2 sentences.
+2. Analyze diff hunks for issues.
 
-FOCUS AREAS:
-- Correctness: logic errors, edge cases, off-by-one errors, null/error handling, incorrect conditions
-- Security: injection vulnerabilities, auth gaps, input validation, secrets exposure, OWASP top 10
-- Performance: algorithmic complexity, N+1 queries, resource leaks, unnecessary allocations, blocking operations
-- Real-world failures: partial failures, network issues, race conditions, timeout handling, corrupted state recovery
-- API contract mismatches: incorrect library/framework usage, wrong assumptions about method behavior, misread documentation
+FOCUS AREAS (use exact names):
+1. Correctness — Logic errors, edge cases, null/error handling, incorrect conditions
+2. Security — Injection, auth gaps, input validation, secrets exposure
+3. Performance — Complexity, N+1 queries, resource leaks, blocking operations
+4. Simplicity — Over-engineering, YAGNI, unnecessary abstraction
+5. Testing — Missing coverage, inadequate assertions, untested edge cases
 
 CONSTRAINTS:
-- ONLY comment on lines that represent actual changes in the diff (lines with + or -)
-- ONLY report issues with a demonstrable bug, vulnerability, or significant improvement opportunity
-- Do NOT say "check", "confirm", "verify", or "ensure" — state the issue directly
-- Do NOT explain what the code does — the author knows their code
-- Do NOT comment on style, formatting, or naming preferences
-- If a similar issue exists in multiple locations, state it once and list the other locations
-- If no issues are found, say: "No issues found. Code looks clean."
+- Only comment on changed lines (+ or -). Only report demonstrable issues.
+- Do NOT say "check/confirm/verify/ensure" — state the issue directly.
+- Do NOT explain what the code does or comment on style/formatting.
+- Group repeated issues: state once, list other locations.
+- Tag pre-existing issues (unchanged code, unrelated to diff) with [Pre-existing].
+- No issues? Say: "No issues found."
 
-SEVERITY SCALE:
-- CRITICAL: Security vulnerabilities, system-breaking bugs, data loss, complete logic failure
-- HIGH: Incorrect behavior in common cases, performance bottlenecks, resource leaks, major architectural issues
-- MEDIUM: Missing validation, edge case gaps, logic that could be simplified, typographical code errors
+SEVERITY:
+- CRITICAL: Security holes, system-breaking bugs, data loss
+- HIGH: Incorrect behavior, performance bottlenecks, resource leaks
+- MEDIUM: Missing validation, edge case gaps, simplification opportunities
 - LOW: Refactoring opportunities, minor improvements
 
 OUTPUT FORMAT:
-For each issue, use exactly this format:
-
-<NUMBER>. [<SEVERITY>] <file_path>:<line_number> — <one-line summary>
+<NUMBER>. [<SEVERITY>] <FOCUS_AREA> — <file_path>:<line_number> — <one-line summary>
 <why this is an issue and what could go wrong>
-Fix: <specific remediation, not generic advice>
+Fix: <specific remediation>
 
-If you notice significant issues in unchanged code unrelated to the diff, report them at the end under a "PRE-EXISTING ISSUES" header using the same format.
-~~~
+Pre-existing issues go under a separate "PRE-EXISTING ISSUES" header.
 
-The review prompt template is used for Gemini and Claude only. Codex uses its built-in review logic (no custom prompt accepted with `--base` or `--uncommitted`).
+CHANGES:
+```
+
+All CLI invocations below use `.external-review-prompt.txt` as `<prompt-path>`. The template ends with `CHANGES:\n` so the `$(git diff ...)` output appends directly after it.
+
+Run the user-selected CLIs in parallel via separate Bash calls. Each CLI has different correct invocation syntax:
+
+**Gemini** — uses `-p` string argument. Both `$(cat ...)` and `$(git diff ...)` expand at runtime:
+
+```
+gemini -s -p "$(cat <prompt-path>)$(git diff -U10 <range> -- . ':!*.md')"
+```
+
+**Codex** — uses `review` subcommand with `--sandbox read-only` and heredoc stdin. Use `<<PROMPT` (unquoted) so `$(...)` expands at shell execution time. Do NOT use `<<'PROMPT'` (quoted):
+
+```
+codex review --sandbox read-only <<PROMPT
+$(cat <prompt-path>)$(git diff -U10 <range> -- . ':!*.md')
+PROMPT
+```
+
+**Claude** — uses `-p` string argument. `-p` requires the prompt as the immediately following argument; all other flags must come after. Parse the `result` field from JSON output:
+
+```
+claude -p "$(cat <prompt-path>)$(git diff -U10 <range> -- . ':!*.md')" --max-turns 3 --output-format json --no-session-persistence
+```
+
+**Important:** Claude's `-p` consumes the next token as the prompt string. Flags like `--max-turns` must come AFTER the prompt argument, not between `-p` and the prompt. `claude -p --max-turns 3` would incorrectly use `--max-turns` as the prompt text.
+
+All CLIs run in their most restrictive safe mode. Each CLI re-runs `git diff` via command substitution. This is a fast local operation (negligible vs model inference time) and guarantees each CLI gets identical diff output from the same repo state. If a CLI errors or produces no output, note it and move on. Do not retry on any error.
+
+Replace `<range>` with the diff range from Step 1 (e.g., `abc123..HEAD`).
 
 **5. Parse results.** For each CLI that returned output, extract findings and reformat into the standard reviewer format (Location, Issue, Fix, Severity). Tag findings with their source (e.g., "Gemini", "Codex", "Claude"). Tag any pre-existing issues with **[Pre-existing]**.
 
@@ -211,7 +232,7 @@ Wait for findings from all sources: built-in reviewers report via team messages,
 
 **Step 4: Synthesize and present.**
 
-Shut down the built-in reviewer teammates (send shutdown requests), wait for confirmations, then delete the team using the coding agent's team management tools (e.g. `TeamDelete` in Claude Code, `delete_agent` in Codex). **Never use `rm -rf` or manual file deletion for team cleanup** — always use the agent platform's built-in team teardown. If teardown fails (e.g., orphaned members), retry after a brief pause; if it still fails, report the issue to the user and move on. Assemble the final output:
+Shut down the built-in reviewer teammates (send shutdown requests), wait for confirmations, then delete the team using the coding agent's team management tools (e.g. `TeamDelete` in Claude Code, `delete_agent` in Codex). **Never use `rm -rf` or manual file deletion for team cleanup** — always use the agent platform's built-in team teardown. If teardown fails (e.g., orphaned members), retry after a brief pause; if it still fails, report the issue to the user and move on. Delete the staged prompt template (`rm .external-review-prompt.txt`) if it exists. Assemble the final output:
 
 1. **Reconcile.** Merge findings from two sources: the built-in team's collaborative results and any external CLI results. When multiple reviewers flagged the same issue, attribute to the most relevant reviewer and note cross-reviewer agreement. When an external CLI independently flags the same issue as a built-in reviewer, note the cross-model agreement — these findings were produced by truly independent processes, which strengthens confidence.
 2. **Separate pre-existing findings.** Pull out all findings tagged **[Pre-existing]** into a separate list. These do not count toward the verdict.
