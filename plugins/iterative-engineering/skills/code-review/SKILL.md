@@ -104,23 +104,28 @@ Spawn each built-in reviewer with a prompt that includes the review context:
 
 **Step 2b: Run external model CLIs (inline, opt-in).**
 
-In Full mode, ask the user whether to include external model CLIs for independent review:
+In Quick mode, skip this step entirely. In Full mode:
 
-> Include external model reviews (Gemini, Codex, Claude CLIs) for model-diverse perspectives? These run in sandbox/read-only mode alongside the built-in reviewers.
+**1. Self-identification.** Determine your own model family. Exclude the matching CLI:
 
-If the user declines, skip to Step 3. In Quick mode, always skip this step — external CLIs are Full mode only.
+- If you are Claude → exclude the `claude` CLI
+- If you are Codex/GPT → exclude the `codex` CLI
+- If you are Gemini → exclude the `gemini` CLI
 
-**1. Self-identification.** Determine your own model family. Skip the matching CLI:
+If uncertain, keep all three — each invocation is safe (sandboxed, read-only, time-bounded).
 
-- If you are Claude → skip the `claude` CLI
-- If you are Codex/GPT → skip the `codex` CLI
-- If you are Gemini → skip the `gemini` CLI
+**2. Check availability.** Run `which` for each non-excluded CLI in parallel. Drop any CLI that isn't installed. Do not attempt to install missing CLIs or fall back to reviewing the code yourself.
 
-If uncertain, run all three — each invocation is safe (sandboxed, read-only, time-bounded).
+**3. Ask the user.** If no CLIs remain after steps 1-2, skip to Step 3 silently. Otherwise, ask the user whether to include them. Name only the CLIs that are actually available (e.g., in Claude Code with Gemini and Codex installed, name "Gemini, Codex"). Use the interactive question tool with these options:
 
-**2. Check availability.** Run `which gemini`, `which codex`, and `which claude` in parallel. Drop any CLI that isn't installed. Do not attempt to install missing CLIs or fall back to reviewing the code yourself.
+> **Also run {available CLI names} for independent review?**
+>
+> - **Yes** — Add model-diverse perspectives alongside the 5 built-in reviewers
+> - **No** — The 5-reviewer team (correctness, security, performance, simplicity, testing) has full coverage
 
-**3. Write prompt and invoke.** For each available, non-skipped CLI, write the review prompt to a temp file and invoke the CLI. Run all available CLIs in parallel via separate Bash calls:
+If the user declines, skip to Step 3.
+
+**4. Write prompt and invoke.** For each available CLI, write the review prompt to a temp file and invoke the CLI. Run all available CLIs in parallel via separate Bash calls:
 
 | CLI | Command |
 |-----|---------|
@@ -183,7 +188,7 @@ If you notice significant issues in unchanged code unrelated to the diff, report
 
 For Codex via `codex review --base`, omit the SCOPE section — Codex scopes the diff internally via its flags.
 
-**4. Parse results.** For each CLI that returned output, extract findings and reformat into the standard reviewer format (Location, Issue, Fix, Severity). Tag findings with their source (e.g., "Gemini", "Codex", "Claude"). Tag any pre-existing issues with **[Pre-existing]**.
+**5. Parse results.** For each CLI that returned output, extract findings and reformat into the standard reviewer format (Location, Issue, Fix, Severity). Tag findings with their source (e.g., "Gemini", "Codex", "Claude"). Tag any pre-existing issues with **[Pre-existing]**.
 
 **Step 3: Collect findings.**
 
