@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-02-10
+
+### Changed
+
+- **Unified external reviewer prompt** — all three external CLIs (Gemini, Codex, Claude) now use the same review prompt template with the diff inlined, replacing per-CLI strategies. Focus areas align with the 5 built-in reviewer domains for easier reconciliation. ([#43](https://github.com/tmchow/tmc-marketplace/pull/43))
+- **Prompt template embedded in skill** — the review prompt is embedded directly in SKILL.md and staged locally via Write tool, eliminating all sandbox permission prompts when accessing plugin directory paths. ([#43](https://github.com/tmchow/tmc-marketplace/pull/43))
+- **Single Step 1 Bash call** — merge-base, file list, and diff combined into one command with labeled output markers, reducing permission prompts from 3 to 1. ([#43](https://github.com/tmchow/tmc-marketplace/pull/43))
+- **Tighter prompt template** — compressed redundant instructions, removed items external CLIs can't evaluate (plan compliance), merged overlapping constraints for ~30% fewer tokens. ([#43](https://github.com/tmchow/tmc-marketplace/pull/43))
+
+### Fixed
+
+- **Gemini plan mode error** — dropped `--approval-mode plan` which requires experimental config that can't be guaranteed. Sandbox (`-s`) is sufficient since diff is inlined and prompt instructs no tool usage. ([#43](https://github.com/tmchow/tmc-marketplace/pull/43))
+- **CLI invocation correctness** — Codex uses `review --sandbox read-only` with heredoc stdin, Claude `-p` requires prompt as immediately following argument with flags after. ([#43](https://github.com/tmchow/tmc-marketplace/pull/43))
+
+---
+
 ## [1.4.2] - 2026-02-10
 
 ### Fixed
@@ -146,7 +162,7 @@ Initial release — 11 skills, 13 agents. ([#10](https://github.com/tmchow/tmc-m
 Core workflow: brainstorming → research → spike → tech planning → implementing, with multi-agent reviews at each stage.
 
 <!-- Version comparison links -->
-[1.4.1]: https://github.com/tmchow/tmc-marketplace/compare/v1.4.0...v1.4.1
+[1.5.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.4.2...v1.5.0
 [1.4.2]: https://github.com/tmchow/tmc-marketplace/compare/v1.4.1...v1.4.2
 [1.4.1]: https://github.com/tmchow/tmc-marketplace/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.3.5...v1.4.0
