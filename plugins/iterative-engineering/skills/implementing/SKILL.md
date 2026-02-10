@@ -96,8 +96,8 @@ Check whether HZL is installed (e.g., `hzl status`) and the project uses HZL for
 
 - **HZL not detected** → Use built-in task tracking automatically, no question needed
 - **HZL detected** → Ask the user to choose:
-  - HZL tasks (Recommended) — durable tracking with dependencies, persists across sessions
   - Built-in tasks — lightweight, session-scoped
+  - HZL tasks — task tracking with history across sessions, allows easy resume of work
 
 ### Parsing the Plan
 
