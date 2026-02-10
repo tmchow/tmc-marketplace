@@ -117,20 +117,31 @@ In Quick mode, skip this step entirely. In Full mode:
 - If you are Codex/GPT → exclude the `codex` CLI
 - If you are Gemini → exclude the `gemini` CLI
 
-If uncertain, keep all three — each invocation is safe (sandboxed, read-only, time-bounded).
+If uncertain, keep all three — each invocation is safe (sandboxed, read-only, or turn-bounded).
 
 **2. Check availability.** Run `which` for each non-excluded CLI in parallel. Drop any CLI that isn't installed. Do not attempt to install missing CLIs or fall back to reviewing the code yourself.
 
-**3. Ask the user.** If no CLIs remain after steps 1-2, skip to Step 3 silently. Otherwise, ask the user whether to include them. Name only the CLIs that are actually available (e.g., in Claude Code with Gemini and Codex installed, name "Gemini, Codex"). Use the interactive question tool with these options:
+**3. Ask the user.** If no CLIs remain after steps 1-2, skip to Step 3 silently. Otherwise, ask the user which external CLIs to include. The 5 built-in reviewers always run regardless of this choice.
 
-> **Also run {available CLI names} for independent review?**
+**If 2+ CLIs available:** Use the interactive question tool with multi-select, listing each available CLI as an option:
+
+> **Add external model reviews?** The 5 built-in reviewers always run.
 >
-> - **Yes** — Add model-diverse perspectives alongside the 5 built-in reviewers
-> - **No** — The 5-reviewer team (correctness, security, performance, simplicity, testing) has full coverage
+> - **Gemini** — Independent review from Google's model
+> - **Codex** — Independent review from OpenAI's model
 
-If the user declines, skip to Step 3.
+The user can select any combination (both, one, or neither).
 
-**4. Invoke CLIs.** Do not write temp files (writing to `/tmp` triggers permission prompts). Run all available CLIs in parallel via separate Bash calls:
+**If 1 CLI available:** Use a simple yes/no question for that CLI:
+
+> **Also run {CLI name} for independent review?** The 5 built-in reviewers always run.
+>
+> - **Yes** — Add an independent perspective from {model family}
+> - **No** — Continue with the 5 built-in reviewers
+
+Run only the CLIs the user selected. If none selected, skip to Step 3.
+
+**4. Invoke CLIs.** Do not write temp files (writing to `/tmp` triggers permission prompts). Run the user-selected CLIs in parallel via separate Bash calls:
 
 | CLI | Invocation |
 |-----|------------|
