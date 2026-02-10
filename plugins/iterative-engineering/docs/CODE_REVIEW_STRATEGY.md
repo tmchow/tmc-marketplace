@@ -2,7 +2,7 @@
 
 ## Overview
 
-The code review system uses an ensemble of specialized reviewers — 5 built-in domain experts plus up to 2 external reviewers from different model families — to provide comprehensive, multi-perspective code review.
+The code review system combines 5 built-in domain experts with up to 2 external reviewers from different model families.
 
 ## Built-in Reviewers
 
@@ -16,37 +16,34 @@ Five reviewers run natively on the host platform, each focused on a specific dom
 | Simplicity | YAGNI, over-engineering, abstraction | Is this minimal? |
 | Testing | Coverage, quality, edge cases, plan scenarios | Is this well-tested? |
 
-Built-in reviewers run as an agent team, enabling cross-validation — reviewers can read each other's findings and challenge them.
+Built-in reviewers run as an agent team, enabling cross-validation: reviewers can read each other's findings and challenge them.
 
 ## External Reviewers (Model Diversity)
 
-The most valuable code review insight isn't more of the same perspective — it's a genuinely different one. Five reviewers powered by the same model share the same training data, reasoning patterns, and blind spots. External reviewers solve this by invoking a different model family's CLI for an independent review.
+Five reviewers powered by the same model share the same training data, reasoning patterns, and blind spots. External reviewers address this by invoking a different model family's CLI for an independent review.
 
-Three external reviewer agents exist:
+Three external CLIs are supported:
 
-| Agent | CLI | Invocation |
-|-------|-----|------------|
-| `gemini-reviewer` | Google Gemini | `gemini --sandbox -p` |
-| `codex-reviewer` | OpenAI Codex | `codex review --base` / `codex exec` |
-| `claude-reviewer` | Anthropic Claude | `claude -p --max-turns 3` |
+| CLI | Invocation | Safety mode |
+|-----|------------|-------------|
+| Google Gemini | `gemini --sandbox -p` | Read-only sandbox |
+| OpenAI Codex | `codex review --base` / `codex exec` | Read-only sandbox |
+| Anthropic Claude | `claude -p --max-turns 3` | Bounded turns, no session persistence |
 
 ### Execution Model
 
-External reviewers run as independent parallel subagents (via the Task tool), not as agent team members. This creates two concurrent tracks during a Full mode review:
+The orchestrator runs external CLIs **directly** via Bash, not via subagents. This ensures CLI commands execute in the main agent context where the user can approve Bash access normally, avoiding permission issues that occur when subagents try to invoke CLIs.
 
-1. **Built-in team track** — The 5 built-in reviewers run as teammates in an agent team, enabling cross-validation where they read each other's findings and challenge them.
-2. **External subagent track** — The 3 external reviewers run as independent parallel subagents alongside the team. Each invokes its CLI, collects results, and returns them to the orchestrating skill.
-
-The orchestrating skill reconciles findings from both tracks during synthesis. This separation reflects the reality that external reviewers are opaque CLI wrappers — they can't meaningfully participate in cross-validation, so they shouldn't be team members.
+In Full mode, the user is asked whether to include external CLIs (opt-in). If yes, the orchestrator runs available CLIs in parallel alongside the built-in reviewer team. The orchestrating skill reconciles findings from both sources during synthesis.
 
 ### Self-Identification
 
-All three are spawned in Full mode. Each agent self-identifies whether it shares a model family with the host platform and skips itself if so. This means:
+The orchestrator determines its own model family and skips the matching CLI:
 
-- Running in Claude Code: Gemini + Codex reviewers run, Claude reviewer skips
-- Running in Codex: Gemini + Claude reviewers run, Codex reviewer skips
+- Running in Claude Code: Gemini + Codex CLIs run, Claude CLI skipped
+- Running in Codex: Gemini + Claude CLIs run, Codex CLI skipped
 
-The skill doesn't need platform detection logic — each agent handles it.
+CLIs that aren't installed are also skipped (checked via `which`).
 
 ### Diff Handling
 
@@ -67,7 +64,7 @@ Each CLI runs in its most restrictive read-only mode:
 
 ### Graceful Degradation
 
-External reviewers are additive. If a CLI isn't installed, the agent reports "skipping" and stops. If all external reviewers are unavailable, the review proceeds with the 5 built-in reviewers — the system never fails because of a missing external tool.
+External CLIs are additive and opt-in. If a CLI isn't installed, the orchestrator notes it and moves on. If all external CLIs are unavailable or the user declines, the review proceeds with the 5 built-in reviewers. The system never fails because of a missing external tool.
 
 ## Diff-Anchored Scope
 
@@ -77,7 +74,7 @@ All reviewers (built-in and external) follow a three-tier scope model:
 |------|------|
 | **Primary** | Issues in the changed lines themselves |
 | **Secondary** | Issues in unchanged code directly caused or exposed by the changes |
-| **Pre-existing** | Significant issues in unchanged code unrelated to the changes — tagged `[Pre-existing]` |
+| **Pre-existing** | Significant issues in unchanged code unrelated to the changes, tagged `[Pre-existing]` |
 
 This prevents two failure modes:
 1. **Noise**: Flagging pre-existing issues at the same priority as change-related findings, overwhelming the author
@@ -88,7 +85,7 @@ Pre-existing findings are separated in the final output and excluded from the me
 ## Review Modes
 
 ### Full Mode (default)
-All 5 built-in reviewers + all available external reviewers. Used for final branch reviews and standalone reviews.
+All 5 built-in reviewers + external model CLIs (opt-in). Used for final branch reviews and standalone reviews.
 
 ### Quick Mode
 2-3 built-in reviewers auto-selected by change type. No external reviewers. Used for incremental section reviews during implementation.
@@ -106,10 +103,10 @@ All 5 built-in reviewers + all available external reviewers. Used for final bran
 
 The skill orchestrator (not the individual reviewers) synthesizes all findings:
 
-1. **Reconciliation** — Merge findings from two streams: the built-in team's collaborative results and the external reviewers' independent subagent results. When multiple reviewers flag the same issue, merge them and note agreement. Cross-model agreement (built-in team + external subagent flagging the same issue independently) strengthens confidence.
-2. **Pre-existing separation** — Findings tagged `[Pre-existing]` are pulled into their own section, excluded from the verdict.
-3. **Structured output** — Strengths section, then per-reviewer findings tables, then pre-existing issues, then verdict.
-4. **Verdict** — Based only on change-related findings: Ready to merge / Ready with fixes / Not ready.
+1. **Reconciliation.** Merge findings from two sources: the built-in team's collaborative results and any external CLI results. When multiple reviewers flag the same issue, merge them and note agreement. Cross-model agreement (built-in team + external CLI flagging the same issue independently) strengthens confidence.
+2. **Pre-existing separation.** Findings tagged `[Pre-existing]` are pulled into their own section, excluded from the verdict.
+3. **Structured output.** Strengths section, then per-reviewer findings tables, then pre-existing issues, then verdict.
+4. **Verdict.** Based only on change-related findings: Ready to merge / Ready with fixes / Not ready.
 
 ## Design Principles
 
@@ -117,7 +114,7 @@ The skill orchestrator (not the individual reviewers) synthesizes all findings:
 
 **Reviewers report, the skill synthesizes.** Individual reviewers (built-in or external) only find and report issues. They never fix code, invoke other skills, or make decisions about what to do with findings. The orchestrating skill owns deduplication, presentation, and next-step decisions.
 
-**Subagents for opaque wrappers, teams for collaborators.** External reviewers are opaque CLI wrappers that can't cross-validate — they belong as independent subagents. Built-in reviewers can read each other's findings and challenge them — they belong as team members. Match the execution model to the agent's actual capabilities.
+**Inline for opaque wrappers, teams for collaborators.** External CLIs are opaque wrappers that can't cross-validate, so they run inline via the orchestrator. Built-in reviewers can read each other's findings and challenge them, so they belong as team members. Match the execution model to the agent's actual capabilities.
 
 **Graceful degradation everywhere.** No component is required for the system to function. Missing CLI? Skip. Missing agent teams? Fall back to parallel subagents. Missing all external reviewers? The 5 built-in reviewers still provide comprehensive coverage.
 
@@ -125,12 +122,12 @@ The skill orchestrator (not the individual reviewers) synthesizes all findings:
 
 ## Shared Prompt Design (External Reviewers)
 
-All three external reviewers use the same prompt template, derived from Google's Gemini CLI code-review extension with adaptations for our ensemble context:
+All three external CLIs use the same prompt template, derived from Google's Gemini CLI code-review extension with adaptations for our ensemble context:
 
-- **Intent-first methodology** — Summarize the change's purpose before looking for issues
-- **Constraint-heavy** — Over half the prompt is about what NOT to do (don't explain code, don't nitpick style, don't say "check" or "verify")
-- **Diff-anchored** — Only comment on changed lines; pre-existing issues go under a separate header
-- **Structured output** — Numbered findings with severity, location, issue, and fix
-- **Deduplication instruction** — State repeated issues once, list other locations
+- **Intent-first methodology.** Summarize the change's purpose before looking for issues.
+- **Constraint-heavy.** Over half the prompt is about what NOT to do (don't explain code, don't nitpick style, don't say "check" or "verify").
+- **Diff-anchored.** Only comment on changed lines; pre-existing issues go under a separate header.
+- **Structured output.** Numbered findings with severity, location, issue, and fix.
+- **Deduplication instruction.** State repeated issues once, list other locations.
 
 This design reduces the most common LLM code review failure modes: hand-wavy non-actionable feedback, reviewing the entire file instead of the changes, and walls of repeated findings.
