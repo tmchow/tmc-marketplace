@@ -203,7 +203,7 @@ In Full mode, the orchestrator can run external model CLIs directly (opt-in) for
 
 | CLI | Invocation | Safety mode |
 |-----|------------|-------------|
-| Google Gemini | `gemini -s --approval-mode plan -p "..."` | Sandboxed, read-only (plan mode prevents tool execution) |
+| Google Gemini | `gemini -s -p "..."` | Sandboxed (diff inlined, no tool access needed) |
 | OpenAI Codex | `codex review --sandbox read-only` | Sandboxed read-only, review-dedicated subcommand |
 | Anthropic Claude | `claude -p "..." --max-turns 3` | Bounded turns, no session persistence |
 
