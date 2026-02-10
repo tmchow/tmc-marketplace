@@ -81,13 +81,13 @@ Identify what code to review using the appropriate git diff range:
 
 Get the changed file list with `--name-only` to determine Full or Quick mode from change analysis. The full diff content is what reviewers analyze.
 
-**Step 2: Spawn reviewers.**
+**Step 2a: Spawn built-in reviewers (team members).**
 
-Create an agent team (e.g. `TeamCreate` in Claude Code, `spawn_agent` in Codex), then spawn reviewers as teammates. **In Full mode, spawn all 5 built-in reviewers plus the appropriate external reviewers (see External Reviewers above).** In Quick mode, spawn 2-3 built-in reviewers based on change type (see Review Modes above) — external reviewers are Full mode only. If the team already exists (e.g., from an interrupted run), reuse it — read its config, check which reviewers are already present, and spawn only the missing ones.
+Create an agent team (e.g. `TeamCreate` in Claude Code, `spawn_agent` in Codex), then spawn the 5 built-in reviewers as teammates. In Quick mode, spawn 2-3 built-in reviewers based on change type (see Review Modes above). If the team already exists (e.g., from an interrupted run), reuse it — read its config, check which reviewers are already present, and spawn only the missing ones.
 
 Tell the user:
 
-> Using Agent Team 🐝 — reviewers will run as teammates who can cross-validate findings.
+> Using Agent Team 🐝 — built-in reviewers will run as teammates who can cross-validate findings.
 
 Spawn each built-in reviewer with a prompt that includes the review context:
 
@@ -97,21 +97,25 @@ Spawn each built-in reviewer with a prompt that includes the review context:
 > **What was built:** [plan section summary — include if available from implementing]
 > **Plan test scenarios:** [relevant test scenarios from the plan — include if available, for correctness and testing reviewers]
 >
-> You're on a review team with [list other active reviewers]. After your initial review, read what the other reviewers found and message them directly if you see cross-domain issues. Challenge each other's findings.
+> You're on a review team with [list other active built-in reviewers]. After your initial review, read what the other reviewers found and message them directly if you see cross-domain issues. Challenge each other's findings.
 >
 > Your job is to review and report findings — not to fix, remediate, or modify the code. Only report issues you're confident about. Tag any pre-existing issues (unrelated to the current changes) with **[Pre-existing]**. When done, send your findings to the team lead (e.g. `SendMessage` in Claude Code, `send_input` in Codex). Use the severity scale: Critical / High / Medium / Low.
 
-In Full mode, also spawn the appropriate external reviewers (see External Reviewers above) with the same changed files list and diff scope. Each external reviewer handles its own CLI invocation — just provide the diff scope and changed files. If an external reviewer reports that its CLI is unavailable, acknowledge and continue with the remaining reviewers' findings.
+**Step 2b: Launch external reviewers (parallel subagents).**
+
+In Full mode, launch all 3 external reviewers (`gemini-reviewer`, `codex-reviewer`, `claude-reviewer`) as independent parallel subagents via the Task tool — **not** as team members. They run concurrently alongside the built-in team but are not part of it. Provide each with the diff scope and changed files list. Each external reviewer handles its own CLI invocation, self-identification, and graceful skipping.
+
+External reviewers are Full mode only — they are never launched in Quick mode. If an external reviewer reports that its CLI is unavailable or that it shares a model family with the host platform, acknowledge and continue with the remaining findings.
 
 **Step 3: Collect findings.**
 
-Wait for all reviewers to send their findings. When you receive a reviewer's message, do not output or echo its content — silently collect it. Only output once in Step 4 when assembling the final results. A brief one-line status like "All reviewers have reported" is fine when ready to proceed.
+Wait for findings from both sources: built-in reviewers report via team messages, external reviewers return via subagent results. When you receive a reviewer's message or subagent result, do not output or echo its content — silently collect it. Only output once in Step 4 when assembling the final results. A brief one-line status like "All reviewers have reported" is fine when ready to proceed.
 
 **Step 4: Synthesize and present.**
 
-Shut down all teammates (send shutdown requests), then delete the team. Assemble the final output:
+Shut down the built-in reviewer teammates (send shutdown requests), wait for confirmations, then delete the team using the coding agent's team management tools (e.g. `TeamDelete` in Claude Code, `delete_agent` in Codex). External subagents terminate on their own when they return results. **Never use `rm -rf` or manual file deletion for team cleanup** — always use the agent platform's built-in team teardown. If teardown fails (e.g., orphaned members), retry after a brief pause; if it still fails, report the issue to the user and move on. Assemble the final output:
 
-1. **Deduplicate.** Merge findings that multiple reviewers flagged — attribute to the most relevant reviewer, note cross-reviewer agreement. When an external reviewer flags the same issue as a built-in reviewer, note the cross-model agreement (this strengthens confidence in the finding).
+1. **Reconcile.** Merge findings from two streams: the built-in team's collaborative results and the external reviewers' independent results. When multiple reviewers flagged the same issue, attribute to the most relevant reviewer and note cross-reviewer agreement. When an external reviewer independently flags the same issue as a built-in reviewer, note the cross-model agreement — these findings were produced by truly independent processes, which strengthens confidence.
 2. **Separate pre-existing findings.** Pull out all findings tagged **[Pre-existing]** into a separate list. These do not count toward the verdict.
 3. **Format.** Start with a `### Strengths` section highlighting what's well done (with `file:line` refs). Format each reviewer's findings as a table — one issue per row, same structure for every section. Use `### Reviewer Name` headers. Separate sections with clear whitespace. If there are pre-existing findings, add a `### Pre-existing Issues` section at the end (before the verdict) with a note that these are outside the current changes and can be addressed separately.
 4. **Verdict.** End with a `---` separator followed by:
@@ -153,4 +157,4 @@ When invoked from `iterative:implementing`, return findings directly — impleme
 
 ## Fallback: If Agent Teams/Swarms are Unavailable
 
-If agent teams/swarms are not available, spawn the reviewers in parallel as independent subagents instead of teammates. Each analyzes independently. Skip the cross-validation instruction. Everything else (Steps 1, 3, 4, output format) stays the same. External reviewers work identically in both modes — they call external CLIs regardless of team vs. subagent setup.
+If agent teams/swarms are not available, spawn the built-in reviewers in parallel as independent subagents instead of teammates. Each analyzes independently. Skip the cross-validation instruction. External reviewers are always subagents regardless, so their behavior is unchanged in fallback mode — only built-in reviewers change (team members → subagents). Everything else (Steps 1, 3, 4, output format) stays the same.

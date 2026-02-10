@@ -30,6 +30,15 @@ Three external reviewer agents exist:
 | `codex-reviewer` | OpenAI Codex | `codex review --base` / `codex exec` |
 | `claude-reviewer` | Anthropic Claude | `claude -p --max-turns 3` |
 
+### Execution Model
+
+External reviewers run as independent parallel subagents (via the Task tool), not as agent team members. This creates two concurrent tracks during a Full mode review:
+
+1. **Built-in team track** — The 5 built-in reviewers run as teammates in an agent team, enabling cross-validation where they read each other's findings and challenge them.
+2. **External subagent track** — The 3 external reviewers run as independent parallel subagents alongside the team. Each invokes its CLI, collects results, and returns them to the orchestrating skill.
+
+The orchestrating skill reconciles findings from both tracks during synthesis. This separation reflects the reality that external reviewers are opaque CLI wrappers — they can't meaningfully participate in cross-validation, so they shouldn't be team members.
+
 ### Self-Identification
 
 All three are spawned in Full mode. Each agent self-identifies whether it shares a model family with the host platform and skips itself if so. This means:
@@ -97,7 +106,7 @@ All 5 built-in reviewers + all available external reviewers. Used for final bran
 
 The skill orchestrator (not the individual reviewers) synthesizes all findings:
 
-1. **Deduplication** — When multiple reviewers flag the same issue, merge them and note agreement. Cross-model agreement (built-in + external flagging the same issue) strengthens confidence.
+1. **Reconciliation** — Merge findings from two streams: the built-in team's collaborative results and the external reviewers' independent subagent results. When multiple reviewers flag the same issue, merge them and note agreement. Cross-model agreement (built-in team + external subagent flagging the same issue independently) strengthens confidence.
 2. **Pre-existing separation** — Findings tagged `[Pre-existing]` are pulled into their own section, excluded from the verdict.
 3. **Structured output** — Strengths section, then per-reviewer findings tables, then pre-existing issues, then verdict.
 4. **Verdict** — Based only on change-related findings: Ready to merge / Ready with fixes / Not ready.
@@ -107,6 +116,8 @@ The skill orchestrator (not the individual reviewers) synthesizes all findings:
 **Model diversity over model quantity.** Two models catching the same bug is stronger signal than five instances of the same model agreeing. External reviewers exist for genuine perspective diversity, not throughput.
 
 **Reviewers report, the skill synthesizes.** Individual reviewers (built-in or external) only find and report issues. They never fix code, invoke other skills, or make decisions about what to do with findings. The orchestrating skill owns deduplication, presentation, and next-step decisions.
+
+**Subagents for opaque wrappers, teams for collaborators.** External reviewers are opaque CLI wrappers that can't cross-validate — they belong as independent subagents. Built-in reviewers can read each other's findings and challenge them — they belong as team members. Match the execution model to the agent's actual capabilities.
 
 **Graceful degradation everywhere.** No component is required for the system to function. Missing CLI? Skip. Missing agent teams? Fall back to parallel subagents. Missing all external reviewers? The 5 built-in reviewers still provide comprehensive coverage.
 
