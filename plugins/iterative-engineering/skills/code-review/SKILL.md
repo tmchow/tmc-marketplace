@@ -130,20 +130,20 @@ If uncertain, keep all three — each invocation is safe (sandboxed, read-only, 
 
 If the user declines, skip to Step 3.
 
-**4. Invoke CLIs.** Pass the review prompt directly to each CLI via command argument or heredoc stdin. Do not write temp files (writing to `/tmp` triggers permission prompts). Run all available CLIs in parallel via separate Bash calls:
+**4. Invoke CLIs.** Do not write temp files (writing to `/tmp` triggers permission prompts). Run all available CLIs in parallel via separate Bash calls:
 
 | CLI | Invocation |
 |-----|------------|
 | Gemini | `gemini --sandbox -p "<prompt>"` |
-| Codex (branch) | `codex review --base <branch> - <<'PROMPT' ... PROMPT` |
-| Codex (uncommitted) | `codex review --uncommitted - <<'PROMPT' ... PROMPT` |
+| Codex (branch) | `codex review --base <branch>` |
+| Codex (uncommitted) | `codex review --uncommitted` |
 | Claude | `claude -p --max-turns 3 --output-format json --no-session-persistence <<'PROMPT' ... PROMPT` |
 
-For Gemini, pass the prompt as the `-p` string argument. For Codex and Claude, pipe via heredoc stdin. For Codex, use `codex review --base <branch>` for branch-level scope, or `--uncommitted` when there are no commits yet (both handle diff internally). For Claude JSON output, parse the `result` field.
+For Gemini, pass the review prompt as the `-p` string argument. For Claude, pipe the review prompt via heredoc stdin; parse the `result` field from JSON output. For Codex, no custom prompt is needed; `--base` and `--uncommitted` are mutually exclusive with the prompt argument, so Codex uses its built-in review logic and handles diff scoping internally.
 
 All CLIs run in read-only or review-only mode. If a CLI errors or produces no output, note it and move on. Do not retry on any error.
 
-**Review prompt template** (shared across all CLIs). Replace `{diff_scope}` with the actual scope from Step 1 (e.g., `$(git merge-base HEAD main)..HEAD`) before passing to the CLI:
+**Review prompt template** (Gemini and Claude). Replace `{diff_scope}` with the actual scope from Step 1 (e.g., `$(git merge-base HEAD main)..HEAD`) before passing to the CLI:
 
 ~~~
 You are a senior engineer performing an independent code review. Be thorough, actionable, and objective.
@@ -190,7 +190,7 @@ Fix: <specific remediation, not generic advice>
 If you notice significant issues in unchanged code unrelated to the diff, report them at the end under a "PRE-EXISTING ISSUES" header using the same format.
 ~~~
 
-For Codex via `codex review --base`, omit the SCOPE section — Codex scopes the diff internally via its flags.
+The review prompt template is used for Gemini and Claude only. Codex uses its built-in review logic (no custom prompt accepted with `--base` or `--uncommitted`).
 
 **5. Parse results.** For each CLI that returned output, extract findings and reformat into the standard reviewer format (Location, Issue, Fix, Severity). Tag findings with their source (e.g., "Gemini", "Codex", "Claude"). Tag any pre-existing issues with **[Pre-existing]**.
 
