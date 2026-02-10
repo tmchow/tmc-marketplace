@@ -166,7 +166,18 @@ Present an interactive choice:
 
 If the user chooses to fix, present the interactive multi-select of severity levels with findings.
 
-Fix only the selected severities. Next-step options come AFTER fixes land, as a separate prompt (Phase 3 step 7).
+### Applying Fixes
+
+Fix only the selected severities. Spawn a **single subagent** to apply all selected fixes — do not fix in the main thread (preserves context for subsequent review rounds and wrapup).
+
+The subagent receives:
+- The filtered findings list (only selected severities)
+- The affected file paths
+- Instruction to apply all fixes, run tests, and commit
+
+One subagent (not one per finding) because findings can interact — a security fix and a correctness fix in the same function need to see each other. This mirrors the `code-simplifier` pattern: one bounded pass, specific scope, commits separately.
+
+Wait for the subagent to complete before proceeding. Next-step options come AFTER fixes land, as a separate prompt (Phase 3 step 7).
 
 By the time implementing hands off to `implementation-wrapup`, all code reviews are complete. Wrapup skips its own review offer and handles verification, PR, and cleanup.
 
