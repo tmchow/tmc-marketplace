@@ -36,7 +36,7 @@ Read the plan critically, create tasks, and implement with TDD, code review, and
 2. **Review critically.** If anything is unclear or ambiguous, ask now. Do not skip this — better to clarify now than build the wrong thing.
 3. **Workspace isolation.** See Workspace Setup section.
 4. **Create tasks from the plan.** See Task Creation section.
-5. **Execution preference.** Ask the user to choose: A) Execute all tasks, report when done (default), B) Pause after each plan section for feedback, C) Pause after each subtask for feedback.
+5. **Execution preference.** Present an interactive choice to the user (e.g., `AskUserQuestion` in Claude Code): A) Execute all tasks, report when done (default), B) Pause after each plan section for feedback, C) Pause after each subtask for feedback.
 
 ### Phase 2: Execute (repeat per plan section)
 
@@ -63,10 +63,10 @@ Read the plan critically, create tasks, and implement with TDD, code review, and
 1. Verify: all tasks complete, all section-level code reviews passed.
 2. **Detect base branch.** `git rev-parse --verify origin/main >/dev/null 2>&1 && echo main || echo master`. Use this for all branch-level scoping in Phase 3.
 3. **Simplification pass.** Get changed files with `git diff --name-only $(git merge-base HEAD <base>)..HEAD`. Spawn the `code-simplifier` agent with this file list. The agent applies behavior-preserving simplifications, runs tests, and commits separately. This is a single bounded pass — not a refactor. **Wait for simplification to complete before proceeding** — the final review must see simplified code.
-4. **Final review offer.** Ask the user to choose: A) Full code review of complete work (recommended), B) Quick review, C) Skip to finish.
+4. **Final review offer.** Present an interactive choice to the user (e.g., `AskUserQuestion` in Claude Code): A) Full code review of complete work (recommended), B) Quick review, C) Skip to finish.
 5. If review: invoke `code-review` skill with scope `git diff $(git merge-base HEAD <base>)..HEAD` (all branch changes including simplification).
 6. **Severity acceptance (separate prompt).** If the review found issues at any severity, present severity acceptance (see Severity Acceptance section). This is its own prompt — do not combine it with next-step options, and do not skip it even when all issues are Medium/Low. "Clean" means zero findings at any severity. If no findings, skip to step 7.
-7. **Next steps (separate prompt, after fixes land or user skipped fixes).** Ask the user to choose: A) Another review round, B) Wrap up and create PR, C) I'll handle PR/merge myself (exit). Do not recommend wrap-up if fixes were just applied — recommend **another round** to verify. Recommend **wrap up** only when zero findings or user chose to skip all fixes.
+7. **Next steps (separate prompt, after fixes land or user skipped fixes).** Present an interactive choice to the user (e.g., `AskUserQuestion` in Claude Code): A) Another review round, B) Wrap up and create PR, C) I'll handle PR/merge myself (exit). Do not recommend wrap-up if fixes were just applied — recommend **another round** to verify. Recommend **wrap up** only when zero findings or user chose to skip all fixes.
 8. Repeat steps 5-7 if user chooses another round.
 
 ## Workspace Setup
@@ -95,9 +95,9 @@ Task creation happens inside Phase 1, after the plan is read and clarified. This
 Check whether HZL is installed (e.g., `hzl status`) and the project uses HZL for task tracking (e.g., AGENTS.md/CLAUDE.md).
 
 - **HZL not detected** → Use built-in task tracking automatically, no question needed
-- **HZL detected** → Ask the user to choose:
-  - HZL tasks (Recommended) — durable tracking with dependencies, persists across sessions
+- **HZL detected** → Present an interactive choice to the user (e.g., `AskUserQuestion` in Claude Code):
   - Built-in tasks — lightweight, session-scoped
+  - HZL tasks — task tracking with history across sessions, allows easy resume of work
 
 ### Parsing the Plan
 
@@ -143,32 +143,41 @@ Assess scope to choose between full and quick: substantial feature work (multipl
 
 ### Severity Acceptance
 
-**This is its own prompt — do not combine it with next-step options.** Present severity acceptance whenever the review has findings at ANY severity, including Medium/Low-only reviews. Do not interpret "no Critical/High" as "clean" — clean means zero findings.
+**This is its own prompt — do not combine it with next-step options.** Present severity acceptance whenever the review has findings at ANY severity, including Medium/Low-only reviews. Do not interpret "no Critical/High" as "clean" — clean means zero findings. **Use the interactive question tool** (e.g., `AskUserQuestion` in Claude Code) for all severity acceptance prompts — do not print options as text.
 
 **When Critical or High issues exist:**
 
-> Review found issues. How would you like to handle them?
-> - **Fix Critical + High (Recommended)** — N Critical, N High
-> - **Choose which severity levels to fix** — select from all levels
-> - **Skip fixes**
+Present an interactive choice:
+- **Fix Critical + High (Recommended)** — N Critical, N High
+- **Choose which severity levels to fix** — select from all levels
+- **Skip fixes**
 
-If the user accepts the recommendation, fix Critical + High. If they choose, present a multi-select of severity levels that have findings:
-
-> Which severity levels should be fixed? (select one or more)
-> - [ ] Critical (N issues)
-> - [ ] High (N issues)
-> - [ ] Medium (N issues)
-> - [ ] Low (N issues)
+If the user accepts the recommendation, fix Critical + High. If they choose, present an interactive multi-select of severity levels that have findings:
+- Critical (N issues)
+- High (N issues)
+- Medium (N issues)
+- Low (N issues)
 
 **When only Medium/Low issues exist (no Critical/High):**
 
-> Review found N Medium and N Low issues. How would you like to handle them?
-> - **Choose which severity levels to fix** — select from Medium, Low
-> - **Proceed without fixes (Recommended)**
+Present an interactive choice:
+- **Choose which severity levels to fix** — select from Medium, Low
+- **Proceed without fixes (Recommended)**
 
-If the user chooses to fix, present the multi-select of severity levels with findings.
+If the user chooses to fix, present the interactive multi-select of severity levels with findings.
 
-Fix only the selected severities. Next-step options come AFTER fixes land, as a separate prompt (Phase 3 step 7).
+### Applying Fixes
+
+Fix only the selected severities. Spawn a **single subagent** to apply all selected fixes — do not fix in the main thread (preserves context for subsequent review rounds and wrapup).
+
+The subagent receives:
+- The filtered findings list (only selected severities)
+- The affected file paths
+- Instruction to apply all fixes, run tests, and commit
+
+One subagent (not one per finding) because findings can interact — a security fix and a correctness fix in the same function need to see each other. This mirrors the `code-simplifier` pattern: one bounded pass, specific scope, commits separately.
+
+Wait for the subagent to complete before proceeding. Next-step options come AFTER fixes land, as a separate prompt (Phase 3 step 7).
 
 By the time implementing hands off to `implementation-wrapup`, all code reviews are complete. Wrapup skips its own review offer and handles verification, PR, and cleanup.
 
@@ -177,7 +186,7 @@ By the time implementing hands off to `implementation-wrapup`, all code reviews 
 If reality diverges from the plan during implementation:
 
 - **Minor adjustments** (different file path, small API change): update the plan document in place and continue. Note the change in the progress report.
-- **Significant divergence** (missing requirement, wrong approach): stop and report the divergence. Ask the user to choose: A) Update the plan and continue, B) Continue as-is, C) Stop execution. If the divergence contradicts the PRD (not just the tech plan), update the PRD as well — it's the requirements source of truth for downstream validation.
+- **Significant divergence** (missing requirement, wrong approach): stop and report the divergence. Present an interactive choice (e.g., `AskUserQuestion`): A) Update the plan and continue, B) Continue as-is, C) Stop execution. If the divergence contradicts the PRD (not just the tech plan), update the PRD as well — it's the requirements source of truth for downstream validation.
 - **Blocked by external dependency**: mark the subtask as blocked, skip to next unblocked subtask, and report.
 
 ## When Things Go Wrong
@@ -191,7 +200,7 @@ If reality diverges from the plan during implementation:
 
 **If a subtask fails:**
 1. Report the failure clearly — what was attempted and what went wrong
-2. Ask the user to choose: A) Retry with a different approach, B) Skip and continue to next subtask, C) Stop execution
+2. Present an interactive choice (e.g., `AskUserQuestion`): A) Retry with a different approach, B) Skip and continue to next subtask, C) Stop execution
 
 ## Anti-Patterns to Avoid
 
@@ -211,7 +220,7 @@ If reality diverges from the plan during implementation:
 
 ## Transition Points
 
-**Always present options to the user at transition points** — never just print options as text.
+**Always present options to the user at transition points using the interactive question tool** (e.g., `AskUserQuestion` in Claude Code) — never just print options as text or end the turn without presenting a choice.
 
 After simplification pass completes (Phase 3 step 4), present options:
 - Full code review of complete work (recommended)

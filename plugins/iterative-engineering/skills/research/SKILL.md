@@ -87,7 +87,7 @@ Present the categorization to the user. They may recategorize or add questions.
 
 ## Transition Points
 
-**Always present options to the user at transition points** — never just print options as text.
+**Always present options to the user at transition points using the interactive question tool** (e.g., `AskUserQuestion` in Claude Code) — never just print options as text or end the turn without presenting a choice.
 
 After research completes, when invoked standalone, present options:
 - Continue to technical planning

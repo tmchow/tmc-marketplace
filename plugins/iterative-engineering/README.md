@@ -222,7 +222,7 @@ Workflow agents run as isolated subagents. Each `task-worker` gets its own conte
 
 ## HZL Integration (Optional)
 
-This plugin supports [HZL](https://github.com/tmchow/hzl) for persistent task tracking across sessions and agents. Implementing detects HZL automatically and offers it as the recommended option. Without HZL, the workflow uses built-in task management.
+This plugin supports [HZL](https://github.com/tmchow/hzl) for persistent task tracking across sessions and agents. Implementing detects HZL automatically and offers the choice between built-in and HZL task tracking. Without HZL, the workflow uses built-in task management.
 
 See the [HZL repository](https://github.com/tmchow/hzl) for installation.
 

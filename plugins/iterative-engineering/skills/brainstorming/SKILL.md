@@ -76,7 +76,7 @@ Skip brainstorming when requirements are explicit, detailed, and the user knows 
    - Deferred: leave in Open Questions.
 
    Present one question at a time. Skip this step if no user-decision questions exist.
-3. **First time presenting options: always recommend Review.** The PRD has never been reviewed — review is the right default. Present options:
+3. **First time presenting options: always recommend Review.** The PRD has never been reviewed — review is the right default. Present an interactive choice (e.g., `AskUserQuestion` in Claude Code):
    - A) Review the PRD **(Recommended)** — the PRD hasn't been reviewed yet
    - B) Research open questions — when questions exist that can be answered by gathering information
    - C) Spike — when questions exist that need to be built and experienced to validate
@@ -85,7 +85,7 @@ Skip brainstorming when requirements are explicit, detailed, and the user knows 
    Only show B and C when the PRD has open questions that fit that resolution method. If active spikes exist (in-progress spike docs in `docs/spikes/`), mention them as a resume option alongside C.
 4. If review: invoke `plan-review` skill. Plan-review returns findings — brainstorming owns the fix loop.
 5. Fix issues identified by plan-review. **Commit the updated PRD.**
-6. Ask the user to choose — same options as step 3, re-assessed with updated PRD context. **Do not mark any option as recommended** — the right next step depends on context the skill can't reliably judge. Just present the options and let the user decide.
+6. **Immediately after fixing**, present an interactive choice to the user (e.g., `AskUserQuestion` in Claude Code) — same options as step 3, re-assessed with updated PRD context. **Do not mark any option as recommended** — the right next step depends on context the skill can't reliably judge. Do not end the turn without presenting this choice.
 7. Repeat steps 4-6 if user chooses another round.
 8. If user chooses research: invoke `iterative:research` skill with the PRD path. After research completes (findings presented and PRD updated with user-approved changes), **commit the updated PRD** and return to step 6.
 9. If user chooses spike: invoke `iterative:spike` skill. After the spike concludes (spike doc finalized, PRD updated with user-approved changes), **commit the updated PRD** and return to step 6.
@@ -179,7 +179,7 @@ The PRD should give enough context for someone to create a detailed technical pl
 
 ## Transition Points
 
-**Always present options to the user at transition points** — never just print options as text.
+**Always present options to the user at transition points using the interactive question tool** (e.g., `AskUserQuestion` in Claude Code) — never just print options as text or end the turn without presenting a choice.
 
 After PRD is created, and after each review round, present options (surface based on relevance):
 - Review the PRD — 4 agents analyze for issues **(Recommended on first pass only)**

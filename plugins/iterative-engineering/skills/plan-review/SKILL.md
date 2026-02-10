@@ -66,9 +66,11 @@ Continue until satisfied or user chooses to proceed.
 
 When invoked from `iterative:brainstorming` or `iterative:tech-planning`, return findings directly — the calling skill owns the fix loop and workflow transitions.
 
-When invoked standalone, ask the user to choose:
+When invoked standalone, **immediately after presenting the synthesis**, present an interactive choice to the user (e.g., `AskUserQuestion` in Claude Code) — do not just print options as text or stop after the synthesis:
 - Fix issues and re-review (Recommended)
 - Continue without changes
+
+This step is mandatory. Do not end the turn after the synthesis without presenting this choice.
 
 ## Fallback: If Agent Teams/Swarms are Unavailable
 
