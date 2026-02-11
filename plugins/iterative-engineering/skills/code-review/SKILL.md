@@ -64,7 +64,7 @@ The orchestrator runs external CLIs **directly** (not via subagents) — this en
 | CLI | Invocation | Safety mode |
 |-----|------------|-------------|
 | Google Gemini | `gemini -s -p "..."` | Sandboxed (diff inlined, no tool access needed) |
-| OpenAI Codex | `codex review --sandbox read-only` | Sandboxed read-only, review-dedicated subcommand |
+| OpenAI Codex | `codex review` | Review-dedicated subcommand (inherently read-only) |
 | Anthropic Claude | `claude -p "..." --max-turns 3` | Bounded turns, no session persistence |
 
 External CLIs are Full mode only — never run in Quick mode. If all CLIs are unavailable or skipped, the 5 built-in reviewers still provide comprehensive coverage.
@@ -204,10 +204,10 @@ Run the user-selected CLIs in parallel via separate Bash calls. Each CLI has dif
 gemini -s -p "$(cat <prompt-path>)$(git diff -U10 <range> -- . ':!*.md')"
 ```
 
-**Codex** — uses `review` subcommand with `--sandbox read-only` and heredoc stdin. Use `<<PROMPT` (unquoted) so `$(...)` expands at shell execution time. Do NOT use `<<'PROMPT'` (quoted):
+**Codex** — uses `review` subcommand with heredoc stdin. The `review` subcommand is inherently read-only and does not accept `--sandbox`. Use `<<PROMPT` (unquoted) so `$(...)` expands at shell execution time. Do NOT use `<<'PROMPT'` (quoted):
 
 ```
-codex review --sandbox read-only <<PROMPT
+codex review <<PROMPT
 $(cat <prompt-path>)$(git diff -U10 <range> -- . ':!*.md')
 PROMPT
 ```
