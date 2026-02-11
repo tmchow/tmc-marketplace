@@ -87,7 +87,7 @@ Spawn each reviewer with a prompt like:
 
 Skip this step if the user did not select any external CLIs.
 
-**1. Stage the prompt template locally.** Use the **Write** tool to write the prompt template below to `.external-doc-review-prompt.txt` in the repo root. Replace `{type}` with the document type determined in Step 1 (e.g., "PRD", "Brainstorm", or "Tech Plan"). Leave both PERSPECTIVE variants in the template — the `DOCUMENT TYPE` value guides the model to the correct one. This avoids permission prompts: the plugin directory (`~/.claude/plugins/...`) is outside the project sandbox, and any tool accessing it triggers a permission dialog with no global-approve option. The repo root already has read/write permission. Clean up this file in Step 4.
+**1. Stage the prompt template locally.** Write the prompt template below to `.external-doc-review-prompt.txt` in the repo root (avoids plugin directory permission prompts). Replace `{type}` with the document type from Step 1 (e.g., "PRD", "Brainstorm", or "Tech Plan"). Leave both PERSPECTIVE variants — `DOCUMENT TYPE` guides the model. Clean up in Step 4.
 
 ```
 You are reviewing a planning document. Adapt your perspective to the document type.
@@ -154,9 +154,7 @@ claude -p "$(cat <prompt-path>)$(cat <document-path>)" --max-turns 3 --output-fo
 
 **Important:** Claude's `-p` consumes the next token as the prompt string. Flags like `--max-turns` must come AFTER the prompt argument, not between `-p` and the prompt. `claude -p --max-turns 3` would incorrectly use `--max-turns` as the prompt text.
 
-All CLIs run in their most restrictive safe mode. If a CLI errors or produces no output, note it and move on. Do not retry on any error.
-
-Replace `<document-path>` with the path to the document from Step 1.
+If a CLI errors or produces no output, note it and move on. Do not retry on any error. Replace `<document-path>` with the document path from Step 1.
 
 **3. Parse results.** For each CLI that returned output, extract findings and reformat into the standard reviewer format (Line number, Issue, Suggestion, Priority). Tag findings with their source (e.g., "Gemini", "Codex", "Claude").
 
@@ -170,28 +168,71 @@ Replace `<document-path>` with the path to the document from Step 1.
    - **External CLIs:** `### External: {CLI Name}` headers. Always use columns: `| # | Priority | Focus Area | Issue | Suggestion |`.
 3. **Synthesize.** End with a `---` separator followed by a blockquote synthesis. Lead with cross-model agreements (if both built-in and external participated), then tensions between reviewers, then quick wins. Do not include time estimates.
 
-## Multiple Rounds
-
-After fixing issues, run another round to catch:
-- New issues introduced by fixes
-- Issues that become visible after others are resolved
-- Verification that fixes addressed the original concerns
-
-Each round runs the full Step 2–4 flow again. The reviewer selection is re-offered each round — the user can change their choices between rounds.
-
-Continue until satisfied or user chooses to proceed.
-
 ## After Review
 
-**This skill only reviews.** Do not invoke other skills (tech-planning, implementing, etc.) — even if the document mentions next steps.
+**When invoked from `iterative:brainstorming` or `iterative:tech-planning`:** return findings directly — the calling skill owns the fix loop and workflow transitions. Do not enter the standalone fix loop below.
 
-When invoked from `iterative:brainstorming` or `iterative:tech-planning`, return findings directly — the calling skill owns the fix loop and workflow transitions.
+**When invoked standalone:** run the standalone fix loop.
 
-When invoked standalone, **immediately after presenting the synthesis**, present an interactive choice to the user (e.g., `AskUserQuestion` in Claude Code) — do not just print options as text or stop after the synthesis:
-- Fix issues and re-review (Recommended)
-- Continue without changes
+### Standalone Fix Loop
 
-This step is mandatory. Do not end the turn after the synthesis without presenting this choice.
+After presenting the synthesized findings (Step 4), this skill handles the full fix-review cycle when running standalone.
+
+#### Step 5: Priority Acceptance
+
+**This is its own prompt — do not combine it with next-step options.** Present priority acceptance whenever the review has findings at ANY priority. If zero findings, skip to Step 8. **Use the interactive question tool** (e.g., `AskUserQuestion` in Claude Code) — do not print options as text.
+
+**When HIGH issues exist:**
+
+Present an interactive choice:
+- **Fix HIGH issues (Recommended)** — N issues that block execution
+- **Choose which priority levels to fix** — select from all levels
+- **Skip fixes**
+
+If the user accepts the recommendation, fix HIGH. If they choose, present an interactive multi-select of priority levels that have findings:
+- HIGH (N issues)
+- MEDIUM (N issues)
+- LOW (N issues)
+
+**When only MEDIUM/LOW issues exist (no HIGH):**
+
+Present an interactive choice:
+- **Choose which priority levels to fix** — select from MEDIUM, LOW
+- **Proceed without fixes (Recommended)**
+
+If the user chooses to fix, present the interactive multi-select of priority levels with findings.
+
+#### Step 6: Apply Fixes via Subagent
+
+Fix only the selected priorities. Spawn a single subagent with the filtered findings, document path, and document type. The subagent applies targeted fixes, preserves the document's voice and decisions, and commits.
+
+Wait for the subagent to complete before proceeding.
+
+#### Step 7: Re-review Offer
+
+After fixes land, present an interactive choice:
+- **Run another review round (Recommended)** — verify fixes and check for new issues
+- **Proceed without re-review**
+
+If the user chooses another round: run the full Step 1–7 flow again (fresh team, fresh scope). The reviewer selection is re-offered each round — the user can change their choices between rounds. Continue until clean or the user chooses to proceed.
+
+#### Step 8: Post-fix Options
+
+After the fix-review cycle completes (clean or user chose to stop), present next steps based on document type. **Use the interactive question tool** — do not print options as text. Do not invoke other skills directly — present the options and let the user decide.
+
+**PRD or brainstorm document:**
+- **Continue to tech-planning (Recommended)** — start `iterative:tech-planning`
+- **Another review round** — run another pass
+- **Exit** — done for now
+
+**Tech plan:**
+- **Continue to implementing (Recommended)** — start `iterative:implementing`
+- **Another review round** — run another pass
+- **Exit** — done for now
+
+**Unknown or other document:**
+- **Another review round**
+- **Exit** — done for now
 
 ## Fallback: If Agent Teams/Swarms are Unavailable
 
