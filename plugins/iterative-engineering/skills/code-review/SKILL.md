@@ -57,7 +57,7 @@ Uses 2-3 reviewers. Auto-detect from changed files when the caller doesn't speci
 
 ## External Reviewers (Experimental)
 
-External reviewers invoke a **different model's CLI** for an independent code review, providing model diversity. The value is that different model families have different blind spots — a finding confirmed across models is higher confidence than one from a single model. This feature is experimental; CLI availability and behavior may vary.
+External reviewers invoke a **different model's CLI** for an independent code review, providing model diversity. This feature is experimental; CLI availability and behavior may vary.
 
 The orchestrator runs external CLIs **directly** (not via subagents) — this ensures Bash calls happen in the main agent context where the user can approve them normally, avoiding permission issues with subagent CLI access.
 
@@ -88,13 +88,7 @@ Chain everything into one command using `&&` and labeled output markers (`BASE:`
 BASE=$(git merge-base HEAD $(git rev-parse --verify origin/main 2>/dev/null && echo origin/main || echo origin/master)) && echo "BASE:$BASE" && echo "FILES:" && git diff --name-only ${BASE}..HEAD -- . ':!*.md' && echo "DIFF:" && git diff -U10 ${BASE}..HEAD -- . ':!*.md'
 ```
 
-**From implementing example** (single Bash call, caller provides base branch):
-
-```
-BASE=$(git merge-base HEAD <base-branch>) && echo "BASE:$BASE" && echo "FILES:" && git diff --name-only ${BASE}..HEAD -- . ':!*.md' && echo "DIFF:" && git diff -U10 ${BASE}..HEAD -- . ':!*.md'
-```
-
-Parse the output: `BASE:` gives the merge-base SHA (needed for external CLI `{range}`), `FILES:` gives the file list (used to determine Full or Quick mode), `DIFF:` gives the diff with extended context. Markdown files are excluded because they are token-heavy and reviewed separately by plan reviews. If no commits exist on the branch, fall back to unstaged changes (`git diff -U10 -- . ':!*.md'`).
+Parse the output: `BASE:` gives the merge-base SHA, `FILES:` gives the file list, `DIFF:` gives the diff. If no commits exist on the branch, fall back to unstaged changes (`git diff -U10 -- . ':!*.md'`).
 
 **Step 2a: Spawn built-in reviewers (team members).**
 
@@ -152,7 +146,7 @@ Run only the CLIs the user selected. If none selected, skip to Step 3.
 
 **4. Invoke CLIs.** All three CLIs use the same unified review prompt template. Both the template and the diff are loaded via `$(...)` command substitution, so the permission approval prompt stays short regardless of prompt or diff size.
 
-**Stage the prompt template locally.** Before invoking any CLI, use the **Write** tool to write the prompt template below to `.external-review-prompt.txt` in the repo root. This avoids permission prompts: the plugin directory (`~/.claude/plugins/...`) is outside the project sandbox, and any tool accessing it triggers a permission dialog with no global-approve option. The repo root already has read/write permission. Clean up this file in Step 4.
+**Stage the prompt template locally.** Write the prompt template below to `.external-review-prompt.txt` in the repo root (avoids plugin directory permission prompts). Clean up in Step 4.
 
 ```
 You are a senior engineer reviewing code. Be thorough and actionable.
@@ -220,9 +214,7 @@ claude -p "$(cat <prompt-path>)$(git diff -U10 <range> -- . ':!*.md')" --max-tur
 
 **Important:** Claude's `-p` consumes the next token as the prompt string. Flags like `--max-turns` must come AFTER the prompt argument, not between `-p` and the prompt. `claude -p --max-turns 3` would incorrectly use `--max-turns` as the prompt text.
 
-All CLIs run in their most restrictive safe mode. Each CLI re-runs `git diff` via command substitution. This is a fast local operation (negligible vs model inference time) and guarantees each CLI gets identical diff output from the same repo state. If a CLI errors or produces no output, note it and move on. Do not retry on any error.
-
-Replace `<range>` with the diff range from Step 1 (e.g., `abc123..HEAD`).
+If a CLI errors or produces no output, note it and move on. Do not retry on any error. Replace `<range>` with the diff range from Step 1.
 
 **5. Parse results.** For each CLI that returned output, extract findings and reformat into the standard reviewer format (Location, Issue, Fix, Severity). Tag findings with their source (e.g., "Gemini", "Codex", "Claude"). Tag any pre-existing issues with **[Pre-existing]**.
 
@@ -255,27 +247,79 @@ This skill does NOT use language-specific reviewer agents (no Rails-reviewer, Py
 
 Instead, reviewers adapt their criteria to the language/framework based on project context (which teammates load automatically). This keeps the skill simple and avoids maintaining parallel reviewers per language.
 
-## Multiple Rounds
-
-After fixing issues, run another round. Each round creates a fresh team (the previous team was deleted). Run the full Step 2–4 flow again.
-
-Continue until:
-- No critical or high issues remain
-- User chooses to proceed
-
 ## After Review
 
-**This skill only reviews.** Do not invoke other skills (implementing, tech-planning, etc.) after presenting results.
+**When invoked from `iterative:implementing`:** return findings directly — implementing owns its own fix loop (severity acceptance, subagent fixes, re-review). Do not enter the standalone fix loop below.
 
-When invoked standalone or from `implementation-wrapup`, use the interactive question tool to ask the user:
+**When invoked standalone or from `implementation-wrapup`:** run the standalone fix loop.
 
-> **How would you like to proceed?**
->
-> - **Fix issues and re-review** (Recommended) — Address findings, then run another review round
-> - **Fix issues and proceed** — Address findings, then move to the next step (e.g., "create a PR" if code is ready)
-> - **Continue without changes** — Accept the code as-is
+### Standalone Fix Loop
 
-When invoked from `iterative:implementing`, return findings directly — implementing owns the review loop and decides whether to re-review or continue to the next section.
+After presenting the synthesized findings and verdict (Step 4), this skill handles the full fix-review cycle when running standalone.
+
+#### Step 5: Severity Acceptance
+
+**This is its own prompt — do not combine it with next-step options.** Present severity acceptance whenever the review has findings at ANY severity, including Medium/Low-only reviews. Do not interpret "no Critical/High" as "clean" — clean means zero findings. If zero findings, skip to Step 8. **Use the interactive question tool** (e.g., `AskUserQuestion` in Claude Code) for all severity acceptance prompts — do not print options as text.
+
+**When Critical or High issues exist:**
+
+Present an interactive choice:
+- **Fix Critical + High (Recommended)** — N Critical, N High
+- **Choose which severity levels to fix** — select from all levels
+- **Skip fixes**
+
+If the user accepts the recommendation, fix Critical + High. If they choose, present an interactive multi-select of severity levels that have findings:
+- Critical (N issues)
+- High (N issues)
+- Medium (N issues)
+- Low (N issues)
+
+**When only Medium/Low issues exist (no Critical/High):**
+
+Present an interactive choice:
+- **Choose which severity levels to fix** — select from Medium, Low
+- **Proceed without fixes (Recommended)**
+
+If the user chooses to fix, present the interactive multi-select of severity levels with findings.
+
+#### Step 6: Apply Fixes via Subagent
+
+Fix only the selected severities. Spawn a **subagent** (not in the main thread — preserves context for re-review rounds) to apply all selected fixes.
+
+The subagent receives:
+- The filtered findings list (only selected severities)
+- The affected file paths
+- The diff range from Step 1
+- Instruction to: apply all fixes, run the project's tests to verify nothing is broken, and commit the changes
+
+One subagent (not one per finding) because findings can interact — a security fix and a correctness fix in the same function need to see each other. Give the agent the full context and let it decide how to approach the work.
+
+Wait for the subagent to complete before proceeding.
+
+#### Step 7: Re-review Offer
+
+After fixes land, present an interactive choice:
+- **Run another review round (Recommended)** — verify fixes and check for new issues
+- **Proceed without re-review**
+
+If the user chooses another round: run the full Step 1–7 flow again (fresh team, fresh scope). Each round creates a fresh team (the previous team was deleted in Step 4). Continue until clean or the user chooses to proceed.
+
+#### Step 8: Post-fix Options
+
+After the fix-review cycle completes (clean verdict or user chose to stop), present next steps. **Use the interactive question tool** — do not print options as text.
+
+Detect whether the current branch is a feature branch (not `main`/`master`):
+
+**On a feature branch:**
+- **Create a PR (Recommended)** — push and open a pull request
+- **Continue without PR** — stay on the branch
+- **Exit** — done for now
+
+**On main/master:**
+- **Continue** — proceed with next steps
+- **Exit** — done for now
+
+If the user chooses "Create a PR": push the branch and use `gh pr create` with a title and summary derived from the branch changes. Do not invoke other skills — handle the PR inline.
 
 ## Fallback: If Agent Teams/Swarms are Unavailable
 
