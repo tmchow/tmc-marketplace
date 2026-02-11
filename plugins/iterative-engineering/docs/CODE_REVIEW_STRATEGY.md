@@ -27,7 +27,7 @@ Three external CLIs are supported:
 | CLI | Invocation | Safety mode |
 |-----|------------|-------------|
 | Google Gemini | `gemini -s -p "..."` | Sandboxed (diff inlined, no tool access needed) |
-| OpenAI Codex | `codex review --sandbox read-only` | Sandboxed read-only, review-dedicated subcommand |
+| OpenAI Codex | `codex review` | Review-dedicated subcommand (inherently read-only) |
 | Anthropic Claude | `claude -p "..." --max-turns 3` | Bounded turns, no session persistence |
 
 ### Execution Model
@@ -54,7 +54,7 @@ All external CLIs receive the same unified prompt with the diff injected at runt
 
 Each CLI re-runs `git diff` via the command substitution. This is a fast local operation (negligible compared to model inference time) and guarantees each CLI analyzes the exact same repo state.
 
-The prompt explicitly instructs the model: "DO NOT run any commands, read files, or use tools." Each CLI also enforces restrictions at the invocation level: Gemini uses `-s` (sandbox mode); Codex uses `--sandbox read-only` (restricts to read-only file access) via its `review` subcommand's `ReviewTarget::Custom` path; Claude is bounded to 3 turns with no session persistence. The invocation syntax also differs: Gemini and Claude use `-p "prompt"` (string argument), while Codex uses heredoc stdin to its `review` subcommand. Claude's `-p` flag consumes the immediately following token as the prompt, so other flags like `--max-turns` must come after the prompt string, not between `-p` and the prompt.
+The prompt explicitly instructs the model: "DO NOT run any commands, read files, or use tools." Each CLI also enforces restrictions at the invocation level: Gemini uses `-s` (sandbox mode); Codex uses its `review` subcommand which is inherently read-only (no `--sandbox` flag needed or accepted); Claude is bounded to 3 turns with no session persistence. The invocation syntax also differs: Gemini and Claude use `-p "prompt"` (string argument), while Codex uses heredoc stdin to its `review` subcommand. Claude's `-p` flag consumes the immediately following token as the prompt, so other flags like `--max-turns` must come after the prompt string, not between `-p` and the prompt.
 
 Extended context (`-U10` = 10 lines before/after each hunk instead of the default 3) compensates for the model not being able to read full files. This adds some tokens but far fewer than letting each CLI make tool calls to read entire files. Markdown files are excluded because they are token-heavy and reviewed separately by plan reviews.
 
@@ -65,7 +65,7 @@ Each CLI runs in its most restrictive read-only mode. Since the diff is inlined 
 | CLI | Safety flags | Effect |
 |-----|-------------|--------|
 | Gemini | `-s` | Sandboxed (diff inlined, no tool access needed) |
-| Codex | `codex review --sandbox read-only` | Review-dedicated subcommand + sandboxed read-only file access |
+| Codex | `codex review` | Review-dedicated subcommand (inherently read-only, no `--sandbox` flag) |
 | Claude | `-p "..." --max-turns 3 --no-session-persistence` | Bounded turns; `-p` requires prompt as immediately following arg |
 
 ### Graceful Degradation

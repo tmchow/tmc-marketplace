@@ -87,12 +87,12 @@ Codex uses the `exec` subcommand because the base `codex` command starts an inte
 
 ### Why `codex` Instead of `codex review`
 
-Code review uses `codex review --sandbox read-only`, which is Codex's dedicated review subcommand. Plan review uses `codex exec` instead because:
+Code review uses `codex review`, which is Codex's dedicated review subcommand (inherently read-only, no `--sandbox` flag needed). Plan review uses `codex exec --sandbox read-only` instead because:
 
 1. `codex review` is optimized for code diffs and may add its own code-review framing
 2. `codex exec` is designed for non-interactive, headless execution — the base `codex` command starts an interactive TUI that hangs when invoked from agent Bash tools
 3. For document review, `codex exec` with a custom prompt gives full control over the evaluation perspective
-4. `--sandbox read-only` provides the same safety guarantees regardless of subcommand
+4. `codex exec` requires explicit `--sandbox read-only` since it's a general-purpose subcommand (unlike `review`, which is inherently read-only)
 
 ### Graceful Degradation
 
