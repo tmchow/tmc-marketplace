@@ -284,17 +284,9 @@ If the user chooses to fix, present the interactive multi-select of severity lev
 
 #### Step 6: Apply Fixes via Subagent
 
-Fix only the selected severities. Spawn a **subagent** (not in the main thread — preserves context for re-review rounds) to apply all selected fixes.
+Fix only the selected severities. Spawn one or more subagents with the filtered findings, affected file paths, and diff range from Step 1. If using multiple subagents, avoid assigning overlapping files. Each subagent applies its fixes, runs tests, and commits.
 
-The subagent receives:
-- The filtered findings list (only selected severities)
-- The affected file paths
-- The diff range from Step 1
-- Instruction to: apply all fixes, run the project's tests to verify nothing is broken, and commit the changes
-
-One subagent (not one per finding) because findings can interact — a security fix and a correctness fix in the same function need to see each other. Give the agent the full context and let it decide how to approach the work.
-
-Wait for the subagent to complete before proceeding.
+Wait for all fixes to complete before proceeding.
 
 #### Step 7: Re-review Offer
 
