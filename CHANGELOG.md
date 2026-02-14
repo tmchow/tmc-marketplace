@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.1] - 2026-02-13
+
+### Fixed
+
+- **External reviewers pass file paths instead of inlining content** — external CLIs now receive a document file path and read the file themselves, avoiding context-limit failures on large documents. All three sandbox modes (Gemini `-s`, Codex `--sandbox read-only`, Claude `--max-turns 3`) support workspace file reads. ([#50](https://github.com/tmchow/tmc-marketplace/pull/50))
+- **Fix loop step collapsing** — strengthened standalone fix loop guardrails to prevent the model from merging Steps 5–8 into a single question after multiple review rounds, which was eliminating the "fix then re-review" path. ([#50](https://github.com/tmchow/tmc-marketplace/pull/50))
+
+---
+
 ## [1.7.0] - 2026-02-11
 
 ### Added
@@ -193,6 +202,7 @@ Initial release — 11 skills, 13 agents. ([#10](https://github.com/tmchow/tmc-m
 Core workflow: brainstorming → research → spike → tech planning → implementing, with multi-agent reviews at each stage.
 
 <!-- Version comparison links -->
+[1.7.1]: https://github.com/tmchow/tmc-marketplace/compare/v1.7.0...v1.7.1
 [1.7.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.4.2...v1.5.0
