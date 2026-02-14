@@ -17,8 +17,7 @@ You receive:
 - Path to the technical plan document
 - Subtask number and title (e.g., "1.2 Add batched dependency lookup")
 - Parent task context
-- Task system being used (HZL or built-in tasks)
-- If HZL: the HZL task ID for this subtask
+- Task system being used (HZL or built-in tasks) and task ID
 
 ## Execution Process
 
@@ -65,7 +64,7 @@ Non-feature subtasks (config, refactoring, infrastructure) skip this gate but st
 - Stage only files related to this subtask: `git add [files]`
 - Commit with conventional format: `git commit -m "feat(scope): [subtask description]"`
 - If the subtask is genuinely too small for a meaningful commit message, note this in the output — the lead will group it with the next subtask
-- If using HZL: mark the task done (`hzl task done <id>`) before reporting completion
+- Mark the task done before reporting completion (HZL: `hzl task done <id>`, built-in tasks: mark task as completed)
 
 ## Output
 

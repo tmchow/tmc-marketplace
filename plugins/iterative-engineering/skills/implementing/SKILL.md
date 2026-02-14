@@ -43,11 +43,11 @@ Read the plan critically, create tasks, and implement with TDD, code review, and
 
 1. **Record section baseline.** Before starting each plan section, capture the current commit: `git rev-parse HEAD`. This SHA is the section's baseline — used to scope reviews to only this section's changes.
 2. **Analyze dependency graph.** Using the plan's `**Depends on:**` and `**Files:**` fields, group the section's subtasks into execution batches — subtasks with no unmet dependencies form the next batch.
-3. **Execute batch.** For each batch, spawn `task-worker` subagents concurrently for all subtasks in the batch. Each subagent receives:
+3. **Execute batch.** For each batch, spawn subagents for all subtasks (concurrently when multiple). Always use subagents, even for single-subtask batches — this keeps implementation detail out of the orchestrator's context, preserving capacity for reviews, phase transitions, and user interaction. Each subagent receives:
    - Path to the tech plan document
    - Subtask number and title
    - Parent task context
-   - Task system (HZL or built-in tasks) and task ID if HZL
+   - Task system (HZL or built-in tasks) and task ID
 4. Worker reads subtask from plan, loads referenced patterns, implements with TDD (tests first), commits, and updates task status (see task-worker agent for details).
 5. **Wait for batch completion.** All subagents in the batch must finish before the next batch starts.
 6. **Test verification gate.** After each batch completes, verify that feature subtasks produced test files. For each completed feature subtask, check: does the test file listed in the plan's `**Files:**` field exist, and does it contain tests matching the plan's `**Test scenarios:**`? If a feature subtask committed without tests, flag it immediately — do not continue to the next batch until resolved.
