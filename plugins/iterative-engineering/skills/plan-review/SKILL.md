@@ -35,7 +35,7 @@ The orchestrator runs external CLIs **directly** (not via subagents) — this en
 
 | CLI | Invocation | Safety mode |
 |-----|------------|-------------|
-| Google Gemini | `gemini -s -p "..."` | Sandboxed (document inlined, no tool access needed) |
+| Google Gemini | `gemini -s -p "..."` | Sandboxed (reads file from workspace, no write access) |
 | OpenAI Codex | `codex exec --sandbox read-only "..."` | Sandboxed read-only, non-interactive |
 | Anthropic Claude | `claude -p "..." --max-turns 3` | Bounded turns, no session persistence |
 
@@ -87,12 +87,12 @@ Spawn each reviewer with a prompt like:
 
 Skip this step if the user did not select any external CLIs.
 
-**1. Stage the prompt template locally.** Write the prompt template below to `.external-doc-review-prompt.txt` in the repo root (avoids plugin directory permission prompts). Replace `{type}` with the document type from Step 1 (e.g., "PRD", "Brainstorm", or "Tech Plan"). Leave both PERSPECTIVE variants — `DOCUMENT TYPE` guides the model. Clean up in Step 4.
+**1. Stage the prompt template locally.** Write the prompt template below to `.external-doc-review-prompt.txt` in the repo root (avoids plugin directory permission prompts). Replace `{type}` with the document type from Step 1 (e.g., "PRD", "Brainstorm", or "Tech Plan") and `{path}` with the document path from Step 1. Leave both PERSPECTIVE variants — `DOCUMENT TYPE` guides the model. Clean up in Step 4.
 
 ```
 You are reviewing a planning document. Adapt your perspective to the document type.
 
-The complete document follows. DO NOT run any commands, read files, or use tools. State assumptions; do not ask questions.
+Read the document at the file path below, then review it. Do not modify any files. State assumptions; do not ask questions.
 
 DOCUMENT TYPE: {type}
 
@@ -127,34 +127,34 @@ OUTPUT FORMAT:
 <why this is a problem and what goes wrong if unaddressed>
 Suggestion: <specific improvement>
 
-DOCUMENT:
+DOCUMENT PATH: {path}
 ```
 
-All CLI invocations below use `.external-doc-review-prompt.txt` as `<prompt-path>`. The template ends with `DOCUMENT:\n` so the `$(cat ...)` output appends directly after it.
+All CLI invocations below use `.external-doc-review-prompt.txt` as `<prompt-path>`. The template ends with `DOCUMENT PATH: <path>\n` — each CLI reads the file itself rather than receiving inlined content. This avoids context-limit issues with large documents.
 
-**2. Invoke CLIs.** Run the user-selected CLIs in parallel via separate Bash calls. Both `$(cat ...)` substitutions expand at runtime, so the permission approval prompt stays short regardless of document size. Each CLI has different correct invocation syntax:
+**2. Invoke CLIs.** Run the user-selected CLIs in parallel via separate Bash calls. Each CLI reads the document from the file path embedded in the prompt. Each CLI has different correct invocation syntax:
 
-**Gemini** — uses `-p` string argument. Both `$(cat ...)` substitutions expand at runtime:
+**Gemini** — uses `-p` string argument. Sandboxed mode has `read_file` access within the workspace:
 
 ```
-gemini -s -p "$(cat <prompt-path>)$(cat <document-path>)"
+gemini -s -p "$(cat <prompt-path>)"
 ```
 
 **Codex** — uses `exec` subcommand for non-interactive execution with a positional string argument. The base `codex` command starts an interactive TUI that hangs when invoked from a non-interactive Bash tool:
 
 ```
-codex exec --sandbox read-only "$(cat <prompt-path>)$(cat <document-path>)"
+codex exec --sandbox read-only "$(cat <prompt-path>)"
 ```
 
 **Claude** — uses `-p` string argument. `-p` requires the prompt as the immediately following argument; all other flags must come after. Parse the `result` field from JSON output:
 
 ```
-claude -p "$(cat <prompt-path>)$(cat <document-path>)" --max-turns 3 --output-format json --no-session-persistence
+claude -p "$(cat <prompt-path>)" --max-turns 3 --output-format json --no-session-persistence
 ```
 
 **Important:** Claude's `-p` consumes the next token as the prompt string. Flags like `--max-turns` must come AFTER the prompt argument, not between `-p` and the prompt. `claude -p --max-turns 3` would incorrectly use `--max-turns` as the prompt text.
 
-If a CLI errors or produces no output, note it and move on. Do not retry on any error. Replace `<document-path>` with the document path from Step 1.
+If a CLI errors or produces no output, note it and move on. Do not retry on any error.
 
 **3. Parse results.** For each CLI that returned output, extract findings and reformat into the standard reviewer format (Line number, Issue, Suggestion, Priority). Tag findings with their source (e.g., "Gemini", "Codex", "Claude").
 
@@ -178,9 +178,11 @@ If a CLI errors or produces no output, note it and move on. Do not retry on any 
 
 After presenting the synthesized findings (Step 4), this skill handles the full fix-review cycle when running standalone.
 
+**CRITICAL: Steps 5–8 are separate prompts. Execute them in sequence — never collapse, merge, or skip steps.** The "fix then re-review" path only works when Step 5 (what to fix), Step 7 (re-review offer), and Step 8 (next workflow step) remain independent questions. This applies on every round regardless of round number — do not add round-awareness commentary, diminishing-returns warnings, or shortcut options that bypass the step sequence.
+
 #### Step 5: Priority Acceptance
 
-**This is its own prompt — do not combine it with next-step options.** Present priority acceptance whenever the review has findings at ANY priority. If zero findings, skip to Step 8. **Use the interactive question tool** (e.g., `AskUserQuestion` in Claude Code) — do not print options as text.
+**This is its own prompt — do not combine it with next-step options.** The only options here are about *which priorities to fix* — never include "then implement", "then re-review", or any other downstream action. Present priority acceptance whenever the review has findings at ANY priority. If zero findings, skip to Step 8. **Use the interactive question tool** (e.g., `AskUserQuestion` in Claude Code) — do not print options as text.
 
 **When HIGH issues exist:**
 
@@ -210,7 +212,7 @@ Wait for the subagent to complete before proceeding.
 
 #### Step 7: Re-review Offer
 
-After fixes land, present an interactive choice:
+**This is its own prompt — separate from Step 5 and Step 8.** After fixes land, present an interactive choice:
 - **Run another review round (Recommended)** — verify fixes and check for new issues
 - **Proceed without re-review**
 

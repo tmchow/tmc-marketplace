@@ -49,16 +49,16 @@ CLIs that aren't installed are also skipped (checked via `which`).
 
 ### Document Handling (vs. Code Review)
 
-Code review feeds external CLIs a `git diff`. Plan review feeds them the **full document** via `$(cat <document-path>)`. This is the fundamental input difference:
+Code review feeds external CLIs a `git diff` (inlined, since diffs aren't files). Plan review gives them a **file path** and lets each CLI read the document itself. This avoids context-limit issues with large documents — each model manages its own context budget.
 
 | Dimension | Code Review | Plan Review |
 |-----------|------------|-------------|
-| Input | `$(git diff -U10 <range>)` | `$(cat <document-path>)` |
+| Input | `$(git diff -U10 <range>)` (inlined) | File path (CLI reads document) |
 | Scope model | Diff-anchored (changed vs. pre-existing) | Document-anchored (full content) |
 | Focus areas | Correctness, Security, Performance, Simplicity, Testing | Clarity, Completeness, Specificity, YAGNI |
 | Output framing | Severity (Critical/High/Medium/Low) + merge verdict | Priority (High/Medium/Low) + suggestions |
 
-Because the input is a single file (not a diff across many files), plan review tends to produce smaller, more focused prompts with less token overhead.
+All three CLIs can read workspace files in their respective sandbox modes (Gemini `-s` has `read_file`, Codex `--sandbox read-only` has file access, Claude has its Read tool).
 
 ### Document-Type-Aware Persona
 
