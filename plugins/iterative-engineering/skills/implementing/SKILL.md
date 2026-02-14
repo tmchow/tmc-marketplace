@@ -19,8 +19,9 @@ Read the plan critically, create tasks, and implement with TDD, code review, and
 1. **The plan is your guide** — Read referenced files and patterns, use the plan's decisions to drive implementation
 2. **Clarify before building** — Ask questions now, not after building the wrong thing
 3. **Test as you go** — Run tests after each change, not at the end
-4. **Review at the right scope** — Incremental reviews for large plan sections, final review after each section, user chooses which severities to fix
-5. **Stop when blocked** — Ask for help rather than guessing
+4. **Commit as you go** — One commit per completed subtask, never batch commits at the end
+5. **Review at the right scope** — Incremental reviews for large plan sections, final review after each section, user chooses which severities to fix
+6. **Stop when blocked** — Ask for help rather than guessing
 
 ## Workflow
 
