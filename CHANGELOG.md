@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.3] - 2026-02-13
+
+### Fixed
+
+- **Task ID passed to workers for all task systems** — workers now receive the task ID for both HZL and built-in tasks (previously only HZL), and mark completion in both systems. ([#54](https://github.com/tmchow/tmc-marketplace/pull/54))
+- **Subagent rationale clarified** — implementing skill now explains that subagents are always used (even for single-subtask batches) to preserve orchestrator context for reviews and phase transitions, not just for parallelism. ([#54](https://github.com/tmchow/tmc-marketplace/pull/54))
+
+---
+
 ## [1.7.2] - 2026-02-13
 
 ### Changed
@@ -210,6 +219,7 @@ Initial release — 11 skills, 13 agents. ([#10](https://github.com/tmchow/tmc-m
 Core workflow: brainstorming → research → spike → tech planning → implementing, with multi-agent reviews at each stage.
 
 <!-- Version comparison links -->
+[1.7.3]: https://github.com/tmchow/tmc-marketplace/compare/v1.7.2...v1.7.3
 [1.7.2]: https://github.com/tmchow/tmc-marketplace/compare/v1.7.1...v1.7.2
 [1.7.1]: https://github.com/tmchow/tmc-marketplace/compare/v1.7.0...v1.7.1
 [1.7.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.6.0...v1.7.0
