@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.2] - 2026-02-13
+
+### Changed
+
+- **"Commit as you go" key principle** — elevated the commit-per-subtask pattern to a top-level key principle in the implementing skill, making incremental commits an explicit expectation rather than buried in the Commit Pattern section. ([#52](https://github.com/tmchow/tmc-marketplace/pull/52))
+
+---
+
 ## [1.7.1] - 2026-02-13
 
 ### Fixed
@@ -202,6 +210,7 @@ Initial release — 11 skills, 13 agents. ([#10](https://github.com/tmchow/tmc-m
 Core workflow: brainstorming → research → spike → tech planning → implementing, with multi-agent reviews at each stage.
 
 <!-- Version comparison links -->
+[1.7.2]: https://github.com/tmchow/tmc-marketplace/compare/v1.7.1...v1.7.2
 [1.7.1]: https://github.com/tmchow/tmc-marketplace/compare/v1.7.0...v1.7.1
 [1.7.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.5.0...v1.6.0
