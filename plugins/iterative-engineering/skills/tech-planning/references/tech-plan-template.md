@@ -71,6 +71,7 @@ rationale. Free-form but specific enough to act on without clarifying questions.
 
 ```markdown
 ## Testing Strategy
+- New coverage: [test scenarios that validate genuinely new behavior — what proves the core change works, as distinct from existing tests updated for new data shapes]
 - Unit tests: [what's covered and approach]
 - Integration tests: [approach]
 - Manual verification: [specific steps to check]
@@ -158,7 +159,7 @@ And the plan overall has:
 - [ ] Subtasks numbered as Parent.Subtask (1.1, 1.2, 2.1) for cross-referencing
 - [ ] Dependency graph is complete — every subtask's blockers are explicit
 - [ ] Architecture section explains the approach and key decisions
-- [ ] Testing strategy covers unit, integration, and manual verification
+- [ ] Testing strategy identifies new coverage and covers unit, integration, and manual verification
 - [ ] Risks identified with concrete mitigations
 
 ## Subtask Granularity Guidelines
