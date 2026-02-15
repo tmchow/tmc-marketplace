@@ -35,7 +35,7 @@ All reviewers use the same 4-level scale:
 | `simplicity-reviewer` | YAGNI, over-engineering, unnecessary abstraction | Is this minimal? |
 | `testing-reviewer` | Coverage, test quality, edge cases, plan test scenarios | Is this well-tested? |
 
-In Full mode, the orchestrator can also run **external model CLIs** inline (Gemini, Codex, Claude) for independent, model-diverse perspectives (experimental, opt-in). See External Reviewers below.
+In Full mode, the orchestrator can also run **external model CLIs** (Gemini, Codex, Claude) for independent, model-diverse perspectives (experimental, opt-in). See External Reviewers below.
 
 ## Review Modes
 
@@ -63,8 +63,8 @@ The orchestrator runs external CLIs **directly** (not via subagents) — this en
 
 | CLI | Invocation | Safety mode |
 |-----|------------|-------------|
-| Google Gemini | `gemini -s -p "..."` | Sandboxed (diff inlined, no tool access needed) |
-| OpenAI Codex | `codex review` | Review-dedicated subcommand (inherently read-only) |
+| Google Gemini | `gemini -s -p "..."` | Sandboxed (reads diff file, no write access) |
+| OpenAI Codex | `codex exec review --base <branch>` | Built-in review preset (read-only, filesystem access) |
 | Anthropic Claude | `claude -p "..." --max-turns 3` | Bounded turns, no session persistence |
 
 External CLIs are Full mode only — never run in Quick mode. If all CLIs are unavailable or skipped, the 5 built-in reviewers still provide comprehensive coverage.
@@ -110,7 +110,7 @@ Spawn each built-in reviewer with a prompt that includes the review context:
 >
 > Your job is to review and report findings — not to fix, remediate, or modify the code. Only report issues you're confident about. Tag any pre-existing issues (unrelated to the current changes) with **[Pre-existing]**. When done, send your findings to the team lead (e.g. `SendMessage` in Claude Code, `send_input` in Codex). Use the severity scale: Critical / High / Medium / Low.
 
-**Step 2b: Run external model CLIs (inline, opt-in).**
+**Step 2b: Run external model CLIs (opt-in).**
 
 In Quick mode, skip this step entirely. In Full mode:
 
@@ -144,14 +144,16 @@ The user can select any combination (both, one, or neither).
 
 Run only the CLIs the user selected. If none selected, skip to Step 3.
 
-**4. Invoke CLIs.** All three CLIs use the same unified review prompt template. Both the template and the diff are loaded via `$(...)` command substitution, so the permission approval prompt stays short regardless of prompt or diff size.
+**4. Invoke CLIs.** Stage the diff and prompt as local files so CLIs read them from disk instead of receiving inlined content. This avoids shell `ARG_MAX` limits on large diffs and keeps permission approval prompts short.
 
-**Stage the prompt template locally.** Write the prompt template below to `.external-review-prompt.txt` in the repo root (avoids plugin directory permission prompts). Clean up in Step 4.
+**Stage files locally.** Write both files to the repo root (avoids plugin directory permission prompts). Clean up in Step 4.
+
+Write the diff from Step 1 to `.external-review-diff.txt`. Then write the prompt template below to `.external-review-prompt.txt`:
 
 ```
 You are a senior engineer reviewing code. Be thorough and actionable.
 
-The complete diff is below. DO NOT run any commands, read files, or use tools. State assumptions; do not ask questions.
+Read the diff from .external-review-diff.txt in the current directory. State assumptions; do not ask questions.
 
 METHODOLOGY:
 1. Summarize the intent in 1-2 sentences.
@@ -184,37 +186,31 @@ OUTPUT FORMAT:
 Fix: <specific remediation>
 
 Pre-existing issues go under a separate "PRE-EXISTING ISSUES" header.
-
-CHANGES:
 ```
-
-All CLI invocations below use `.external-review-prompt.txt` as `<prompt-path>`. The template ends with `CHANGES:\n` so the `$(git diff ...)` output appends directly after it.
 
 Run the user-selected CLIs in parallel via separate Bash calls. Each CLI has different correct invocation syntax:
 
-**Gemini** — uses `-p` string argument. Both `$(cat ...)` and `$(git diff ...)` expand at runtime:
+**Gemini** — reads the prompt via `$(cat ...)`, then reads the diff file as instructed by the prompt. Sandbox mode (`-s`) allows file reads but blocks writes:
 
 ```
-gemini -s -p "$(cat <prompt-path>)$(git diff -U10 <range> -- . ':!*.md')"
+gemini -s -p "$(cat .external-review-prompt.txt)"
 ```
 
-**Codex** — uses `review` subcommand with heredoc stdin. The `review` subcommand is inherently read-only and does not accept `--sandbox`. Use `<<PROMPT` (unquoted) so `$(...)` expands at shell execution time. Do NOT use `<<'PROMPT'` (quoted):
+**Codex** — uses the built-in `review` preset with `--base` flag. Codex computes and reviews the branch diff internally with full filesystem access. Replace `<branch>` with the base branch from Step 1 (e.g., `main`). Does not use the staged prompt or diff files:
 
 ```
-codex review <<PROMPT
-$(cat <prompt-path>)$(git diff -U10 <range> -- . ':!*.md')
-PROMPT
+codex exec review --base <branch>
 ```
 
-**Claude** — uses `-p` string argument. `-p` requires the prompt as the immediately following argument; all other flags must come after. Parse the `result` field from JSON output:
+**Claude** — reads the prompt via `$(cat ...)`, then reads the diff file as instructed by the prompt. `-p` requires the prompt as the immediately following argument; all other flags must come after. Parse the `result` field from JSON output:
 
 ```
-claude -p "$(cat <prompt-path>)$(git diff -U10 <range> -- . ':!*.md')" --max-turns 3 --output-format json --no-session-persistence
+claude -p "$(cat .external-review-prompt.txt)" --max-turns 3 --output-format json --no-session-persistence
 ```
 
 **Important:** Claude's `-p` consumes the next token as the prompt string. Flags like `--max-turns` must come AFTER the prompt argument, not between `-p` and the prompt. `claude -p --max-turns 3` would incorrectly use `--max-turns` as the prompt text.
 
-If a CLI errors or produces no output, note it and move on. Do not retry on any error. Replace `<range>` with the diff range from Step 1.
+If a CLI errors or produces no output, note it and move on. Do not retry on any error.
 
 **5. Parse results.** For each CLI that returned output, extract findings and reformat into the standard reviewer format (Location, Issue, Fix, Severity). Tag findings with their source (e.g., "Gemini", "Codex", "Claude"). Tag any pre-existing issues with **[Pre-existing]**.
 
@@ -224,7 +220,7 @@ Wait for findings from all sources: built-in reviewers report via team messages,
 
 **Step 4: Synthesize and present.**
 
-Shut down the built-in reviewer teammates (send shutdown requests), wait for confirmations, then delete the team using the coding agent's team management tools (e.g. `TeamDelete` in Claude Code, `delete_agent` in Codex). **Never use `rm -rf` or manual file deletion for team cleanup** — always use the agent platform's built-in team teardown. If teardown fails (e.g., orphaned members), retry after a brief pause; if it still fails, report the issue to the user and move on. Delete the staged prompt template (`rm .external-review-prompt.txt`) if it exists. Assemble the final output:
+Shut down the built-in reviewer teammates (send shutdown requests), wait for confirmations, then delete the team using the coding agent's team management tools (e.g. `TeamDelete` in Claude Code, `delete_agent` in Codex). **Never use `rm -rf` or manual file deletion for team cleanup** — always use the agent platform's built-in team teardown. If teardown fails (e.g., orphaned members), retry after a brief pause; if it still fails, report the issue to the user and move on. Delete the staged files (`rm -f .external-review-prompt.txt .external-review-diff.txt`). Assemble the final output:
 
 1. **Reconcile.** Merge findings from two sources: the built-in team's collaborative results and any external CLI results. When multiple reviewers flagged the same issue, attribute to the most relevant reviewer and note cross-reviewer agreement. When an external CLI independently flags the same issue as a built-in reviewer, note the cross-model agreement — these findings were produced by truly independent processes, which strengthens confidence.
 2. **Separate pre-existing findings.** Pull out all findings tagged **[Pre-existing]** into a separate list. These do not count toward the verdict.
