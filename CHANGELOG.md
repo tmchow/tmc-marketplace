@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.5] - 2026-02-15
+
+### Fixed
+
+- **External CLIs use file-based diff instead of inline** — Gemini and Claude now read the diff from a staged `.external-review-diff.txt` file instead of receiving it as a shell argument, avoiding `ARG_MAX` limits on large diffs (~700KB+). Codex switches to the built-in `codex exec review --base` preset which computes its own diff with filesystem access. ([#58](https://github.com/tmchow/tmc-marketplace/pull/58))
+
+---
+
 ## [1.7.4] - 2026-02-14
 
 ### Changed
@@ -227,6 +235,7 @@ Initial release — 11 skills, 13 agents. ([#10](https://github.com/tmchow/tmc-m
 Core workflow: brainstorming → research → spike → tech planning → implementing, with multi-agent reviews at each stage.
 
 <!-- Version comparison links -->
+[1.7.5]: https://github.com/tmchow/tmc-marketplace/compare/v1.7.4...v1.7.5
 [1.7.4]: https://github.com/tmchow/tmc-marketplace/compare/v1.7.3...v1.7.4
 [1.7.3]: https://github.com/tmchow/tmc-marketplace/compare/v1.7.2...v1.7.3
 [1.7.2]: https://github.com/tmchow/tmc-marketplace/compare/v1.7.1...v1.7.2
