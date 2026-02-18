@@ -1,6 +1,6 @@
 ---
 name: iterative:spike
-description: This skill should be used when the user says "spike this", "prototype this", "proof of concept", "POC this", "try this out", "let me see what this looks like", "validate this", "explore what this would feel like", "I want to try this before committing", or when PRD requirements need to be experienced before committing to a direction.
+description: Build throwaway prototypes to validate uncertain requirements before committing to a direction. Triggers: "spike this", "prototype this", "proof of concept", "POC this", "try this out", "validate this".
 ---
 
 # Spike

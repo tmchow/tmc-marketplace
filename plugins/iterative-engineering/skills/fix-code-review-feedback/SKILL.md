@@ -1,6 +1,6 @@
 ---
 name: fix-code-review-feedback
-description: Address code review feedback by evaluating validity and fixing issues. This skill should be used when the user says "fix the review feedback", "address PR comments", or after a code-review agent produces findings.
+description: Address code review feedback by evaluating validity and fixing issues — supports local agent feedback and GitHub PR threads. Triggers: "fix the review feedback", "address PR comments".
 user-invocable: true
 context: fork
 ---

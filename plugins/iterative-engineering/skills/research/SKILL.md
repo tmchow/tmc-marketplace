@@ -1,6 +1,6 @@
 ---
 name: iterative:research
-description: This skill should be used when the user says "research this", "research these questions", "investigate questions", "resolve open questions", "look into this", "address open questions", or when a PRD has unresolved questions that can be answered through information gathering before technical planning.
+description: Investigate open questions through parallel research — prior art, constraints, competitive analysis. Triggers: "research this", "investigate questions", "resolve open questions", "look into this", or when a PRD has unresolved questions.
 ---
 
 # Research
