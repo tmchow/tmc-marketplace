@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0] - 2026-02-17
+
+### Added
+
+- **Scope-aware brainstorming (Quick/Standard/Full)** — after initial Q&A, brainstorming assesses scope and adjusts ceremony. Quick gets focused Q&A and inline sanity check; Standard produces a lightweight implementation brief with full review; Full produces a complete PRD with structured tech planning. ([#60](https://github.com/tmchow/tmc-marketplace/pull/60))
+- **Changelog links in READMEs** — both repo and plugin READMEs now link to the changelog, since we don't use GitHub Releases. ([#60](https://github.com/tmchow/tmc-marketplace/pull/60))
+
+### Changed
+
+- **YAGNI reviewer → Complexity & Debt Reviewer** — recalibrated from "is this minimal?" to "is the complexity justified?" Focus shifted to maintenance burden over implementation cost. Added "What NOT to Flag" guardrails (simple additions, user-requested features, proportional edge cases). ([#60](https://github.com/tmchow/tmc-marketplace/pull/60))
+- **Simplicity reviewer Section 4** — renamed from "YAGNI Violations" to "Dead Flexibility & Dead Code" to remove overlap with Section 1 (Over-Engineering). Section 1 catches things being built unnecessarily; Section 4 catches things that exist unnecessarily. ([#60](https://github.com/tmchow/tmc-marketplace/pull/60))
+- **HZL selection uses plan-size heuristic** — implementing skill now uses plan structure (single section or ≤5 subtasks → built-in tasks; multiple sections or 6+ subtasks → offer HZL) instead of referencing brainstorming's scope assessment. ([#60](https://github.com/tmchow/tmc-marketplace/pull/60))
+- **Skill descriptions lead with purpose** — frontmatter descriptions rewritten to show what the skill does before listing triggers, so the slash command menu shows useful info before truncation. ([#60](https://github.com/tmchow/tmc-marketplace/pull/60))
+
+---
+
 ## [1.7.5] - 2026-02-15
 
 ### Fixed
@@ -235,6 +251,7 @@ Initial release — 11 skills, 13 agents. ([#10](https://github.com/tmchow/tmc-m
 Core workflow: brainstorming → research → spike → tech planning → implementing, with multi-agent reviews at each stage.
 
 <!-- Version comparison links -->
+[1.8.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.7.5...v1.8.0
 [1.7.5]: https://github.com/tmchow/tmc-marketplace/compare/v1.7.4...v1.7.5
 [1.7.4]: https://github.com/tmchow/tmc-marketplace/compare/v1.7.3...v1.7.4
 [1.7.3]: https://github.com/tmchow/tmc-marketplace/compare/v1.7.2...v1.7.3
