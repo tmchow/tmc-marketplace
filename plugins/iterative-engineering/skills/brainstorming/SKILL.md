@@ -1,6 +1,6 @@
 ---
 name: iterative:brainstorming
-description: Explore ideas and approaches before building. This skill should be used when the user says "brainstorm", "brainstorming", "create a PRD", "write requirements", "define scenarios", "explore approaches", "think through options", or is starting a new feature with unclear direction.
+description: Explore ideas and approaches before building — scope assessment (Quick/Standard/Full), collaborative Q&A, PRD or implementation brief. Triggers: "brainstorm", "create a PRD", "write requirements", "explore approaches", "think through options", or starting a new feature with unclear direction.
 ---
 
 # Brainstorming
@@ -23,8 +23,8 @@ Skip brainstorming when requirements are explicit, detailed, and the user knows 
 3. **Multiple choice preferred** - Easier to answer than open-ended when natural options exist
 4. **Be a thinking partner** - Don't just extract requirements. Bring ideas, suggest alternatives, challenge assumptions, explore what-ifs
 5. **Directional, not detailed** - High-level technical direction is welcome ("real-time vs polling", "build vs buy"). Implementation specifics are not ("use Socket.io with Redis", "add a notifications table with columns X, Y, Z")
-6. **Scale to the scope** - An entire app idea needs deeper exploration than a small feature. Match the depth to what's being brainstormed
-7. **YAGNI** - Resist complexity; choose the simplest approach that solves the stated problem
+6. **Scale to the scope** - After initial questions, assess scope (Quick/Standard/Full) and adjust ceremony accordingly. A bug fix gets focused Q&A and an inline check; a new subsystem gets the full PRD and 4-agent review
+7. **Complexity-aware** - Be skeptical of complexity, not of scope. Simple additions are fine; unnecessary abstraction and indirection are not
 8. **PRD is a living document** - The PRD is the requirements source of truth throughout the workflow. Tech planning and implementation may update it as reality reveals new constraints
 
 ## Workflow
@@ -42,7 +42,29 @@ Skip brainstorming when requirements are explicit, detailed, and the user knows 
 3. Don't try to cover everything — just enough to propose broad directions.
 4. Move to Phase 2 after 2-3 questions (do not extend).
 
+### Scope Assessment (after Phase 1)
+
+After the initial questions, assess the scope of work and present a recommendation to the user. This determines how much ceremony the rest of the workflow applies.
+
+| Scope | Description | Signals | Downstream behavior |
+|-------|-------------|---------|---------------------|
+| **Quick** | Bug fix, config change, single-behavior tweak | 1-3 files, no architectural decisions, clear root cause or change | Focused Q&A, no document, inline sanity check, implement directly |
+| **Standard** | Small feature, bounded refactor, UI addition | Several files, a few decisions, clear scope | Brief document, full review, option to skip tech planning |
+| **Full** | Large feature, cross-cutting change, new subsystem | Many files, architectural choices, multiple stakeholders or flows | Full PRD, 4-agent review, tech planning, structured implementation |
+
+Present the assessment as a recommendation with an interactive choice (e.g., `AskUserQuestion` in Claude Code). The user confirms or overrides. Lead with a brief rationale for the recommendation, then present the three options — marking the assessed scope as `(Recommended)`:
+
+- **Quick** — focused Q&A on edge cases, inline sanity check, then implement directly
+- **Standard** — lightweight implementation brief, full review, option to skip tech planning
+- **Full** — complete PRD, full review, tech plan, structured implementation
+
+If the user overrides to a larger scope, proceed with that scope's workflow. If they confirm Quick or Standard, proceed with the lighter path. The scope can also be upgraded mid-conversation if hidden complexity emerges — note this possibility but don't belabor it.
+
 ### Phase 2: Broad Directions (steering, not detailed)
+
+**Quick scope:** Skip Phase 2. The problem and approach are typically obvious for a bug fix or small tweak. Instead, briefly state your understanding of the approach: "Here's my understanding: [the fix/change]. Does that match?" Then move to Phase 3.
+
+**Standard and Full scope:**
 
 1. Present 2-3 high-level directions (1-2 sentences each). Keep them lightweight — these are steering choices, not final approaches.
 2. Include a brief trade-off for each (not full pros/cons yet). Lead with a recommendation.
@@ -50,6 +72,12 @@ Skip brainstorming when requirements are explicit, detailed, and the user knows 
 4. **Validate the direction.** After the user picks, briefly check: does this direction satisfy the core requirements identified so far? If any requirement looks at risk, flag it before going deeper. This is a quick sanity check, not a formal review — a sentence or two is sufficient.
 
 ### Phase 3: Deep Exploration (Q&A within chosen direction)
+
+**Quick scope:** Iterative Q&A focused on understanding the specific problem and catching edge cases. Same one-question-at-a-time pattern, but the conversation naturally centers on the fix or change rather than broad goals, UX flows, or feasibility trade-offs. It wraps up faster because there's less to explore — not because of an artificial cap. If the Q&A reveals the problem is more complex than expected, suggest upgrading to Standard or Full scope.
+
+**Standard scope:** Normal Q&A but briefer. Focus on approach decisions and edge cases rather than exhaustive exploration. 3-5 exchanges is typical. Move to Phase 4 once the approach and key edge cases are clear.
+
+**Full scope:**
 
 1. Ask targeted questions within the chosen direction.
 2. Bring ideas — don't just ask, suggest and react.
@@ -60,6 +88,17 @@ Skip brainstorming when requirements are explicit, detailed, and the user knows 
 
 ### Phase 4: Document Findings
 
+**Quick scope:** Skip document creation entirely. The brainstorm conversation itself is the artifact. Instead, move directly to Phase 5 (which runs an inline sanity check for Quick scope). No branch safety gate needed — no commits to make.
+
+**Standard scope:**
+
+1. **Branch safety gate.** Before the first commit, check if on the default branch (`main`/`master`). If so, offer: A) Create a feature branch (recommended), B) Continue on default branch. This is a one-time check — once resolved, all subsequent commits in this session go to the chosen branch.
+2. Write a lightweight **implementation brief** — not a full PRD. Include only: Goal (1-2 sentences), Approach (the chosen direction and why), Requirements (simplified table — just the key ones), Edge Cases (what to watch for), and Scope Boundaries (what's deliberately excluded). Skip sections like Alternatives Considered, Key Decisions log, Success Criteria, and Open Questions unless they genuinely apply.
+3. Save to `docs/prd/YYYY-MM-DD-<topic>-brief.md` (ensure directory exists).
+4. **Commit the brief.** Don't leave it as an uncommitted change.
+
+**Full scope:**
+
 1. **Branch safety gate.** Before the first commit, check if on the default branch (`main`/`master`). If so, offer: A) Create a feature branch (recommended), B) Continue on default branch. This is a one-time check — once resolved, all subsequent commits in this session go to the chosen branch.
 2. Write PRD using the template in `references/prd-template.md`. Include sections when their inclusion criteria apply — skip the rest.
 3. Group requirements by priority in a single markdown table (columns: ID, Priority, Requirement). Priority values: Core, Must, Nice, Out. Be deliberate about priority — if everything is Must, nothing is.
@@ -67,6 +106,48 @@ Skip brainstorming when requirements are explicit, detailed, and the user knows 
 5. **Commit the PRD.** Don't leave it as an uncommitted change.
 
 ### Phase 5: Review and Handoff
+
+Phase 5 behavior varies by scope. All scopes include at least one review pass — even Quick scope gets a sanity check.
+
+#### Quick Scope
+
+1. **Inline sanity check.** Before presenting options, do a brief self-review of the approach discussed. Present it directly:
+
+   > **Sanity check before proceeding:**
+   > - [Edge case X] — covered by [approach detail], or flagged as a concern
+   > - [Assumption Y] — validated because [reason], or needs verification
+   > - [Adjacent risk Z] — low because [reason], or worth watching
+   > - Hidden complexity: [assessment — is this actually as small as it seems?]
+   >
+   > [Clean: "This looks straightforward." / Concern: "One thing to watch: [X]"]
+
+   This is a thinking pause, not a formal review — a few sentences surfacing anything the conversation might have missed.
+
+2. **Present options.** Interactive choice (e.g., `AskUserQuestion` in Claude Code). AskUserQuestion provides an automatic "Other" option — use that as the exit path:
+   - **Implement (Recommended)** — approach is clear, go build it
+   - **Upgrade to tech plan** — scope is bigger than expected, create a structured plan
+
+   "Implement" means the skill exits and the user proceeds to build based on the brainstorm conversation. No plan document or structured implementation skill needed. If the sanity check flagged concerns, note them but still let the user choose — they may already be aware.
+
+#### Standard Scope
+
+1. **Classify open questions.** If the brief has open questions, classify them (see classification criteria below).
+2. **Surface user decisions.** Same as Full scope step 2 below, applied to the brief.
+3. **First time presenting options: recommend Review.** Present an interactive choice (e.g., `AskUserQuestion` in Claude Code). AskUserQuestion provides an automatic "Other" option — use that as the exit path (user can type "I'll take it from here" or similar). Show up to 4 explicit options:
+   - **Review the brief (Recommended)** — 4 specialized reviewers analyze for issues
+   - **Continue to technical planning** — create a detailed implementation plan
+   - **Implement directly** — scope is clear enough to start building
+   - **Research open questions** — resolve unknowns through investigation (only show when applicable)
+   Only show Research when open questions exist that fit the research resolution method. When Research isn't shown, there are 3 options + Other.
+4. If review: invoke `plan-review` skill. Brainstorming owns the fix loop.
+5. Fix issues identified by plan-review. **Commit the updated brief.**
+6. **After fixing**, present an interactive choice (e.g., `AskUserQuestion` in Claude Code) — same options as step 3 but with no default recommendation. Do not end the turn without presenting this choice.
+7. Repeat steps 4-6 if user chooses another round.
+8. If user chooses research: invoke `iterative:research` skill. After completion, **commit updated brief** and return to step 6.
+9. If user chooses tech-planning: invoke `iterative:tech-planning` skill.
+10. If user chooses implement directly: exit the skill. The user proceeds to build based on the brief and brainstorm conversation.
+
+#### Full Scope
 
 1. **Classify open questions.** If the PRD has an Open Questions section, read the questions and assess which resolution method fits each (see classification criteria below). Use this to determine which steps and options to surface next.
 2. **Surface user decisions.** If any questions were classified as "user decision needed," present them before the main options — the brainstorming context is fresh and it's a good moment to decide. For each question:
@@ -76,13 +157,12 @@ Skip brainstorming when requirements are explicit, detailed, and the user knows 
    - Deferred: leave in Open Questions.
 
    Present one question at a time. Skip this step if no user-decision questions exist.
-3. **First time presenting options: always recommend Review.** The PRD has never been reviewed — review is the right default. Present an interactive choice (e.g., `AskUserQuestion` in Claude Code):
-   - A) Review the PRD **(Recommended)** — the PRD hasn't been reviewed yet
-   - B) Research open questions — when questions exist that can be answered by gathering information
-   - C) Spike — when questions exist that need to be built and experienced to validate
-   - D) Continue to technical planning
-   - E) I'll take it from here (exit)
-   Only show B and C when the PRD has open questions that fit that resolution method. If active spikes exist (in-progress spike docs in `docs/spikes/`), mention them as a resume option alongside C.
+3. **First time presenting options: always recommend Review.** The PRD has never been reviewed — review is the right default. Present an interactive choice (e.g., `AskUserQuestion` in Claude Code). AskUserQuestion provides an automatic "Other" option — use that as the exit path. Show up to 4 explicit options, selected from this priority order:
+   - **Review the PRD (Recommended)** — 4 specialized reviewers analyze for issues (always show)
+   - **Research open questions** — resolve unknowns through investigation (only show when applicable)
+   - **Spike** — build and experience to validate uncertain requirements (only show when applicable)
+   - **Continue to technical planning** — create a detailed implementation plan (always show)
+   Only show Research and Spike when the PRD has open questions that fit those resolution methods. If active spikes exist (in-progress spike docs in `docs/spikes/`), mention them as a resume option alongside Spike. When both Research and Spike are shown, all 4 slots are used. When neither is shown, only 2 options + Other.
 4. If review: invoke `plan-review` skill. Plan-review returns findings — brainstorming owns the fix loop.
 5. Fix issues identified by plan-review. **Commit the updated PRD.**
 6. **Immediately after fixing**, present an interactive choice to the user (e.g., `AskUserQuestion` in Claude Code) — same options as step 3, re-assessed with updated PRD context. **Do not mark any option as recommended** — the right next step depends on context the skill can't reliably judge. Do not end the turn without presenting this choice.
@@ -171,7 +251,9 @@ The PRD should give enough context for someone to create a detailed technical pl
 | Asking multiple questions at once | One question per message |
 | Just extracting requirements passively | Be a thinking partner — bring ideas, challenge assumptions |
 | Going too deep into implementation specifics | High-level direction is fine; specific libraries, schema, and code design are not |
-| Proposing overly complex solutions | Start simple, add complexity only if needed |
+| Proposing overly complex solutions | Start simple, add complexity only when it reduces maintenance burden |
+| Full PRD ceremony for a bug fix | Match scope assessment — Quick scope skips documents, Standard scope uses a brief |
+| Skipping scope assessment | Always assess scope after Phase 1 — it determines the entire downstream workflow |
 | Making assumptions without validating | State assumptions explicitly and confirm |
 | Same depth for every PRD | Scale to scope — include sections when their criteria apply |
 | Everything is Must | Use priority honestly — if everything is Core, nothing is |
@@ -181,16 +263,15 @@ The PRD should give enough context for someone to create a detailed technical pl
 
 **Always present options to the user at transition points using the interactive question tool** (e.g., `AskUserQuestion` in Claude Code) — never just print options as text or end the turn without presenting a choice.
 
-After PRD is created, and after each review round, present options (surface based on relevance):
-- Review the PRD — 4 agents analyze for issues **(Recommended on first pass only)**
-- Research open questions — resolve unknowns through investigation (when researchable questions exist)
-- Spike — build and validate uncertain requirements (when questions need to be experienced)
-- Continue to technical planning
-- I'll take it from here (exit)
+Transition options vary by scope (see Phase 5 for detailed options per scope):
 
-After the first review round, do not mark any option as recommended — just present the choices.
+- **Quick:** Implement directly (recommended) | Upgrade to tech plan | Other (exit)
+- **Standard:** Review brief (recommended first pass) | Tech planning | Implement directly | Research (conditional) | Other (exit)
+- **Full:** Review PRD (recommended first pass) | Research (conditional) | Spike (conditional) | Tech planning | Other (exit)
 
-**Never skip this step.** Do not proceed to tech-planning or announce "the PRD is ready" without presenting these options first.
+After the first review round (Standard/Full), do not mark any option as recommended — just present the choices.
+
+**Never skip this step.** Do not proceed to tech-planning, announce "the PRD is ready," or let the conversation drift without presenting these options first.
 
 ## Additional Resources
 
