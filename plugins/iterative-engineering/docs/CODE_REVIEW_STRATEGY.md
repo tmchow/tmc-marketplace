@@ -13,7 +13,7 @@ Five reviewers run natively on the host platform, each focused on a specific dom
 | Correctness | Logic, edge cases, bugs, error handling | Does this work correctly? |
 | Security | Vulnerabilities, auth, input validation | Is this safe? |
 | Performance | Complexity, queries, memory, caching | Is this fast enough? |
-| Simplicity | YAGNI, over-engineering, abstraction | Is this minimal? |
+| Simplicity | Unjustified complexity, over-engineering, abstraction | Is the complexity justified? |
 | Testing | Coverage, quality, edge cases, plan scenarios | Is this well-tested? |
 
 Built-in reviewers run as an agent team, enabling cross-validation: reviewers can read each other's findings and challenge them.

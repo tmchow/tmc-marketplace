@@ -83,11 +83,11 @@ Each stage produces an artifact, offers iterative review, and hands off when the
 
 ### Brainstorming
 
-Brainstorming shapes requirements through dialogue. It asks 2-3 questions to map the problem space, presents broad directions to narrow things down, and validates the user's choice against core requirements before going deep. It pushes back on assumptions and suggests alternatives — the goal is to surface options, not just document what the user already knows.
+Brainstorming shapes requirements through dialogue. It asks 2-3 questions to map the problem space, then assesses scope — **Quick** (bug fix, config change), **Standard** (small feature, bounded refactor), or **Full** (large feature, new subsystem). The scope determines how much ceremony follows: Quick gets focused Q&A and an inline sanity check before implementing directly; Standard produces a lightweight brief with full review; Full produces a complete PRD with full review and structured tech planning. The user confirms or overrides the scope assessment.
 
-The output is a **PRD** with requirements grouped by priority: Core (the whole point), Must-Have (required for v1), Nice-to-Have (include if straightforward), Out (considered and explicitly excluded). Scope splits into In Scope and deliberate Boundaries — active decisions that prevent scope creep, not oversights. Open questions are tagged with what they affect (requirements, scope, direction) so downstream stages know what depends on resolving them. Sections earn their place based on criteria, not a rigid template. High-level technical direction belongs here; implementation specifics do not.
+For Standard and Full scope, it presents broad directions to narrow things down, validates the user's choice against core requirements before going deep, and pushes back on assumptions. The Full scope output is a **PRD** with requirements grouped by priority: Core (the whole point), Must-Have (required for v1), Nice-to-Have (include if straightforward), Out (considered and explicitly excluded). Scope splits into In Scope and deliberate Boundaries. Open questions are tagged with what they affect so downstream stages know what depends on resolving them. Sections earn their place based on criteria, not a rigid template. High-level technical direction belongs here; implementation specifics do not.
 
-After the PRD is written, it goes through review. 4 specialized reviewers (clarity, completeness, specificity, YAGNI) analyze the document via agent team with cross-validation — a YAGNI reviewer can push back when completeness wants more detail. The user reviews findings, fixes issues, and can run as many rounds as needed. If the PRD has open questions, they can be resolved before planning. The agent classifies each question by resolution method: questions where the answer exists somewhere (prior art, constraints, competitive landscape) get parallel research via `iterative:research`. Questions that need to be built and experienced (UX feel, interaction design, behavioral validation) get spiked via `iterative:spike`. Technical questions defer to tech planning; questions needing user decisions get flagged. Findings are proposed as PRD updates, applied only with user approval. The PRD stays live — tech planning, spiking, and implementation update it when they hit new constraints.
+After the PRD is written, it goes through review. 4 specialized reviewers (clarity, completeness, specificity, complexity/debt) analyze the document via agent team with cross-validation — the complexity reviewer can push back when completeness wants more detail. The user reviews findings, fixes issues, and can run as many rounds as needed. If the PRD has open questions, they can be resolved before planning. The agent classifies each question by resolution method: questions where the answer exists somewhere (prior art, constraints, competitive landscape) get parallel research via `iterative:research`. Questions that need to be built and experienced (UX feel, interaction design, behavioral validation) get spiked via `iterative:spike`. Technical questions defer to tech planning; questions needing user decisions get flagged. Findings are proposed as PRD updates, applied only with user approval. The PRD stays live — tech planning, spiking, and implementation update it when they hit new constraints.
 
 Spiking builds lightweight throwaway prototypes in isolated worktrees to validate uncertain requirements. Each spike follows a build → present → feedback loop — the user experiences the prototype and provides direction. The spike adapts its approach to the system state: if relevant modules exist, it spikes within the existing system; if not, it builds a standalone prototype. Spike findings update the PRD with full rationale — the PRD stays self-sufficient for downstream stages without needing to read the spike doc. Spike code is throwaway; the decisions are what persist.
 
@@ -97,7 +97,7 @@ Tech planning turns the PRD into an implementation plan. It starts by exploring 
 
 The output is a **Tech Plan** that captures what to build and where — architecture decisions, query strategies, file paths, concrete test scenarios with specific inputs and expected outputs. It does not pre-write implementation code; that's brittle and gets followed blindly. The implementer writes the actual code. Subtasks are scoped to atomic commits (typically 2-3 files) with explicit dependencies. New constraints found during planning go back into the PRD with rationale.
 
-Same review process: the 4 plan reviewers analyze via agent team, the user fixes issues, multiple rounds until it's ready.
+Same review process — all 4 plan reviewers analyze via agent team regardless of document size. Shorter documents naturally produce fewer findings. The user fixes issues, multiple rounds until it's ready.
 
 ### Implementing
 
@@ -124,7 +124,7 @@ Reviews are user-driven:
 - **Offered, never forced** — Every review is presented as a choice. The user can skip.
 - **Severity-based acceptance** — Findings grouped by severity (Critical / High / Medium / Low). User selects which levels to fix — not all-or-nothing.
 - **User-controlled loop** — After fixes, user chooses to re-review or continue. No automatic re-review.
-- **Agent teams with fallback** — Reviewers run as an agent team so they can cross-validate findings (a YAGNI reviewer can push back on completeness suggestions). When agent teams aren't available, reviews automatically fall back to parallel subagents.
+- **Agent teams with fallback** — Reviewers run as an agent team so they can cross-validate findings (the complexity/debt reviewer can push back on completeness suggestions). When agent teams aren't available, reviews automatically fall back to parallel subagents.
 - **Scaled to scope** — Full review for substantial work, quick review for moderate changes, skip for trivial config edits.
 
 ## Design Decisions
@@ -181,7 +181,7 @@ The core workflow skills use an `iterative:` prefix in their name (e.g., `/itera
 | `clarity-reviewer` | Vague language, ambiguity, structure |
 | `completeness-reviewer` | Missing sections, gaps, dependencies |
 | `specificity-reviewer` | Actionability, concrete details |
-| `yagni-reviewer` | Scope creep, over-specification |
+| `yagni-reviewer` | Unjustified complexity, maintenance burden, dead flexibility |
 
 ### Review Agents (Code Review)
 
@@ -192,7 +192,7 @@ The core workflow skills use an `iterative:` prefix in their name (e.g., `/itera
 | `correctness-reviewer` | Logic errors, edge cases, bugs, silent failures, plan compliance |
 | `security-reviewer` | Vulnerabilities, auth, input validation, project conventions |
 | `performance-reviewer` | Algorithmic complexity, queries, memory, caching |
-| `simplicity-reviewer` | YAGNI, over-engineering, unnecessary abstraction |
+| `simplicity-reviewer` | Unjustified complexity, over-engineering, unnecessary abstraction |
 | `testing-reviewer` | Coverage, test quality, edge cases, plan test scenarios |
 
 Built-in reviewers use diff-anchored scoping — primary focus on changed lines, with pre-existing issues tagged separately for independent triage. They run as teammates who can cross-validate findings. When agent teams are unavailable, reviews fall back to parallel subagent execution.
@@ -225,6 +225,10 @@ Workflow agents run as isolated subagents. Each `task-worker` gets its own conte
 This plugin supports [HZL](https://github.com/tmchow/hzl) for persistent task tracking across sessions and agents. Implementing detects HZL automatically and offers the choice between built-in and HZL task tracking. Without HZL, the workflow uses built-in task management.
 
 See the [HZL repository](https://github.com/tmchow/hzl) for installation.
+
+## Changelog
+
+See [CHANGELOG.md](../../CHANGELOG.md) for a detailed history of all changes, new features, and fixes across releases.
 
 ## Credits
 

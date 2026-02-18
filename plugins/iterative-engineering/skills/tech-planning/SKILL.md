@@ -1,6 +1,6 @@
 ---
 name: iterative:tech-planning
-description: This skill should be used when the user says "create a plan", "tech planning", "write a tech plan", or has requirements ready to formalize into an implementation plan.
+description: Turn requirements into a structured implementation plan with subtasks, dependencies, file paths, and test scenarios. Triggers: "create a plan", "tech planning", "write a tech plan", or has requirements ready to formalize.
 ---
 
 # Create Technical Plan
@@ -16,6 +16,8 @@ The plan captures WHAT to build and WHERE. The implementer writes the actual cod
 - Can be invoked standalone with existing requirements
 
 If requirements are vague and no PRD exists, offer to start with `iterative:brainstorming` skill first.
+
+**Note on scope:** If brainstorming classified the scope as Quick, tech-planning is typically not invoked — the user implements directly. If the scope is Standard, the user may optionally invoke tech-planning. Adapt the plan depth to the scope: a Standard-scope implementation brief doesn't need 5 parent tasks with 3 subtasks each — a flat checklist of 3-5 steps may be sufficient. Full scope uses the complete structured plan format.
 
 ## Key Principles
 
@@ -121,7 +123,7 @@ The tech plan's `**PRD:**` header links to the PRD document. If the PRD is updat
 **Always present options to the user at transition points using the interactive question tool** (e.g., `AskUserQuestion` in Claude Code) — never just print options as text or end the turn without presenting a choice.
 
 After technical plan is written, and after each review round, present options:
-- Review the plan — 4 agents analyze for issues (recommended on first pass)
+- Review the plan — specialized agents analyze for issues (recommended on first pass)
 - Start implementing (recommended when prior review found only Medium/Low issues or after 3+ rounds)
 - I'll take it from here (exit)
 

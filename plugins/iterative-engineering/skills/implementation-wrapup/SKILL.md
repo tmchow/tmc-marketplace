@@ -1,6 +1,6 @@
 ---
 name: implementation-wrapup
-description: Complete a feature branch with test verification and PR creation. This skill should be used when the user says "finish up", "create a PR", "wrap up the feature", or when invoked by the iterative:implementing skill after all tasks are complete.
+description: Complete a feature branch with test verification and PR creation. Triggers: "finish up", "create a PR", "wrap up the feature". Also invoked by iterative:implementing after all tasks are complete.
 ---
 
 # Implementation Wrapup
