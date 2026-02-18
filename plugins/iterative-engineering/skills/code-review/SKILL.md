@@ -32,7 +32,7 @@ All reviewers use the same 4-level scale:
 | `correctness-reviewer` | Logic, edge cases, bugs, error handling, plan compliance | Does this work correctly and match the intent? |
 | `security-reviewer` | Vulnerabilities, auth, input validation, secrets | Is this safe? |
 | `performance-reviewer` | Algorithmic complexity, queries, memory, caching | Is this fast enough? |
-| `simplicity-reviewer` | YAGNI, over-engineering, unnecessary abstraction | Is this minimal? |
+| `simplicity-reviewer` | Unjustified complexity, over-engineering, unnecessary abstraction | Is the complexity justified? |
 | `testing-reviewer` | Coverage, test quality, edge cases, plan test scenarios | Is this well-tested? |
 
 In Full mode, the orchestrator can also run **external model CLIs** (Gemini, Codex, Claude) for independent, model-diverse perspectives (experimental, opt-in). See External Reviewers below.
@@ -163,7 +163,7 @@ FOCUS AREAS (use exact names):
 1. Correctness — Logic errors, edge cases, null/error handling, incorrect conditions
 2. Security — Injection, auth gaps, input validation, secrets exposure
 3. Performance — Complexity, N+1 queries, resource leaks, blocking operations
-4. Simplicity — Over-engineering, YAGNI, unnecessary abstraction
+4. Simplicity — Over-engineering, unjustified complexity, unnecessary abstraction
 5. Testing — Missing coverage, inadequate assertions, untested edge cases
 
 CONSTRAINTS:

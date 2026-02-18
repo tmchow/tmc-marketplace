@@ -1,6 +1,6 @@
 ---
 name: iterative:implementing
-description: This skill should be used when the user says "implement the plan", "start building", "start implementing", "execute the plan", or has a technical plan ready to implement.
+description: Execute a tech plan with dependency-aware batching, TDD, code review, and PR creation. Triggers: "implement the plan", "start building", "start implementing", "execute the plan".
 ---
 
 # Executing Work
@@ -96,9 +96,10 @@ Task creation happens inside Phase 1, after the plan is read and clarified. This
 Check whether HZL is installed (e.g., `hzl status`) and the project uses HZL for task tracking (e.g., AGENTS.md/CLAUDE.md).
 
 - **HZL not detected** → Use built-in task tracking automatically, no question needed
-- **HZL detected** → Present an interactive choice to the user (e.g., `AskUserQuestion` in Claude Code):
-  - Built-in tasks — lightweight, session-scoped
-  - HZL tasks — task tracking with history across sessions, allows easy resume of work
+- **HZL detected, small plan** (single section or ≤5 total subtasks) → Use built-in task tracking automatically. HZL's cross-session history doesn't justify the overhead for work that will complete in one session. Mention HZL is available if the user wants it, but don't prompt.
+- **HZL detected, large plan** (multiple sections or 6+ total subtasks) → Present an interactive choice to the user (e.g., `AskUserQuestion` in Claude Code):
+  - **Built-in tasks** — lightweight, session-scoped
+  - **HZL tasks** — task tracking with history across sessions, allows easy resume of work
 
 ### Parsing the Plan
 

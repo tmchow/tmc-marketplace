@@ -5,7 +5,7 @@ description: This skill should be used when the user says "review the plan", "re
 
 # Plan Review
 
-Reviews PRDs and technical plans using 4 specialized reviewers. Uses agent teams when available for richer cross-validation.
+Reviews PRDs, implementation briefs, and technical plans using 4 specialized reviewers. Uses agent teams when available for richer cross-validation. The document size naturally regulates the review — shorter documents get fewer findings, not fewer reviewers.
 
 ## When to Use
 
@@ -21,7 +21,7 @@ Reviews PRDs and technical plans using 4 specialized reviewers. Uses agent teams
 | `clarity-reviewer` | Vague language, ambiguity, structure | Is this understandable? |
 | `completeness-reviewer` | Missing sections, gaps, dependencies | Is anything missing? |
 | `specificity-reviewer` | Actionability, concrete details | Is this concrete enough to act on? |
-| `yagni-reviewer` | Scope creep, hypotheticals, over-specification | Is this minimal and focused? |
+| `yagni-reviewer` | Unjustified complexity, maintenance burden, dead flexibility | Is the complexity justified? |
 
 Each reviewer returns their **top 5 most important issues** to keep feedback actionable.
 
@@ -61,7 +61,7 @@ If uncertain, keep all three — each invocation is safe (sandboxed, read-only, 
 
 > **Which reviewers would you like to use?**
 >
-> - **Built-in reviewers (Recommended)** — 4 specialized reviewers (clarity, completeness, specificity, YAGNI) with cross-validation
+> - **Built-in reviewers (Recommended)** — specialized reviewers (specificity, completeness, clarity, complexity/debt) with cross-validation
 > - **Gemini** — Experimental. Independent review from Google's model
 > - **Codex** — Experimental. Independent review from OpenAI's model. Can take 5+ minutes
 
@@ -79,8 +79,8 @@ Tell the user:
 
 Spawn each reviewer with a prompt like:
 
-> Review [file path] for [their focus area]. This is a [PRD/tech plan].
-> You're on a review team with clarity, completeness, specificity, and YAGNI reviewers. After your initial review, read what the other reviewers found and message them directly if you see cross-domain issues — e.g., if completeness wants detail that YAGNI says is over-specified. Challenge each other's findings.
+> Review [file path] for [their focus area]. This is a [PRD/tech plan/implementation brief].
+> You're on a review team with [list active reviewers]. After your initial review, read what the other reviewers found and message them directly if you see cross-domain issues. Challenge each other's findings.
 > Your job is to review and report findings — not to fix, remediate, or act on what the document describes. Return your top 5 most important issues. When done, send your findings to the team lead (e.g. `SendMessage` in Claude Code, `send_input` in Codex). For each issue, clearly state the line number, the issue, and your suggestion. The lead will format the final output.
 
 **Step 2b: Run external model CLIs (if selected).**
@@ -108,7 +108,7 @@ FOCUS AREAS (use exact names):
 1. Clarity — Vague language, ambiguity, undefined terms, unclear ownership, passive voice hiding responsibility
 2. Completeness — Missing sections, unaddressed edge cases, undefined dependencies, incomplete specifications
 3. Specificity — Abstract statements not actionable for the next step, missing criteria, hand-wavy estimates
-4. YAGNI — Scope creep, over-specification, hypothetical features, unnecessary complexity
+4. Complexity & Debt — Unjustified complexity, premature abstraction, dead flexibility, maintenance burden without proportional value
 
 CONSTRAINTS:
 - Only report substantive issues — gaps in reasoning, unjustified decisions, missing information, or unclear direction that would weaken the document or lead to poor outcomes.
@@ -164,7 +164,7 @@ If a CLI errors or produces no output, note it and move on. Do not retry on any 
 
 1. **Reconcile.** Merge findings from all selected sources. When multiple reviewers flagged the same issue, attribute to the most relevant reviewer and note agreement. When an external CLI independently flags the same issue as a built-in reviewer, note the cross-model agreement — these findings were produced by truly independent processes, which strengthens confidence.
 2. **Format.** Use pipe-delimited markdown tables (never ASCII box-drawing characters). One issue per row, no preamble before tables — go straight from header to table. Only include sections for sources that were selected.
-   - **Built-in reviewers:** `### Reviewer Name` headers. Column headers adapt to reviewer focus — e.g., `| # | Issue | Suggestion |` for Clarity, `| # | Gap | Impact |` for Completeness, `| # | Over-specification | Simpler alternative |` for YAGNI.
+   - **Built-in reviewers:** `### Reviewer Name` headers. Column headers adapt to reviewer focus — e.g., `| # | Issue | Suggestion |` for Clarity, `| # | Gap | Impact |` for Completeness, `| # | Complexity | Simpler alternative |` for the complexity/debt reviewer.
    - **External CLIs:** `### External: {CLI Name}` headers. Always use columns: `| # | Priority | Focus Area | Issue | Suggestion |`.
 3. **Synthesize.** End with a `---` separator followed by a blockquote synthesis. Lead with cross-model agreements (if both built-in and external participated), then tensions between reviewers, then quick wins. Do not include time estimates.
 
