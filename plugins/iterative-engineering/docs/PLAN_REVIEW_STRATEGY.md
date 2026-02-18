@@ -13,9 +13,11 @@ Four reviewers run natively on the host platform, each focused on a specific dom
 | Clarity | Vague language, ambiguity, structure | Is this understandable? |
 | Completeness | Missing sections, gaps, dependencies | Is anything missing? |
 | Specificity | Actionability, concrete details | Is this concrete enough? |
-| YAGNI | Scope creep, hypotheticals, over-specification | Is this minimal? |
+| Complexity & Debt | Unjustified complexity, premature abstraction, dead flexibility | Is the complexity justified? |
 
-Built-in reviewers run as an agent team, enabling cross-validation: reviewers can read each other's findings and challenge them. A key cross-validation pattern is the completeness-vs-YAGNI tension — completeness wants more detail while YAGNI pushes for less. When these reviewers disagree, the friction itself is informative.
+Built-in reviewers run as an agent team, enabling cross-validation: reviewers can read each other's findings and challenge them. A key cross-validation pattern is the completeness-vs-complexity tension — completeness wants more detail while the complexity reviewer pushes back on additions that add maintenance burden. When these reviewers disagree, the friction itself is informative.
+
+Quick scope tasks don't invoke plan-review — they use an inline sanity check during brainstorming instead. Standard and Full scope both use all 4 reviewers; the document size naturally regulates the volume of findings.
 
 ## External Reviewers (Experimental)
 
@@ -55,7 +57,7 @@ Code review feeds external CLIs a `git diff` (inlined, since diffs aren't files)
 |-----------|------------|-------------|
 | Input | `$(git diff -U10 <range>)` (inlined) | File path (CLI reads document) |
 | Scope model | Diff-anchored (changed vs. pre-existing) | Document-anchored (full content) |
-| Focus areas | Correctness, Security, Performance, Simplicity, Testing | Clarity, Completeness, Specificity, YAGNI |
+| Focus areas | Correctness, Security, Performance, Simplicity, Testing | Clarity, Completeness, Specificity, Complexity/Debt |
 | Output framing | Severity (Critical/High/Medium/Low) + merge verdict | Priority (High/Medium/Low) + suggestions |
 
 All three CLIs can read workspace files in their respective sandbox modes (Gemini `-s` has `read_file`, Codex `--sandbox read-only` has file access, Claude has its Read tool).
@@ -138,7 +140,7 @@ The external review prompt differs from the code review prompt in several key wa
 |----------|-------------------|-------------------|
 | Input | Diff with +/- markers | Full document |
 | Persona | "Senior engineer reviewing code" | Varies by doc type (product strategy / engineering leadership) |
-| Focus areas | Correctness, Security, Performance, Simplicity, Testing | Clarity, Completeness, Specificity, YAGNI |
+| Focus areas | Correctness, Security, Performance, Simplicity, Testing | Clarity, Completeness, Specificity, Complexity/Debt |
 | Scope instruction | "Only comment on changed lines" | "Only report substantive issues that weaken the document or lead to poor outcomes" |
 | Severity | 4-level (Critical/High/Medium/Low) | 3-level (High/Medium/Low) |
 | Output anchor | File path + line number | Line number + suggestion |

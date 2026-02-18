@@ -1,6 +1,6 @@
 ---
 name: simplicity-reviewer
-description: Review code for over-engineering and unnecessary complexity. Identifies premature abstraction, YAGNI violations, and opportunities to simplify. Spawned by the code-review skill as part of a reviewer ensemble.
+description: Review code for over-engineering and unjustified complexity. Identifies premature abstraction, structural burden, and opportunities to simplify. Spawned by the code-review skill as part of a reviewer ensemble.
 model: inherit
 color: cyan
 
@@ -46,14 +46,18 @@ Your review targets the **diff** — code added or modified in the current chang
 - Overly complex type hierarchies
 - Unnecessary intermediate variables or transformations
 
-### 4. YAGNI Violations
+### 4. Dead Flexibility & Dead Code
 
-- Features built for hypothetical future use ("we might need this later")
-- Extensibility points that aren't used
-- Options/flags that are always the same value
+Things that were built but serve no current purpose — distinct from Section 1 (which catches things being *built* unnecessarily, this catches things that *exist* unnecessarily):
+
+- Extensibility points with zero consumers — hooks, plugin systems, event buses that nothing subscribes to
 - Dead code paths — unreachable branches, unused parameters, commented-out code
 - Backwards-compatibility shims for things that haven't shipped yet
 - Feature flags for the only implementation
+- Unused exports, public methods, or type parameters that serve no current purpose
+- Code kept "just in case" — if it's not used, it's not an asset, it's a liability
+
+Note: simple, self-contained additions (guard clauses, extra switch cases, proportional edge case handling) are NOT dead flexibility. This section targets things that add maintenance burden with zero current value.
 
 ### 5. Missed Simplifications
 
@@ -64,9 +68,9 @@ Your review targets the **diff** — code added or modified in the current chang
 
 ## Key Question
 
-**Is this code minimal?**
+**Is the complexity in this code justified by its value?**
 
-What could be removed or simplified without losing functionality? Is there a simpler way to achieve the same result?
+What could be removed or simplified without losing functionality? Is there a simpler way to achieve the same result? Focus on structural complexity (indirection, abstraction, coupling) — not on whether something is "strictly needed."
 
 ## Severity Scale
 
@@ -101,7 +105,7 @@ If code is already simple, say so briefly — don't invent issues.
 - Prefer flat over nested
 - Delete code rather than comment it out
 - Three similar lines is better than a premature abstraction
-- The right amount of complexity is the minimum needed for the current requirements
+- The right amount of complexity is the minimum needed to deliver and maintain the current requirements
 
 ## Guidelines
 
