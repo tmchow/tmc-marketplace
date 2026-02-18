@@ -226,6 +226,10 @@ This plugin supports [HZL](https://github.com/tmchow/hzl) for persistent task tr
 
 See the [HZL repository](https://github.com/tmchow/hzl) for installation.
 
+## Changelog
+
+See [CHANGELOG.md](../../CHANGELOG.md) for a detailed history of all changes, new features, and fixes across releases.
+
 ## Credits
 
 This plugin draws inspiration from:

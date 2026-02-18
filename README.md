@@ -47,6 +47,10 @@ This extracts all skills (with their reference files) to `~/.codex/skills/`.
 |--------|-------------|
 | [iterative-engineering](./plugins/iterative-engineering) | Iterative development workflow — brainstorming → tech planning → implementing with multi-agent reviews, dependency-aware execution, and severity-based acceptance |
 
+## Changelog
+
+See [CHANGELOG.md](./CHANGELOG.md) for a detailed history of all changes, new features, and fixes across releases.
+
 ## License
 
 MIT
