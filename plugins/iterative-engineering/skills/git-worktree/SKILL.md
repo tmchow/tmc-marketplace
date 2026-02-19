@@ -11,7 +11,7 @@ Ensures agent has an isolated workspace to avoid conflicts with human work.
 ## When Called
 
 - At the start of `iterative:implementing` skill
-- At the start of `iterative:spike` skill (branch convention: `spike/<topic>`)
+- At the start of feature work requiring isolation from the current branch
 - When workspace isolation is needed
 - Not directly invocable by users
 

@@ -7,7 +7,7 @@ description: Investigate open questions through parallel research — prior art,
 
 Research open questions from a PRD or a user-provided set of questions. Categorize each question, spawn parallel research subagents for investigatable items, synthesize findings, and update the PRD.
 
-This skill resolves unknowns where the answer **exists somewhere and needs to be found** — prior art, external constraints, codebase patterns, competitive landscape. For unknowns that need to be **built and experienced** to validate (UI/UX feel, interaction design, behavioral validation), use `iterative:spike` instead.
+This skill resolves unknowns where the answer **exists somewhere and needs to be found** — prior art, external constraints, codebase patterns, competitive landscape. For unknowns about visual design, UX, or interaction feel, use `iterative:design-exploration` instead.
 
 ## When to Use
 
@@ -18,7 +18,7 @@ This skill resolves unknowns where the answer **exists somewhere and needs to be
 
 ## Key Principles
 
-1. **Categorize before investigating** — Not all questions belong here. Technical implementation questions (how to query X, which API to use) belong in tech planning's codebase exploration. Questions that need to be experienced belong in `iterative:spike`. This skill handles scope, requirements, external research, and prior art questions.
+1. **Categorize before investigating** — Not all questions belong here. Technical implementation questions (how to query X, which API to use) belong in tech planning's codebase exploration. Questions about visual design or interaction feel belong in `iterative:design-exploration`. This skill handles scope, requirements, external research, and prior art questions.
 2. **Parallel research** — Spawn independent research subagents for each question. Questions are typically unrelated and benefit from concurrent investigation.
 3. **Update the source of truth** — When a PRD exists, findings should update it directly. Answered questions move out of Open Questions; new constraints become requirements.
 4. **Present before committing** — Show findings and proposed PRD changes to the user for approval before updating the document.
@@ -40,11 +40,11 @@ For each question, assess whether it can be investigated now or should be handle
 | **Scope / Requirements** | Investigate now | "Do users need offline support?" / "Should this handle bulk operations?" |
 | **External research** | Investigate now | "What do competitors do for this?" / "Are there regulatory constraints?" |
 | **Prior art / Patterns** | Investigate now | "How do similar tools handle this?" / "What's the standard approach?" |
-| **Needs spiking** | Suggest `iterative:spike` | "How should the drag interaction feel?" / "Would users find this flow intuitive?" |
+| **Needs design exploration** | Suggest `iterative:design-exploration` | "How should the drag interaction feel?" / "Would users find this flow intuitive?" |
 | **Technical implementation** | Defer to tech planning | "Which database index strategy?" / "How does the existing auth middleware work?" |
 | **User decision needed** | Flag for user | "Should we support both formats?" / "What's the priority between X and Y?" |
 
-The distinction between research and spike: **Can the answer be found, or does it need to be built and experienced?** If the question is about how something should feel, look, or behave in practice — that's a spike, not research.
+The distinction between research and design exploration: **Can the answer be found, or does it need to be seen and experienced?** If the question is about how something should feel, look, or behave in practice — that's design exploration, not research.
 
 Present the categorization to the user. They may recategorize or add questions.
 
@@ -73,7 +73,7 @@ Present the categorization to the user. They may recategorize or add questions.
 
 ### Phase 5: Handoff
 
-1. Summarize: what was resolved, what remains open, what was deferred to tech planning, what was suggested for spiking.
+1. Summarize: what was resolved, what remains open, what was deferred to tech planning, what was suggested for design exploration.
 2. If invoked from brainstorming workflow: return to brainstorming's Phase 5 transition (brainstorming presents the next set of options).
 3. If invoked standalone: present options (see Transition Points).
 
@@ -81,7 +81,7 @@ Present the categorization to the user. They may recategorize or add questions.
 
 - **No results found for a question:** Mark it as unresolved. Carry it forward to tech planning or flag it for the user as needing a decision.
 - **All questions are "User decision needed":** Nothing to investigate. Present the decisions to the user directly and skip Phase 3.
-- **All questions need spiking:** Nothing to research. Suggest invoking `iterative:spike` instead and skip Phase 3.
+- **All questions need design exploration:** Nothing to research. Suggest invoking `iterative:design-exploration` instead and skip Phase 3.
 - **PRD has no Open Questions section:** If invoked with a PRD path but no Open Questions, report this and ask the user if they have questions to investigate or if the PRD is ready for tech planning.
 - **User rejects all proposed PRD changes:** Findings are still valuable context. Summarize what was learned even if the PRD isn't updated.
 
@@ -101,7 +101,7 @@ When invoked from brainstorming: return to brainstorming's transition (brainstor
 | Anti-Pattern | Better Approach |
 |--------------|-----------------|
 | Investigating technical implementation questions | Defer to tech planning — those need codebase context |
-| Researching questions that need to be experienced | Suggest `iterative:spike` — research can't answer "how should this feel?" |
+| Researching questions that need to be experienced | Suggest `iterative:design-exploration` — research can't answer "how should this feel?" |
 | Making PRD changes without user approval | Present findings and proposed changes first |
 | Sequential research when questions are independent | Spawn parallel subagents |
 | Leaving answered questions in Open Questions | Clean up — move resolved items out, update affected sections |

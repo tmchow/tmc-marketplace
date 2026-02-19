@@ -32,8 +32,9 @@ Skip brainstorming when requirements are explicit, detailed, and the user knows 
 ### Phase 0: Detect Resume / Assess Clarity
 
 1. If user references an existing PRD or brainstorming topic: load the document (check both `docs/prd/` and `docs/brainstorms/` — treat PRDs and brainstorm documents synonymously), summarize current state, and let the user direct what happens next. Build on existing content, update in place.
-2. If requirements are already explicit and detailed: ask the user: A) Skip to creating a technical plan (recommended), B) Brainstorm anyway. If skipping: invoke `iterative:tech-planning` skill.
-3. Otherwise: proceed to Phase 1.
+2. **Check for existing design direction docs.** Scan `docs/design-directions/` for design direction docs. If found, acknowledge the exploration upfront and fold the chosen direction into the conversation. A design direction narrows the exploration space but isn't a final spec — it's strong input about interaction model and visual direction. Build on what it establishes; explore what it doesn't answer (requirements, behaviors, scope, edge cases). Don't ask about technology or implementation — that's for planning. Reference the direction doc in the PRD when written; don't duplicate it.
+3. If requirements are already explicit and detailed: ask the user: A) Skip to creating a technical plan (recommended), B) Brainstorm anyway. If skipping: invoke `iterative:tech-planning` skill.
+4. Otherwise: proceed to Phase 1.
 
 ### Phase 1: Map the Space (2-3 questions)
 
@@ -133,19 +134,22 @@ Phase 5 behavior varies by scope. All scopes include at least one review pass �
 
 1. **Classify open questions.** If the brief has open questions, classify them (see classification criteria below).
 2. **Surface user decisions.** Same as Full scope step 2 below, applied to the brief.
-3. **First time presenting options: recommend Review.** Present an interactive choice (e.g., `AskUserQuestion` in Claude Code). AskUserQuestion provides an automatic "Other" option — use that as the exit path (user can type "I'll take it from here" or similar). Show up to 4 explicit options:
-   - **Review the brief (Recommended)** — 4 specialized reviewers analyze for issues
-   - **Continue to technical planning** — create a detailed implementation plan
-   - **Implement directly** — scope is clear enough to start building
+3. **First time presenting options: recommend Review.** Present an interactive choice (e.g., `AskUserQuestion` in Claude Code). AskUserQuestion provides an automatic "Other" option — use that as the exit path (user can type "I'll take it from here" or similar). Show up to 4 explicit options, selected from this priority order:
+   - **Review the brief (Recommended)** — 4 specialized reviewers analyze for issues (always show)
+   - **Explore design directions** — generate visual/UX variations to see options before committing (only show when applicable)
    - **Research open questions** — resolve unknowns through investigation (only show when applicable)
-   Only show Research when open questions exist that fit the research resolution method. When Research isn't shown, there are 3 options + Other.
+   - **Implement directly** — scope is clear enough to start building (always show)
+   Only show Design Exploration when the work involves UI/UX. Only show Research when open questions exist that fit the research resolution method. If both Design Exploration and Research apply (rare for Standard scope), drop "Implement directly" to stay within the 4-option limit — if the task has both visual unknowns and open questions, it's complex enough that implementing directly isn't appropriate. When neither conditional applies, show: Review, Tech planning, Implement directly (3 options + Other).
+
+   **Note:** "Continue to technical planning" is available via the automatic "Other" option when not shown explicitly. When it IS shown, it replaces "Implement directly" in the fourth slot — Standard scope always offers at least one forward path (tech planning or implement directly), but not necessarily both. Show "Continue to technical planning" explicitly when the task clearly warrants a plan (e.g., touches multiple files, has architectural decisions). Show "Implement directly" when the brief is simple enough to build from directly.
 4. If review: invoke `plan-review` skill. Brainstorming owns the fix loop.
 5. Fix issues identified by plan-review. **Commit the updated brief.**
-6. **After fixing**, present an interactive choice (e.g., `AskUserQuestion` in Claude Code) — same options as step 3 but with no default recommendation. Do not end the turn without presenting this choice.
+6. **After fixing**, present an interactive choice (e.g., `AskUserQuestion` in Claude Code) — same options as step 3, re-assessed with updated context. **Do not mark any option as recommended.** Do not end the turn without presenting this choice.
 7. Repeat steps 4-6 if user chooses another round.
-8. If user chooses research: invoke `iterative:research` skill. After completion, **commit updated brief** and return to step 6.
-9. If user chooses tech-planning: invoke `iterative:tech-planning` skill.
-10. If user chooses implement directly: exit the skill. The user proceeds to build based on the brief and brainstorm conversation.
+8. If user chooses design exploration: invoke `iterative:design-exploration` skill. After exploration concludes (design direction doc created, brief updated to reference it), **commit the updated brief** and return to step 6.
+9. If user chooses research: invoke `iterative:research` skill. After completion, **commit updated brief** and return to step 6.
+10. If user chooses tech-planning: invoke `iterative:tech-planning` skill.
+11. If user chooses implement directly: exit the skill. The user proceeds to build based on the brief and brainstorm conversation.
 
 #### Full Scope
 
@@ -159,16 +163,16 @@ Phase 5 behavior varies by scope. All scopes include at least one review pass �
    Present one question at a time. Skip this step if no user-decision questions exist.
 3. **First time presenting options: always recommend Review.** The PRD has never been reviewed — review is the right default. Present an interactive choice (e.g., `AskUserQuestion` in Claude Code). AskUserQuestion provides an automatic "Other" option — use that as the exit path. Show up to 4 explicit options, selected from this priority order:
    - **Review the PRD (Recommended)** — 4 specialized reviewers analyze for issues (always show)
+   - **Explore design directions** — generate visual/UX variations to see options before committing (only show when applicable)
    - **Research open questions** — resolve unknowns through investigation (only show when applicable)
-   - **Spike** — build and experience to validate uncertain requirements (only show when applicable)
    - **Continue to technical planning** — create a detailed implementation plan (always show)
-   Only show Research and Spike when the PRD has open questions that fit those resolution methods. If active spikes exist (in-progress spike docs in `docs/spikes/`), mention them as a resume option alongside Spike. When both Research and Spike are shown, all 4 slots are used. When neither is shown, only 2 options + Other.
+   Only show Design Exploration when the work involves UI/UX. Only show Research when the PRD has open questions that fit the research resolution method. When all are shown, all 4 slots are used. When neither Design Exploration nor Research applies, only 2 options + Other.
 4. If review: invoke `plan-review` skill. Plan-review returns findings — brainstorming owns the fix loop.
 5. Fix issues identified by plan-review. **Commit the updated PRD.**
 6. **Immediately after fixing**, present an interactive choice to the user (e.g., `AskUserQuestion` in Claude Code) — same options as step 3, re-assessed with updated PRD context. **Do not mark any option as recommended** — the right next step depends on context the skill can't reliably judge. Do not end the turn without presenting this choice.
 7. Repeat steps 4-6 if user chooses another round.
-8. If user chooses research: invoke `iterative:research` skill with the PRD path. After research completes (findings presented and PRD updated with user-approved changes), **commit the updated PRD** and return to step 6.
-9. If user chooses spike: invoke `iterative:spike` skill. After the spike concludes (spike doc finalized, PRD updated with user-approved changes), **commit the updated PRD** and return to step 6.
+8. If user chooses design exploration: invoke `iterative:design-exploration` skill. After exploration concludes (design direction doc created, PRD updated to reference it), **commit the updated PRD** and return to step 6.
+9. If user chooses research: invoke `iterative:research` skill with the PRD path. After research completes (findings presented and PRD updated with user-approved changes), **commit the updated PRD** and return to step 6.
 10. If user chooses tech-planning: invoke `iterative:tech-planning` skill.
 
 **Open question classification criteria.** When assessing open questions in step 1, apply these criteria to determine which options to surface:
@@ -176,8 +180,8 @@ Phase 5 behavior varies by scope. All scopes include at least one review pass �
 | Resolution method | When | The answer... |
 |---|---|---|
 | **Research** | Facts, patterns, prior art, external constraints | ...exists somewhere and needs to be found |
-| **Spike** | UX feel, interaction design, "would this work in practice?" | ...doesn't exist yet and needs to be built and experienced |
-| **User decision** | Priorities, preferences, business judgment | ...is a human call, not something research or building will reveal |
+| **Design exploration** | Visual design, UX feel, interaction models, "what could this look like?" | ...needs to be seen and experienced across multiple approaches |
+| **User decision** | Priorities, preferences, business judgment | ...is a human call, not something research or exploration will reveal |
 | **Tech planning** | Implementation details, architecture, codebase mechanics | ...requires deep codebase context that tech planning will explore |
 
 This classification is a judgment call — present it as informed options, not a formal categorization step. The user picks what to do.
@@ -266,8 +270,10 @@ The PRD should give enough context for someone to create a detailed technical pl
 Transition options vary by scope (see Phase 5 for detailed options per scope):
 
 - **Quick:** Implement directly (recommended) | Upgrade to tech plan | Other (exit)
-- **Standard:** Review brief (recommended first pass) | Tech planning | Implement directly | Research (conditional) | Other (exit)
-- **Full:** Review PRD (recommended first pass) | Research (conditional) | Spike (conditional) | Tech planning | Other (exit)
+- **Standard:** Review brief (recommended first pass) | Design exploration (conditional) | Research (conditional) | Implement directly or Tech planning | Other (exit)
+- **Full:** Review PRD (recommended first pass) | Design exploration (conditional) | Research (conditional) | Tech planning | Other (exit)
+
+All scopes respect the 4-option limit for interactive questions. See Phase 5 for the priority rules when more options apply than slots allow.
 
 After the first review round (Standard/Full), do not mark any option as recommended — just present the choices.
 

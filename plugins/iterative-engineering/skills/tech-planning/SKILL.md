@@ -52,7 +52,7 @@ A plan is ready when an implementer can start working without asking clarifying 
 
 ### Phase 1: Gather Context (Q&A + Codebase Exploration)
 
-1. Read PRD (if exists). Check both `docs/prd/` and `docs/brainstorms/` for existing documents.
+1. Read PRD (if exists). Check both `docs/prd/` and `docs/brainstorms/` for existing documents. Also check `docs/design-directions/` for design direction docs. If a PRD references a design direction doc, read both — the direction doc contains visual/UX decisions that inform implementation. If only a direction doc exists (no PRD), use it as the requirements input alongside any context from the brainstorming conversation.
 2. **Check for open questions.** If the PRD has an Open Questions section, review each question. Technical questions (tagged `[Affects ...]` or implementation-related) should be investigated during codebase exploration below. Non-technical questions that remain unresolved may need the user's input — flag them early.
 3. Explore the codebase for: existing patterns and conventions to follow, files and modules that will be affected, test patterns and frameworks in use, related code that informs the design.
 4. **Resolve technical open questions.** As codebase exploration answers PRD questions, note the resolution. These findings may trigger PRD updates (see PRD Alignment below).

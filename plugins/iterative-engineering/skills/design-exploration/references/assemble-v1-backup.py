@@ -1,0 +1,180 @@
+#!/usr/bin/env python3
+"""Assembly script for design exploration gallery.
+
+Usage: python3 assemble.py <exploration_dir> <round> <template_path>
+
+Steps:
+  1. Copies shell template to exploration_dir/v{round}.html
+  2. Validates all subagent output files exist and are safe
+  3. Extracts @fonts declarations from CSS files
+  4. Replaces template placeholders with variation content
+  5. Cleans up temp files (_var-*, _metadata.json)
+
+Exit codes:
+  0 — success
+  1 — missing files (lists which variations are incomplete)
+  2 — validation failure (dangerous content in variation html)
+  3 — usage error
+"""
+import glob
+import os
+import re
+import shutil
+import sys
+
+
+def extract_fonts(css_content):
+    """Extract font families from /* @fonts: ... */ comment in CSS."""
+    match = re.search(r'/\*\s*@fonts:\s*(.+?)\s*\*/', css_content)
+    if not match:
+        return []
+    return [f.strip() for f in match.group(1).split("|") if f.strip()]
+
+
+def main():
+    if len(sys.argv) != 4:
+        print(f"Usage: {sys.argv[0]} <exploration_dir> <round> <template_path>", file=sys.stderr)
+        sys.exit(3)
+
+    d = sys.argv[1]
+    r = sys.argv[2]
+    template = sys.argv[3]
+
+    html_path = os.path.join(d, f"v{r}.html")
+    meta_path = os.path.join(d, "_metadata.json")
+
+    # --- Step 1: Copy template ---
+    if not os.path.exists(template):
+        print(f"ERROR: Template not found at {template}", file=sys.stderr)
+        sys.exit(3)
+    shutil.copy2(template, html_path)
+
+    # --- Step 2: Check metadata ---
+    if not os.path.exists(meta_path):
+        print(f"ERROR: Metadata not found at {meta_path}", file=sys.stderr)
+        sys.exit(1)
+
+    # --- Step 3: Find and validate variation files ---
+    js_files = sorted(glob.glob(os.path.join(d, "_var-*.js")))
+    css_files = sorted(glob.glob(os.path.join(d, "_var-*.css")))
+
+    if not js_files:
+        print("ERROR: No variation JS files found (_var-*.js)", file=sys.stderr)
+        sys.exit(1)
+
+    # Check for incomplete file sets — both JS and CSS required per variation
+    js_ids = {os.path.basename(f).replace("_var-", "").replace(".js", "") for f in js_files}
+    css_ids = {os.path.basename(f).replace("_var-", "").replace(".css", "") for f in css_files}
+    all_ids = js_ids | css_ids
+
+    missing = []
+    for vid in sorted(all_ids):
+        parts = []
+        if vid not in js_ids:
+            parts.append("JS")
+        if vid not in css_ids:
+            parts.append("CSS")
+        if parts:
+            missing.append(f"  {vid}: missing {', '.join(parts)}")
+
+    if missing:
+        print("ERROR: Incomplete variation file sets:", file=sys.stderr)
+        for line in missing:
+            print(line, file=sys.stderr)
+        sys.exit(1)
+
+    # Validate JS files — no full HTML documents
+    dangerous = [
+        "<!doctype", "<html", "</html>", "<head>", "</head>",
+        "<body", "</body>", "</script>", "<script",
+        "<style>", "</style>",
+    ]
+    for f in js_files:
+        content = open(f).read().lower()
+        for bad in dangerous:
+            if bad in content:
+                vid = os.path.basename(f)
+                print(f"ERROR: {vid} contains \"{bad}\" — html must be a fragment, not a full document", file=sys.stderr)
+                sys.exit(2)
+
+    print(f"Validated {len(js_files)} variations: {', '.join(sorted(all_ids))}")
+
+    # --- Step 3b: Control quality checks (warnings, not errors) ---
+    warnings = []
+    for f in js_files:
+        vid = os.path.basename(f).replace("_var-", "").replace(".js", "")
+        js_content = open(f).read()
+        css_path = os.path.join(d, f"_var-{vid}.css")
+        css_content = open(css_path).read() if os.path.exists(css_path) else ""
+
+        # Check for controls missing 'id' field
+        # Find control blocks by looking for { id: or { label: patterns
+        control_blocks = re.findall(r'\{[^{}]*?label\s*:\s*[\'"]([^"\']+)[\'"][^{}]*?\}', js_content, re.DOTALL)
+        id_fields = re.findall(r'id\s*:\s*[\'"]([^"\']+)[\'"]', js_content)
+        if control_blocks and not id_fields:
+            warnings.append(f"  {vid}: all controls missing 'id' field (template will auto-generate from label)")
+
+        # Check for cssVar references in CSS + HTML
+        css_vars = re.findall(r"cssVar\s*:\s*['\"]([^'\"]+)['\"]", js_content)
+        for var in css_vars:
+            var_ref = f"var({var})"
+            if var_ref not in js_content and var_ref not in css_content:
+                warnings.append(f"  {vid}: control targets {var} but var({var}) not found in HTML or CSS")
+
+        # Check for fragile [style*=] attribute selectors
+        if "[style*=" in css_content:
+            warnings.append(f"  {vid}: CSS uses [style*=] attribute selector (fragile, may not work with control system)")
+
+    if warnings:
+        print("WARNINGS (controls may not work as expected):")
+        for w in warnings:
+            print(w)
+    else:
+        print("Control quality checks passed")
+
+    # --- Step 4: Assemble ---
+    html = open(html_path).read()
+
+    # Metadata
+    html = html.replace("__METADATA_JSON__", open(meta_path).read())
+
+    # Variation CSS — concatenate all CSS files
+    css_contents = [open(f).read() for f in css_files]
+    css = "\n".join(css_contents)
+    html = html.replace("__VARIATION_CSS__", css)
+
+    # Variation JS objects — comma-join all JS files
+    objs = ",\n".join(open(f).read() for f in js_files)
+    html = html.replace("__VARIATIONS_ARRAY__", objs)
+
+    # Google Fonts — extract from /* @fonts: ... */ comments in CSS files, deduplicate
+    fonts = set()
+    for css_content in css_contents:
+        fonts.update(extract_fonts(css_content))
+    if fonts:
+        font_url = "".join(
+            "&family=" + fam.replace(" ", "+").replace(":", ":wght@").replace(",", ";")
+            for fam in sorted(fonts)
+        )
+        print(f"Fonts: {', '.join(sorted(fonts))}")
+    else:
+        font_url = ""
+        print("WARNING: No @fonts declarations found in CSS files")
+    html = html.replace("__VARIATION_FONTS__", font_url)
+
+    open(html_path, "w").write(html)
+
+    line_count = html.count("\n") + 1
+    print(f"Assembled {html_path} ({line_count} lines)")
+
+    # --- Step 5: Cleanup ---
+    cleaned = 0
+    for pattern in ["_var-*.js", "_var-*.css", "_var-*-fonts.txt", "_metadata.json"]:
+        for f in glob.glob(os.path.join(d, pattern)):
+            os.remove(f)
+            cleaned += 1
+    print(f"Cleaned up {cleaned} temp files")
+
+
+if __name__ == "__main__":
+    main()

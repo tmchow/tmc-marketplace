@@ -2,7 +2,7 @@
 
 ## Overview
 
-The plan review system offers 4 built-in domain experts and up to 2 external reviewers from different model families (one of 3 supported CLIs is always self-excluded), designed for PRDs, brainstorms, and technical plans. All reviewer sources are opt-in — the user chooses which combination to run.
+The plan review system offers 4 built-in domain experts and up to 2 external reviewers from different model families (one of 3 supported CLIs is always self-excluded), designed for PRDs, brainstorms, and technical plans. All reviewer sources are opt-in; the user chooses which combination to run.
 
 ## Built-in Reviewers
 
@@ -15,9 +15,9 @@ Four reviewers run natively on the host platform, each focused on a specific dom
 | Specificity | Actionability, concrete details | Is this concrete enough? |
 | Complexity & Debt | Unjustified complexity, premature abstraction, dead flexibility | Is the complexity justified? |
 
-Built-in reviewers run as an agent team, enabling cross-validation: reviewers can read each other's findings and challenge them. A key cross-validation pattern is the completeness-vs-complexity tension — completeness wants more detail while the complexity reviewer pushes back on additions that add maintenance burden. When these reviewers disagree, the friction itself is informative.
+Built-in reviewers run as an agent team, enabling cross-validation: reviewers can read each other's findings and challenge them. A key cross-validation pattern is the completeness-vs-complexity tension, where completeness wants more detail while the complexity reviewer pushes back on additions that add maintenance burden. When these reviewers disagree, the friction itself is informative.
 
-Quick scope tasks don't invoke plan-review — they use an inline sanity check during brainstorming instead. Standard and Full scope both use all 4 reviewers; the document size naturally regulates the volume of findings.
+Quick scope tasks don't invoke plan-review; they use an inline sanity check during brainstorming instead. Standard and Full scope both use all 4 reviewers; the document size naturally regulates the volume of findings.
 
 ## External Reviewers (Experimental)
 
@@ -35,7 +35,7 @@ Three external CLIs are supported:
 
 The orchestrator runs external CLIs **directly** via Bash, not via subagents. This ensures CLI commands execute in the main agent context where the user can approve Bash access normally, avoiding permission issues with subagent CLI access.
 
-All reviewer sources are opt-in. The user selects which combination of built-in reviewers and external CLIs to run via a single multi-select prompt. This means the user can run built-in reviewers only, external CLIs only, or any combination. The orchestrator runs all selected sources in parallel — built-in reviewers as a team (if selected), external CLIs inline via Bash (if selected).
+All reviewer sources are opt-in. The user selects which combination of built-in reviewers and external CLIs to run via a single multi-select prompt. This means the user can run built-in reviewers only, external CLIs only, or any combination. The orchestrator runs all selected sources in parallel: built-in reviewers as a team (if selected), external CLIs inline via Bash (if selected).
 
 ### Self-Identification
 
@@ -45,13 +45,13 @@ The orchestrator determines its own model family and excludes CLIs accordingly:
 - Running in Codex: Only Gemini CLI available (Codex CLI skipped as self; Claude CLI not offered for Codex-hosted plan reviews)
 - Running in Gemini: Codex + Claude CLIs available, Gemini CLI skipped (self)
 
-The Codex-hosted restriction is intentional — for document reviews, the cross-model value of offering Claude from within Codex isn't established yet. This may be relaxed in the future.
+The Codex-hosted restriction is intentional. For document reviews, the cross-model value of offering Claude from within Codex isn't established yet. This may be relaxed in the future.
 
 CLIs that aren't installed are also skipped (checked via `which`).
 
 ### Document Handling (vs. Code Review)
 
-Code review feeds external CLIs a `git diff` (inlined, since diffs aren't files). Plan review gives them a **file path** and lets each CLI read the document itself. This avoids context-limit issues with large documents — each model manages its own context budget.
+Code review feeds external CLIs a `git diff` (inlined, since diffs aren't files). Plan review gives them a **file path** and lets each CLI read the document itself. This avoids context-limit issues with large documents, since each model manages its own context budget.
 
 | Dimension | Code Review | Plan Review |
 |-----------|------------|-------------|
@@ -71,7 +71,7 @@ The external review prompt adapts its evaluation perspective based on document t
 | PRD / Brainstorm | Product strategy | Is the problem worth solving? Are user needs clear? Is the approach justified? |
 | Tech Plan / Design | Engineering leadership | Is this implementable? Are architecture decisions sound? Are dependencies mapped? |
 
-This matters because a PRD's job is to justify *what* and *why*, while a tech plan's job is to specify *how*. Reviewing a PRD through a pure engineering lens misses product gaps; reviewing a tech plan through a product lens misses implementation gaps.
+A PRD's job is to justify *what* and *why*; a tech plan's job is to specify *how*. Reviewing a PRD through a pure engineering lens misses product gaps; reviewing a tech plan through a product lens misses implementation gaps.
 
 The document type is determined in Step 1 and baked into the staged prompt template before CLI invocation.
 
@@ -92,13 +92,13 @@ Codex uses the `exec` subcommand because the base `codex` command starts an inte
 Code review uses `codex review`, which is Codex's dedicated review subcommand (inherently read-only, no `--sandbox` flag needed). Plan review uses `codex exec --sandbox read-only` instead because:
 
 1. `codex review` is optimized for code diffs and may add its own code-review framing
-2. `codex exec` is designed for non-interactive, headless execution — the base `codex` command starts an interactive TUI that hangs when invoked from agent Bash tools
+2. `codex exec` is designed for non-interactive, headless execution; the base `codex` command starts an interactive TUI that hangs when invoked from agent Bash tools
 3. For document review, `codex exec` with a custom prompt gives full control over the evaluation perspective
 4. `codex exec` requires explicit `--sandbox read-only` since it's a general-purpose subcommand (unlike `review`, which is inherently read-only)
 
 ### Graceful Degradation
 
-All sources are opt-in with graceful degradation. If no external CLIs are installed, the orchestrator skips the selection prompt and runs built-in reviewers automatically. If external CLIs are available, the user chooses their combination via multi-select. The system never fails because of a missing external tool or an unexpected user selection — any combination of sources produces a valid review.
+All sources are opt-in with graceful degradation. If no external CLIs are installed, the orchestrator skips the selection prompt and runs built-in reviewers automatically. If external CLIs are available, the user chooses their combination via multi-select. The system never fails because of a missing external tool or an unexpected user selection; any combination of sources produces a valid review.
 
 ## Priority Scale
 
@@ -106,9 +106,9 @@ Plan reviews use a 3-level priority scale (vs. code review's 4-level severity sc
 
 | Level | Meaning | Action |
 |-------|---------|--------|
-| **High** | Blocks execution — cannot start the next step without resolving | Must fix before proceeding |
-| **Medium** | Creates risk — work can start but likely leads to rework or confusion | Should fix |
-| **Low** | Improvement opportunity — plan works but could be clearer or tighter | Author's discretion |
+| **High** | Blocks execution; cannot start the next step without resolving | Must fix before proceeding |
+| **Medium** | Creates risk; work can start but likely leads to rework or confusion | Should fix |
+| **Low** | Improvement opportunity; plan works but could be clearer or tighter | Author's discretion |
 
 The scale is lighter than code review's severity scale because document issues don't crash systems or create security vulnerabilities. "High" in a plan review means "someone will be blocked or confused," not "the system will break in production."
 
@@ -117,8 +117,8 @@ The scale is lighter than code review's severity scale because document issues d
 The skill orchestrator (not the individual reviewers) synthesizes all findings:
 
 1. **Reconciliation.** Merge findings from all selected sources. When multiple reviewers flag the same issue, merge and note agreement. Cross-model agreement (when both built-in and external sources are used) strengthens confidence.
-2. **Structured output.** Per-reviewer findings tables, then synthesis with cross-reviewer patterns, tensions, and quick wins. Works with any combination of sources — built-in only, external only, or both.
-3. **No verdict.** Unlike code review (which ends with a merge verdict), plan review ends with a synthesis that highlights patterns and tensions. Plans don't have a binary "ready/not ready" — the synthesis helps the author decide what to address.
+2. **Structured output.** Per-reviewer findings tables, then synthesis with cross-reviewer patterns, tensions, and quick wins. Works with any combination of sources: built-in only, external only, or both.
+3. **No verdict.** Unlike code review (which ends with a merge verdict), plan review ends with a synthesis that highlights patterns and tensions. Plans don't have a binary "ready/not ready"; the synthesis helps the author decide what to address.
 
 ## Design Principles
 
@@ -128,7 +128,7 @@ The skill orchestrator (not the individual reviewers) synthesizes all findings:
 
 **Inline for opaque wrappers, teams for collaborators.** External CLIs are opaque wrappers that can't cross-validate, so they run inline via the orchestrator. Built-in reviewers can read each other's findings and challenge them, so they belong as team members.
 
-**Document-type-aware, not one-size-fits-all.** The external review prompt adapts its perspective based on whether the document is a PRD/brainstorm (product lens) or tech plan (engineering lens). The built-in reviewers already handle this via their individual agent definitions (e.g., specificity-reviewer calibrates its bar by document type).
+**Document-type-aware.** The external review prompt adapts its perspective based on whether the document is a PRD/brainstorm (product lens) or tech plan (engineering lens). The built-in reviewers already handle this via their individual agent definitions (e.g., specificity-reviewer calibrates its bar by document type).
 
 **Graceful degradation everywhere.** No component is required for the system to function. Missing CLI? Hide it from the selection. Missing agent teams? Fall back to parallel subagents for built-in reviewers. No external CLIs installed? Skip the selection prompt and run built-in reviewers automatically. Any combination the user selects produces a valid review.
 
@@ -156,4 +156,4 @@ The prompt includes both persona variants (product and engineering) with instruc
 
 ## Temporary File Naming
 
-Plan review stages its prompt to `.external-doc-review-prompt.txt` (vs. code review's `.external-review-prompt.txt`). Different names ensure the two features can coexist if both run in the same repository, and makes it clear from the filename which review process created the temporary file. Both files are cleaned up during their respective Step 4.
+Plan review stages its prompt to `.external-doc-review-prompt.txt` (vs. code review's `.external-review-prompt.txt`). Different names ensure the two features can coexist if both run in the same repository, and make it clear from the filename which review process created the temporary file. Both files are cleaned up during their respective Step 4.
