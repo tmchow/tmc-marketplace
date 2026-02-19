@@ -17,7 +17,7 @@ The plan captures WHAT to build and WHERE. The implementer writes the actual cod
 
 If requirements are vague and no PRD exists, offer to start with `iterative:brainstorming` skill first.
 
-**Note on scope:** If brainstorming classified the scope as Quick, tech-planning is typically not invoked — the user implements directly. If the scope is Standard, the user may optionally invoke tech-planning. Adapt the plan depth to the scope: a Standard-scope implementation brief doesn't need 5 parent tasks with 3 subtasks each — a flat checklist of 3-5 steps may be sufficient. Full scope uses the complete structured plan format.
+**Note on scope:** Quick scope skips tech-planning entirely — the user implements directly from the brainstorming conversation. Standard scope may also skip tech-planning if the user chooses to implement directly from brainstorming's summary; tech-planning is invoked only when the user explicitly opts in. Full scope always uses tech-planning. Adapt plan depth to scope: a Standard-scope task doesn't need 5 parent tasks with 3 subtasks each — a flat checklist of 3-5 steps is sufficient. Full scope uses the complete structured plan format. Tech-planning is where the HOW lives — file paths, architecture decisions, implementation steps, test scenarios. This complements brainstorming's WHAT (requirements, scope, decisions).
 
 ## Key Principles
 

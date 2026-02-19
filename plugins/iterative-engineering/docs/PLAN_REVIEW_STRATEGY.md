@@ -17,7 +17,7 @@ Four reviewers run natively on the host platform, each focused on a specific dom
 
 Built-in reviewers run as an agent team, enabling cross-validation: reviewers can read each other's findings and challenge them. A key cross-validation pattern is the completeness-vs-complexity tension, where completeness wants more detail while the complexity reviewer pushes back on additions that add maintenance burden. When these reviewers disagree, the friction itself is informative.
 
-Quick scope tasks don't invoke plan-review; they use an inline sanity check during brainstorming instead. Standard and Full scope both use all 4 reviewers; the document size naturally regulates the volume of findings.
+Quick scope tasks don't invoke plan-review; they use a lightweight confirmation gate during brainstorming (confirm understanding of the fix, flag edge cases) and exit directly. Standard scope also doesn't invoke plan-review — brainstorming captures decisions in an inline summary without creating a document, so there's nothing for reviewers to analyze. Only Full scope invokes plan-review, since it produces a PRD that benefits from structured multi-reviewer analysis.
 
 ## External Reviewers (Experimental)
 
