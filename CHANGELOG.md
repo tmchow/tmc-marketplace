@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.0] - 2026-02-19
+
+### Changed
+
+- **Brainstorming: scope-first routing** — scope is now assessed from the initial message + a light codebase scan before any questions, replacing the old Phase 1 Q&A-then-assess flow. Three self-contained paths replace the single phase-based workflow with scope conditionals at each phase. ([#63](https://github.com/tmchow/tmc-marketplace/pull/63))
+- **Quick path exits fast** — 0-2 questions, confirmation gate, done. No documents, no branch safety gate, no plan-review, no transition menu. Bug fixes and config changes no longer get ceremony they don't need. ([#63](https://github.com/tmchow/tmc-marketplace/pull/63))
+- **Standard path drops document requirement** — inline summary in the conversation replaces the mandatory implementation brief that was committed to `docs/prd/`. No commits, no plan-review. Exit options: implement directly or create a tech plan. ([#63](https://github.com/tmchow/tmc-marketplace/pull/63))
+- **Design exploration offered at Broad Directions** — for design/interaction-heavy tasks in Full scope, the skill now offers design exploration before locking a direction (after initial scoping questions), not only in Review and Handoff. ([#63](https://github.com/tmchow/tmc-marketplace/pull/63))
+- **Tech-planning scope note updated** — clarifies Quick skips tech-planning, Standard may skip it, and reinforces the what/how boundary between brainstorming and tech-planning. ([#63](https://github.com/tmchow/tmc-marketplace/pull/63))
+
+### Added
+
+- **Design exploration skill** — new skill replacing the spike skill. Generates interactive HTML galleries with per-variation tuning controls, star ratings, and structured export for multi-round iteration. Parallel subagent architecture keeps context windows small. Concludes with a design direction document. ([#62](https://github.com/tmchow/tmc-marketplace/pull/62))
+- **BRAINSTORMING_STRATEGY.md** — strategy doc capturing design decisions behind the restructure: scope-first routing, three self-contained paths, what/how boundary, no documents for Quick/Standard, design exploration timing. ([#63](https://github.com/tmchow/tmc-marketplace/pull/63))
+
+### Fixed
+
+- **Design exploration sleep-polling** — replaced vague "use platform's built-in mechanism" with explicit `TaskOutput` guidance. Orchestrator no longer uses `sleep N && ls` to poll for subagent completion. ([#63](https://github.com/tmchow/tmc-marketplace/pull/63))
+
+---
+
 ## [1.8.0] - 2026-02-17
 
 ### Added
@@ -251,6 +272,7 @@ Initial release — 11 skills, 13 agents. ([#10](https://github.com/tmchow/tmc-m
 Core workflow: brainstorming → research → spike → tech planning → implementing, with multi-agent reviews at each stage.
 
 <!-- Version comparison links -->
+[1.9.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.8.0...v1.9.0
 [1.8.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.7.5...v1.8.0
 [1.7.5]: https://github.com/tmchow/tmc-marketplace/compare/v1.7.4...v1.7.5
 [1.7.4]: https://github.com/tmchow/tmc-marketplace/compare/v1.7.3...v1.7.4
