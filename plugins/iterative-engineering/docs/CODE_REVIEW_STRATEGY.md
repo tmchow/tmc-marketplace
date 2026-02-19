@@ -146,17 +146,17 @@ This design reduces the most common LLM code review failure modes: hand-wavy non
 
 ## Standalone Fix Loop
 
-When code-review runs standalone (not invoked from `iterative:implementing`), it owns the full fix-review cycle after presenting findings. When invoked from implementing, it returns findings directly — implementing has its own severity acceptance, subagent fix, and re-review loop.
+When code-review runs standalone (not invoked from `iterative:implementing`), it owns the full fix-review cycle after presenting findings. When invoked from implementing, it returns findings directly; implementing has its own severity acceptance, subagent fix, and re-review loop.
 
 ### Why Two Modes
 
-Implementing orchestrates a multi-phase workflow (task execution → simplification → review → wrapup) and needs to control fix decisions within that broader context. Standalone code-review has no outer orchestrator, so it must handle the cycle itself. Both modes use the same pattern — severity acceptance → subagent fix → re-review — but ownership differs.
+Implementing orchestrates a multi-phase workflow (task execution, simplification, review, wrapup) and needs to control fix decisions within that broader context. Standalone code-review has no outer orchestrator, so it must handle the cycle itself. Both modes use the same pattern (severity acceptance, subagent fix, re-review) but ownership differs.
 
 ### Standalone Flow
 
 After synthesizing findings (Step 4), the standalone flow adds:
 
-1. **Severity acceptance (Step 5).** Same pattern as implementing: Critical/High present → recommend fixing them; Medium/Low only → recommend proceeding. Interactive prompt, never combined with next-step options.
+1. **Severity acceptance (Step 5).** Same pattern as implementing: Critical/High present, recommend fixing them; Medium/Low only, recommend proceeding. Interactive prompt, never combined with next-step options.
 2. **Subagent fix (Step 6).** A single subagent receives the filtered findings, affected files, and instructions to fix, test, and commit. Runs outside the main thread to preserve context for re-review. One agent handles all findings because fixes can interact across files.
 3. **Re-review (Step 7).** After fixes land, offer another round. Each round runs the full review flow (fresh team, fresh scope). Continues until clean or the user stops.
-4. **Post-fix options (Step 8).** PR creation (if on a feature branch), continue, or exit. Handled inline — no other skills invoked.
+4. **Post-fix options (Step 8).** PR creation (if on a feature branch), continue, or exit. Handled inline; no other skills invoked.

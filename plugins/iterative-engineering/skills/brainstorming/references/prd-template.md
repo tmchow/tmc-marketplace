@@ -111,7 +111,7 @@ Tag each question with what it affects so downstream stages know which questions
 - **[Affects Direction]** [Question that could change the chosen approach]
 ```
 
-Questions tagged with specific requirements or scope signal that those areas aren't fully locked in. Tech planning should resolve technical questions during codebase exploration. Non-technical questions may be resolved through research (see `iterative:research`) or by building and experiencing a prototype (see `iterative:spike`). Resolution method is determined when you go to resolve them, not when writing the PRD.
+Questions tagged with specific requirements or scope signal that those areas aren't fully locked in. Tech planning should resolve technical questions during codebase exploration. Non-technical questions may be resolved through research (see `iterative:research`) or through design exploration (see `iterative:design-exploration`). Resolution method is determined when you go to resolve them, not when writing the PRD.
 
 ### Next Steps (always include)
 
