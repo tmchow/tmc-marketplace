@@ -413,7 +413,9 @@ The shell template (`references/shell-template.html`) is a complete gallery page
 
 #### Step 3b: Spawn Variation Subagents
 
-For each planned variation, spawn a background **subagent** (model: `sonnet` or equivalent capable general-purpose model). Subagents must have write permissions — they need to create files without interactive approval since they run in the background. Launch all subagents in a single message so they run in parallel. Wait for all subagents to complete using your platform's built-in mechanism before proceeding to assembly.
+For each planned variation, spawn a background **subagent** (model: `sonnet` or equivalent capable general-purpose model). Subagents must have write permissions — they need to create files without interactive approval since they run in the background. Launch all subagents in a single message so they run in parallel.
+
+**Wait for subagents using agent tools, not sleep polling.** After spawning, collect each subagent's result using the platform's agent output tool (e.g., `TaskOutput` with `block=true` in Claude Code). Do NOT use `sleep N && ls` to poll for file creation. Sleep polling wastes time, triggers permission prompts, and can proceed before all agents finish. The agent output tool blocks until the subagent completes and returns its result directly.
 
 **CRITICAL: Subagents are single-turn generators, not exploratory agents.** The orchestrator must frame each subagent's task as structured output generation — not an open-ended build task. If the prompt reads like "here's a creative brief, go build something," the subagent will act like an agent (read files, explore, burn context). If it reads like "here's the complete spec, write these files," it acts like a generator.
 
@@ -716,4 +718,5 @@ if the user adjusted controls from defaults. Include any notes the user added.]
 - **Color controls as a single theme preset** — A single "warm/cool/neutral" select is too blunt. Prefer 2-3 independent color dimensions the viewer can mix. Use multi-var `cssValues` (object format) when one control needs to change multiple properties together.
 - **Orchestrator reading variation files to fix partial subagent output** — If a subagent wrote JS but not HTML (or vice versa), do NOT read the existing file to "understand what's needed." This reads variation content into the orchestrator's context. Instead, delete the partial output and re-spawn the subagent.
 - **Wrong round number** — Check existing files in the directory before naming.
-- **Unnecessary filesystem checks** — Don't verify plugin file paths (`ls`, `find`) before running commands, and don't poll for subagent completion with `sleep && ls`. Both trigger permission prompts. Run commands directly; wait for subagents using built-in tools.
+- **Unnecessary filesystem checks** — Don't verify plugin file paths (`ls`, `find`) before running commands. Run commands directly.
+- **Sleep-polling for subagent completion** — Never use `sleep N && ls` to check if subagents finished writing files. Use the platform's agent output tool (e.g., `TaskOutput` with `block=true` in Claude Code) to wait for each subagent to complete. Sleep polling wastes time, can miss incomplete output, and triggers unnecessary permission prompts.

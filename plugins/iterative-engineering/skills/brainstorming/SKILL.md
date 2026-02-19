@@ -1,11 +1,11 @@
 ---
 name: iterative:brainstorming
-description: Explore ideas and approaches before building — scope assessment (Quick/Standard/Full), collaborative Q&A, PRD or implementation brief. Triggers: "brainstorm", "create a PRD", "write requirements", "explore approaches", "think through options", or starting a new feature with unclear direction.
+description: Scope-first brainstorming with intelligent routing — assesses complexity upfront (Quick/Standard/Full), then adapts depth accordingly. Handles simple bug fixes in ~2 exchanges and complex features with full PRD ceremony. Triggers: "brainstorm", "create a PRD", "write requirements", "explore approaches", "think through options", or starting a new feature with unclear direction.
 ---
 
 # Brainstorming
 
-Explore the problem space, scope the goal, and make directional choices through collaborative dialogue. Be a thinking partner — bring ideas, challenge assumptions, and help the user see options they haven't considered.
+Explore the problem space, scope the goal, and make directional choices through collaborative dialogue. Assess scope early and match ceremony to complexity — a bug fix exits in two exchanges, a new subsystem gets a full PRD.
 
 ## When to Use
 
@@ -14,71 +14,151 @@ Explore the problem space, scope the goal, and make directional choices through 
 - When the user hasn't fully articulated what they want
 - When exploring an entirely new project or app idea
 
-Skip brainstorming when requirements are explicit, detailed, and the user knows exactly what they want.
+**When to skip:** Requirements are explicit, detailed, and the user knows exactly what they want. Offer to go straight to `iterative:tech-planning`.
 
 ## Key Principles
 
-1. **Quick questions, then broad options** - Ask 2-3 questions to map the space, then present lightweight directions to steer deeper exploration
-2. **One question at a time** - Never ask multiple questions in a single message
-3. **Multiple choice preferred** - Easier to answer than open-ended when natural options exist
-4. **Be a thinking partner** - Don't just extract requirements. Bring ideas, suggest alternatives, challenge assumptions, explore what-ifs
-5. **Directional, not detailed** - High-level technical direction is welcome ("real-time vs polling", "build vs buy"). Implementation specifics are not ("use Socket.io with Redis", "add a notifications table with columns X, Y, Z")
-6. **Scale to the scope** - After initial questions, assess scope (Quick/Standard/Full) and adjust ceremony accordingly. A bug fix gets focused Q&A and an inline check; a new subsystem gets the full PRD and 4-agent review
-7. **Complexity-aware** - Be skeptical of complexity, not of scope. Simple additions are fine; unnecessary abstraction and indirection are not
-8. **PRD is a living document** - The PRD is the requirements source of truth throughout the workflow. Tech planning and implementation may update it as reality reveals new constraints
+1. **Scope first** — Assess complexity from the initial message and codebase signals before asking questions. Route to the right path early.
+2. **One question at a time** — Never ask multiple questions in a single message
+3. **Multiple choice preferred** — Easier to answer than open-ended when natural options exist
+4. **Be a thinking partner** — Don't just extract requirements. Bring ideas, suggest alternatives, challenge assumptions, explore what-ifs
+5. **Directional, not detailed** — High-level technical direction is welcome. Implementation specifics belong in tech-planning
+6. **Complexity-aware** — Be skeptical of unnecessary complexity, not of scope. Simple additions are fine; unnecessary abstraction is not
+7. **What, not how** — Brainstorming captures WHAT to build (requirements, scope, decisions). Tech-planning captures HOW (files, architecture, implementation steps). Even in lighter paths, respect this boundary
+8. **PRD is a living document** — For Full scope, the PRD is the requirements source of truth throughout the workflow. Tech planning and implementation may update it as reality reveals new constraints
 
-## Workflow
+## Step 1: Assess and Route
 
-### Phase 0: Detect Resume / Assess Clarity
+### Detect Resume
 
-1. If user references an existing PRD or brainstorming topic: load the document (check both `docs/prd/` and `docs/brainstorms/` — treat PRDs and brainstorm documents synonymously), summarize current state, and let the user direct what happens next. Build on existing content, update in place.
-2. **Check for existing design direction docs.** Scan `docs/design-directions/` for design direction docs. If found, acknowledge the exploration upfront and fold the chosen direction into the conversation. A design direction narrows the exploration space but isn't a final spec — it's strong input about interaction model and visual direction. Build on what it establishes; explore what it doesn't answer (requirements, behaviors, scope, edge cases). Don't ask about technology or implementation — that's for planning. Reference the direction doc in the PRD when written; don't duplicate it.
-3. If requirements are already explicit and detailed: ask the user: A) Skip to creating a technical plan (recommended), B) Brainstorm anyway. If skipping: invoke `iterative:tech-planning` skill.
-4. Otherwise: proceed to Phase 1.
+If user references an existing PRD or brainstorming topic: load the document (check both `docs/prd/` and `docs/brainstorms/` — treat PRDs and brainstorm documents synonymously), summarize current state, and let the user direct what happens next. Build on existing content, update in place.
 
-### Phase 1: Map the Space (2-3 questions)
+### Check for Existing Context
+
+- **Design direction docs.** Scan `docs/design-directions/` for design direction docs. If found, acknowledge the exploration upfront and fold the chosen direction into the conversation. A design direction narrows the exploration space but isn't a final spec. Build on what it establishes; explore what it doesn't answer. Reference the direction doc in the PRD when written; don't duplicate it.
+- **Explicit requirements.** If requirements are already explicit and detailed: ask the user: A) Skip to creating a technical plan (recommended), B) Brainstorm anyway. If skipping: invoke `iterative:tech-planning` skill.
+
+### Assess Scope
+
+Before asking any questions, assess the scope of work from the initial message and a light codebase scan. This determines which path to follow.
+
+1. **Light codebase scan.** Quickly explore relevant files and patterns to ground the assessment.
+2. **Assess scope** based on the initial message + codebase signals:
+
+| Scope | Description | Signals |
+|-------|-------------|---------|
+| **Quick** | Bug fix, config change, single-behavior tweak | 1-3 files, no architectural decisions, clear root cause or change |
+| **Standard** | Small feature, bounded refactor, UI addition | Several files, a few decisions, clear scope |
+| **Full** | Large feature, cross-cutting change, new subsystem | Many files, architectural choices, multiple stakeholders or flows |
+
+3. **If scope is ambiguous:** Ask one targeted question to disambiguate, then assess.
+4. **Present scope recommendation.** Lead with a brief rationale, then present the three options using an interactive choice (e.g., `AskUserQuestion` in Claude Code), marking the assessed scope as `(Recommended)`:
+   - **Quick** — focused clarification, confirm understanding, then implement
+   - **Standard** — collaborative Q&A, summarize deliverables, option for tech plan
+   - **Full** — deep exploration, complete PRD, review and handoff
+
+If the user overrides to a different scope, proceed with that scope's path.
+
+---
+
+## Quick Path
+
+For bug fixes, config changes, and single-behavior tweaks. Gets out of the way fast.
+
+**Question focus:** Inherently technical — questions about root cause, affected behavior, and edge cases are natural for bug fixes and tweaks.
+
+### Clarify (0-2 questions)
+
+Use your judgment. If the initial message plus codebase context gives you enough to understand the fix, ask zero questions. If something is ambiguous, ask one or two — no more.
+
+### Confirm Understanding
+
+State your understanding concisely:
+- What the change is
+- Which files are likely involved
+- Edge cases or risks worth noting
+
+Ask the user to confirm. If they correct something significant, update and re-confirm.
+
+### Multi-step Enumeration
+
+If the fix involves multiple discrete steps, briefly enumerate them at a high level (what to do, not how). These are deliverables, not implementation instructions — no file paths or code specifics.
+
+### Exit
+
+The skill is done. The user proceeds to implement based on the conversation. No documents, no formal review, no transition menu.
+
+**If complexity emerges:** If at any point the problem turns out to be more complex than expected, suggest upgrading to Standard or Full scope. Carry forward everything discussed — don't repeat questions.
+
+---
+
+## Standard Path
+
+For small features, bounded refactors, and UI additions. Enough structure to align on what to build without document ceremony.
+
+**Question focus:** Product decisions + light technical direction. "Should pagination be client-side or server-side?" is fine. "Should we use offset or cursor pagination in the SQL query?" is tech-planning territory.
+
+### Collaborative Q&A
+
+1. Ask targeted questions one at a time. Focus on approach decisions, scope boundaries, and edge cases.
+2. Bring ideas — suggest alternatives, challenge assumptions, explore what-ifs.
+3. Typically 3-5 exchanges, but use your judgment. Move on when the approach and key decisions are clear, not at an arbitrary count.
+
+### Optional Approach Discussion
+
+Only if the path forward is genuinely ambiguous — present 2-3 lightweight directions (1-2 sentences each with a brief trade-off) and ask the user to pick. Skip this if there's an obvious approach.
+
+### Summarize What We're Building
+
+Capture the key outcomes of the conversation:
+- **Goal** — what we're building and why (1-2 sentences)
+- **Deliverables** — high-level list of what gets built (e.g., "add pagination to list view", "update UI with page controls", "handle empty state"). These describe WHAT, not HOW — no file paths or implementation steps
+- **Key decisions** — choices made during the conversation that constrain the approach
+- **Scope boundaries** — what's deliberately excluded
+- **Edge cases** — what to watch for
+
+Present this inline in the conversation. Do not create a document or commit anything.
+
+### Exit Options
+
+Present an interactive choice (e.g., `AskUserQuestion` in Claude Code):
+- **Implement directly (Recommended)** — scope is clear, go build it
+- **Create a tech plan** — want a structured implementation plan before building
+
+The skill exits after this choice. If the user chooses tech-planning, invoke `iterative:tech-planning` skill.
+
+**If complexity emerges:** If Q&A reveals the work is larger than expected, suggest upgrading to Full scope. Carry forward all decisions and context.
+
+---
+
+## Full Path
+
+For large features, cross-cutting changes, and new subsystems. Full ceremony — deep exploration, PRD, review, and structured handoff.
+
+**Question focus:** Product-focused. High-level technical direction ("build vs buy", "real-time vs polling") is the limit. Implementation specifics belong in tech-planning.
+
+### Map the Space (2-3 questions)
 
 1. Explore the codebase lightly for relevant context.
-2. Ask the 2-3 BEST questions to understand the problem space (one at a time). Pick questions that will most differentiate possible approaches.
+2. Ask the 2-3 best questions to understand the problem space (one at a time). Pick questions that most differentiate possible approaches.
 3. Don't try to cover everything — just enough to propose broad directions.
-4. Move to Phase 2 after 2-3 questions (do not extend).
 
-### Scope Assessment (after Phase 1)
+**For design and interaction-heavy tasks** (visual redesigns, marketing pages, UI overhauls, workflow/onboarding redesigns): frame questions around constraints and goals — what should be preserved, what specifically feels stale, who's the audience, what impression or experience they should walk away with. Gather parameters for exploration rather than pushing toward verbal style or interaction choices ("what energy do you want?" forces a text answer for a question the user needs to see or experience to answer well).
 
-After the initial questions, assess the scope of work and present a recommendation to the user. This determines how much ceremony the rest of the workflow applies.
-
-| Scope | Description | Signals | Downstream behavior |
-|-------|-------------|---------|---------------------|
-| **Quick** | Bug fix, config change, single-behavior tweak | 1-3 files, no architectural decisions, clear root cause or change | Focused Q&A, no document, inline sanity check, implement directly |
-| **Standard** | Small feature, bounded refactor, UI addition | Several files, a few decisions, clear scope | Brief document, full review, option to skip tech planning |
-| **Full** | Large feature, cross-cutting change, new subsystem | Many files, architectural choices, multiple stakeholders or flows | Full PRD, 4-agent review, tech planning, structured implementation |
-
-Present the assessment as a recommendation with an interactive choice (e.g., `AskUserQuestion` in Claude Code). The user confirms or overrides. Lead with a brief rationale for the recommendation, then present the three options — marking the assessed scope as `(Recommended)`:
-
-- **Quick** — focused Q&A on edge cases, inline sanity check, then implement directly
-- **Standard** — lightweight implementation brief, full review, option to skip tech planning
-- **Full** — complete PRD, full review, tech plan, structured implementation
-
-If the user overrides to a larger scope, proceed with that scope's workflow. If they confirm Quick or Standard, proceed with the lighter path. The scope can also be upgraded mid-conversation if hidden complexity emerges — note this possibility but don't belabor it.
-
-### Phase 2: Broad Directions (steering, not detailed)
-
-**Quick scope:** Skip Phase 2. The problem and approach are typically obvious for a bug fix or small tweak. Instead, briefly state your understanding of the approach: "Here's my understanding: [the fix/change]. Does that match?" Then move to Phase 3.
-
-**Standard and Full scope:**
+### Broad Directions
 
 1. Present 2-3 high-level directions (1-2 sentences each). Keep them lightweight — these are steering choices, not final approaches.
-2. Include a brief trade-off for each (not full pros/cons yet). Lead with a recommendation.
-3. Ask the user to pick a direction. This narrows the search space for deeper exploration.
-4. **Validate the direction.** After the user picks, briefly check: does this direction satisfy the core requirements identified so far? If any requirement looks at risk, flag it before going deeper. This is a quick sanity check, not a formal review — a sentence or two is sufficient.
+2. Include a brief trade-off for each. Lead with a recommendation.
+3. Ask the user to pick a direction.
+4. After the user picks, briefly validate: does this direction satisfy the core requirements identified so far? Flag any requirement at risk before going deeper.
 
-### Phase 3: Deep Exploration (Q&A within chosen direction)
+**For design and interaction-heavy tasks:** When the task involves visual design, interaction patterns, or user experience (redesigns, marketing pages, onboarding flows, workflow changes), offer the user a choice before presenting text-based directions:
+- **Explore design directions** — invoke `iterative:design-exploration` to produce directions the user can see and react to. Use Map the Space answers as constraints and goals to guide the exploration.
+- **Discuss approaches first** — present text-based broad directions as above, then optionally explore later. Better when the user already has a direction in mind or wants to narrow conceptually first.
 
-**Quick scope:** Iterative Q&A focused on understanding the specific problem and catching edge cases. Same one-question-at-a-time pattern, but the conversation naturally centers on the fix or change rather than broad goals, UX flows, or feasibility trade-offs. It wraps up faster because there's less to explore — not because of an artificial cap. If the Q&A reveals the problem is more complex than expected, suggest upgrading to Standard or Full scope.
+Present this as an interactive choice (e.g., `AskUserQuestion`). The signal to offer this is any task where the user needs to *see or experience* options to meaningfully choose — visual concepts, interaction patterns, flows, or a combination. This choice comes after Map the Space, so the exploration is grounded in the initial scoping, not untethered. If the user picks exploration, the chosen direction feeds into Deep Exploration for remaining requirements and scope decisions. If they pick text-based directions, proceed as normal — design-exploration remains available later in Review and Handoff.
 
-**Standard scope:** Normal Q&A but briefer. Focus on approach decisions and edge cases rather than exhaustive exploration. 3-5 exchanges is typical. Move to Phase 4 once the approach and key edge cases are clear.
-
-**Full scope:**
+### Deep Exploration
 
 1. Ask targeted questions within the chosen direction.
 2. Bring ideas — don't just ask, suggest and react.
@@ -87,119 +167,60 @@ If the user overrides to a larger scope, proceed with that scope's workflow. If 
 5. Validate assumptions explicitly ("I'm assuming X. Is that correct?"). Identify risks and open questions to carry forward.
 6. Continue until the approach is well-scoped.
 
-### Phase 4: Document Findings
+### Document: Write PRD
 
-**Quick scope:** Skip document creation entirely. The brainstorm conversation itself is the artifact. Instead, move directly to Phase 5 (which runs an inline sanity check for Quick scope). No branch safety gate needed — no commits to make.
-
-**Standard scope:**
-
-1. **Branch safety gate.** Before the first commit, check if on the default branch (`main`/`master`). If so, offer: A) Create a feature branch (recommended), B) Continue on default branch. This is a one-time check — once resolved, all subsequent commits in this session go to the chosen branch.
-2. Write a lightweight **implementation brief** — not a full PRD. Include only: Goal (1-2 sentences), Approach (the chosen direction and why), Requirements (simplified table — just the key ones), Edge Cases (what to watch for), and Scope Boundaries (what's deliberately excluded). Skip sections like Alternatives Considered, Key Decisions log, Success Criteria, and Open Questions unless they genuinely apply.
-3. Save to `docs/prd/YYYY-MM-DD-<topic>-brief.md` (ensure directory exists).
-4. **Commit the brief.** Don't leave it as an uncommitted change.
-
-**Full scope:**
-
-1. **Branch safety gate.** Before the first commit, check if on the default branch (`main`/`master`). If so, offer: A) Create a feature branch (recommended), B) Continue on default branch. This is a one-time check — once resolved, all subsequent commits in this session go to the chosen branch.
+1. **Branch safety gate.** Before the first commit, check if on the default branch (`main`/`master`). If so, offer: A) Create a feature branch (recommended), B) Continue on default branch. One-time check.
 2. Write PRD using the template in `references/prd-template.md`. Include sections when their inclusion criteria apply — skip the rest.
 3. Group requirements by priority in a single markdown table (columns: ID, Priority, Requirement). Priority values: Core, Must, Nice, Out. Be deliberate about priority — if everything is Must, nothing is.
 4. Save to `docs/prd/YYYY-MM-DD-<topic>-prd.md` (ensure directory exists).
 5. **Commit the PRD.** Don't leave it as an uncommitted change.
 
-### Phase 5: Review and Handoff
+### Review and Handoff
 
-Phase 5 behavior varies by scope. All scopes include at least one review pass — even Quick scope gets a sanity check.
+1. **Classify open questions.** If the PRD has an Open Questions section, assess which resolution method fits each:
 
-#### Quick Scope
+   | Resolution method | When | The answer... |
+   |---|---|---|
+   | **Research** | Facts, patterns, prior art, external constraints | ...exists somewhere and needs to be found |
+   | **Design exploration** | Visual design, UX feel, interaction models | ...needs to be seen and experienced across multiple approaches |
+   | **User decision** | Priorities, preferences, business judgment | ...is a human call, not something research or exploration will reveal |
+   | **Tech planning** | Implementation details, architecture, codebase mechanics | ...requires deep codebase context that tech planning will explore |
 
-1. **Inline sanity check.** Before presenting options, do a brief self-review of the approach discussed. Present it directly:
+2. **Surface user decisions.** If any questions were classified as "user decision needed," present them before the main options — the brainstorming context is fresh. For each: if natural options exist, present as multiple choice; if truly open-ended, ask free-form. Include a "Decide later" option. Answered questions: update the PRD. Deferred: leave in Open Questions. One question at a time.
 
-   > **Sanity check before proceeding:**
-   > - [Edge case X] — covered by [approach detail], or flagged as a concern
-   > - [Assumption Y] — validated because [reason], or needs verification
-   > - [Adjacent risk Z] — low because [reason], or worth watching
-   > - Hidden complexity: [assessment — is this actually as small as it seems?]
-   >
-   > [Clean: "This looks straightforward." / Concern: "One thing to watch: [X]"]
-
-   This is a thinking pause, not a formal review — a few sentences surfacing anything the conversation might have missed.
-
-2. **Present options.** Interactive choice (e.g., `AskUserQuestion` in Claude Code). AskUserQuestion provides an automatic "Other" option — use that as the exit path:
-   - **Implement (Recommended)** — approach is clear, go build it
-   - **Upgrade to tech plan** — scope is bigger than expected, create a structured plan
-
-   "Implement" means the skill exits and the user proceeds to build based on the brainstorm conversation. No plan document or structured implementation skill needed. If the sanity check flagged concerns, note them but still let the user choose — they may already be aware.
-
-#### Standard Scope
-
-1. **Classify open questions.** If the brief has open questions, classify them (see classification criteria below).
-2. **Surface user decisions.** Same as Full scope step 2 below, applied to the brief.
-3. **First time presenting options: recommend Review.** Present an interactive choice (e.g., `AskUserQuestion` in Claude Code). AskUserQuestion provides an automatic "Other" option — use that as the exit path (user can type "I'll take it from here" or similar). Show up to 4 explicit options, selected from this priority order:
-   - **Review the brief (Recommended)** — 4 specialized reviewers analyze for issues (always show)
-   - **Explore design directions** — generate visual/UX variations to see options before committing (only show when applicable)
-   - **Research open questions** — resolve unknowns through investigation (only show when applicable)
-   - **Implement directly** — scope is clear enough to start building (always show)
-   Only show Design Exploration when the work involves UI/UX. Only show Research when open questions exist that fit the research resolution method. If both Design Exploration and Research apply (rare for Standard scope), drop "Implement directly" to stay within the 4-option limit — if the task has both visual unknowns and open questions, it's complex enough that implementing directly isn't appropriate. When neither conditional applies, show: Review, Tech planning, Implement directly (3 options + Other).
-
-   **Note:** "Continue to technical planning" is available via the automatic "Other" option when not shown explicitly. When it IS shown, it replaces "Implement directly" in the fourth slot — Standard scope always offers at least one forward path (tech planning or implement directly), but not necessarily both. Show "Continue to technical planning" explicitly when the task clearly warrants a plan (e.g., touches multiple files, has architectural decisions). Show "Implement directly" when the brief is simple enough to build from directly.
-4. If review: invoke `plan-review` skill. Brainstorming owns the fix loop.
-5. Fix issues identified by plan-review. **Commit the updated brief.**
-6. **After fixing**, present an interactive choice (e.g., `AskUserQuestion` in Claude Code) — same options as step 3, re-assessed with updated context. **Do not mark any option as recommended.** Do not end the turn without presenting this choice.
-7. Repeat steps 4-6 if user chooses another round.
-8. If user chooses design exploration: invoke `iterative:design-exploration` skill. After exploration concludes (design direction doc created, brief updated to reference it), **commit the updated brief** and return to step 6.
-9. If user chooses research: invoke `iterative:research` skill. After completion, **commit updated brief** and return to step 6.
-10. If user chooses tech-planning: invoke `iterative:tech-planning` skill.
-11. If user chooses implement directly: exit the skill. The user proceeds to build based on the brief and brainstorm conversation.
-
-#### Full Scope
-
-1. **Classify open questions.** If the PRD has an Open Questions section, read the questions and assess which resolution method fits each (see classification criteria below). Use this to determine which steps and options to surface next.
-2. **Surface user decisions.** If any questions were classified as "user decision needed," present them before the main options — the brainstorming context is fresh and it's a good moment to decide. For each question:
-   - Assess the question: if natural options exist, present as multiple choice (use interactive tool-based presentation when available). If the question is truly open-ended, ask free-form.
-   - Include a "Decide later" option — the user shouldn't be forced to decide now.
-   - Answered: update the PRD — remove from Open Questions, apply the decision to the relevant section (requirement, scope, boundary, etc.).
-   - Deferred: leave in Open Questions.
-
-   Present one question at a time. Skip this step if no user-decision questions exist.
-3. **First time presenting options: always recommend Review.** The PRD has never been reviewed — review is the right default. Present an interactive choice (e.g., `AskUserQuestion` in Claude Code). AskUserQuestion provides an automatic "Other" option — use that as the exit path. Show up to 4 explicit options, selected from this priority order:
+3. **Present options.** Interactive choice (e.g., `AskUserQuestion` in Claude Code). AskUserQuestion provides an automatic "Other" option — use that as the exit path. Show up to 4 explicit options, selected from this priority order:
    - **Review the PRD (Recommended)** — 4 specialized reviewers analyze for issues (always show)
-   - **Explore design directions** — generate visual/UX variations to see options before committing (only show when applicable)
+   - **Explore design directions** — generate visual/UX variations (only show when work involves UI/UX)
    - **Research open questions** — resolve unknowns through investigation (only show when applicable)
    - **Continue to technical planning** — create a detailed implementation plan (always show)
-   Only show Design Exploration when the work involves UI/UX. Only show Research when the PRD has open questions that fit the research resolution method. When all are shown, all 4 slots are used. When neither Design Exploration nor Research applies, only 2 options + Other.
-4. If review: invoke `plan-review` skill. Plan-review returns findings — brainstorming owns the fix loop.
+
+   When all are shown, all 4 slots are used. When neither Design Exploration nor Research applies, only 2 options + Other.
+
+4. **If review:** invoke `plan-review` skill. Brainstorming owns the fix loop.
 5. Fix issues identified by plan-review. **Commit the updated PRD.**
-6. **Immediately after fixing**, present an interactive choice to the user (e.g., `AskUserQuestion` in Claude Code) — same options as step 3, re-assessed with updated PRD context. **Do not mark any option as recommended** — the right next step depends on context the skill can't reliably judge. Do not end the turn without presenting this choice.
+6. **After fixing**, present an interactive choice — same options as step 3, re-assessed with updated PRD context. **Do not mark any option as recommended.** Do not end the turn without presenting this choice.
 7. Repeat steps 4-6 if user chooses another round.
-8. If user chooses design exploration: invoke `iterative:design-exploration` skill. After exploration concludes (design direction doc created, PRD updated to reference it), **commit the updated PRD** and return to step 6.
-9. If user chooses research: invoke `iterative:research` skill with the PRD path. After research completes (findings presented and PRD updated with user-approved changes), **commit the updated PRD** and return to step 6.
-10. If user chooses tech-planning: invoke `iterative:tech-planning` skill.
+8. **If design exploration:** invoke `iterative:design-exploration` skill. After exploration concludes, **commit the updated PRD** and return to step 6.
+9. **If research:** invoke `iterative:research` skill. After completion, **commit updated PRD** and return to step 6.
+10. **If tech-planning:** invoke `iterative:tech-planning` skill.
 
-**Open question classification criteria.** When assessing open questions in step 1, apply these criteria to determine which options to surface:
+---
 
-| Resolution method | When | The answer... |
-|---|---|---|
-| **Research** | Facts, patterns, prior art, external constraints | ...exists somewhere and needs to be found |
-| **Design exploration** | Visual design, UX feel, interaction models, "what could this look like?" | ...needs to be seen and experienced across multiple approaches |
-| **User decision** | Priorities, preferences, business judgment | ...is a human call, not something research or exploration will reveal |
-| **Tech planning** | Implementation details, architecture, codebase mechanics | ...requires deep codebase context that tech planning will explore |
+## Scope Upgrades
 
-This classification is a judgment call — present it as informed options, not a formal categorization step. The user picks what to do.
+Scope can be upgraded mid-conversation if hidden complexity emerges. When upgrading:
 
-**After the first review (step 6), do not recommend a specific option.** Just present the choices and let the user decide. If deferred user decisions remain, note they'll carry forward as open questions into tech planning.
+1. **Explain why** — briefly note what changed (e.g., "This touches more systems than expected").
+2. **Carry forward** — everything discussed so far transfers. Don't re-ask questions or repeat analysis.
+3. **Resume at the right point** — enter the new path where it makes sense given what's already been covered. If Quick→Standard and you've already clarified the problem, start at the Q&A stage. If Standard→Full and you've already done Q&A, start at Broad Directions or Deep Exploration.
 
 ## Question Techniques
-
-**Phase 1 questions (2-3 max) — pick the ones that differentiate approaches:**
-- What's the core problem? (purpose)
-- Who's the primary user/audience? (scope)
-- Are there hard constraints? (boundaries)
 
 **Prefer multiple choice when natural options exist:**
 - Good: "Should the notification be: (a) email only, (b) in-app only, or (c) both?"
 - Avoid: "How should users be notified?"
 
-**Phase 3 questions — go deeper within the chosen direction:**
+**Topics to explore (choose what's relevant, not all):**
 
 | Topic | Example Questions |
 |-------|-------------------|
@@ -220,7 +241,7 @@ This classification is a judgment call — present it as informed options, not a
 - "I'm assuming users will be logged in. Is that correct?"
 - "It sounds like you want X. Did I understand that right?"
 
-## Broad Directions Format (Phase 2)
+## Broad Directions Format
 
 Keep these lightweight — 1-2 sentences each with a brief trade-off. These steer the conversation, not finalize the approach.
 
@@ -234,48 +255,45 @@ Here are 2-3 broad directions:
 I'd lean toward **A** because [one sentence]. Which direction feels right?
 ```
 
-## PRD Format (Phase 4)
+## PRD Format (Full Path)
 
 See `references/prd-template.md` for the full template with section descriptions and inclusion criteria.
 
 Key structural points:
 - **Requirements are a single table** with columns ID, Priority, Requirement. Priority values: Core, Must, Nice, Out. Each requirement gets a persistent ID (R1, R2...) for cross-referencing.
 - **Scope is split into In Scope and Boundaries.** Boundaries are deliberate limits — active decisions that prevent scope creep, not oversights.
-- **Open Questions are tagged** with what they affect (specific requirements, scope, direction) so downstream stages know what depends on their resolution.
-- **Sections earn their inclusion.** Goal, Scope, Requirements, and Next Steps are always present. Other sections (Chosen Direction, Alternatives Considered, Key Decisions, Open Questions) are included when their criteria apply.
+- **Open Questions are tagged** with what they affect so downstream stages know what depends on their resolution.
+- **Sections earn their inclusion.** Goal, Scope, Requirements, and Next Steps are always present. Other sections are included when their criteria apply.
 
-The PRD should give enough context for someone to create a detailed technical plan from it. High-level technical direction belongs here. Implementation specifics do not.
+The PRD should give enough context for someone to create a detailed technical plan from it.
 
 ## Anti-Patterns to Avoid
 
 | Anti-Pattern | Better Approach |
 |--------------|-----------------|
-| Exhaustive Q&A before presenting any options | Ask 2-3 questions, then present broad directions to steer |
-| Detailed approach comparison too early | Phase 2 directions are lightweight; detail comes in Phase 3 |
-| Asking multiple questions at once | One question per message |
+| Asking questions before assessing scope | Assess scope from initial message + codebase scan first |
+| Same ceremony for every task | Quick exits fast; Standard aligns without docs; Full gets full PRD |
+| Rigid question counts ("exactly 2-3") | Use judgment — ask as many as needed, as few as possible |
+| Asking implementation questions during brainstorming | "Which database?" is tech-planning. "Real-time vs polling?" is fine |
+| Writing documents for Standard scope | An inline summary suffices. Users wanting docs upgrade to Full |
+| Multiple questions in one message | One question per message |
 | Just extracting requirements passively | Be a thinking partner — bring ideas, challenge assumptions |
-| Going too deep into implementation specifics | High-level direction is fine; specific libraries, schema, and code design are not |
 | Proposing overly complex solutions | Start simple, add complexity only when it reduces maintenance burden |
-| Full PRD ceremony for a bug fix | Match scope assessment — Quick scope skips documents, Standard scope uses a brief |
-| Skipping scope assessment | Always assess scope after Phase 1 — it determines the entire downstream workflow |
+| Skipping scope assessment | Always assess scope before questions — it determines the entire path |
 | Making assumptions without validating | State assumptions explicitly and confirm |
-| Same depth for every PRD | Scale to scope — include sections when their criteria apply |
-| Everything is Must | Use priority honestly — if everything is Core, nothing is |
-| Leaving open questions unstructured | Tag each question with what it affects (requirement, scope, direction) |
+| Everything is Must priority | Use priority honestly — if everything is Core, nothing is |
+| Repeating work after scope upgrade | Carry forward everything; resume the new path where it makes sense |
+| Describing HOW instead of WHAT in Standard summary | Deliverables are "add pagination", not "modify api/list.ts to accept page params" |
 
 ## Transition Points
 
 **Always present options to the user at transition points using the interactive question tool** (e.g., `AskUserQuestion` in Claude Code) — never just print options as text or end the turn without presenting a choice.
 
-Transition options vary by scope (see Phase 5 for detailed options per scope):
-
-- **Quick:** Implement directly (recommended) | Upgrade to tech plan | Other (exit)
-- **Standard:** Review brief (recommended first pass) | Design exploration (conditional) | Research (conditional) | Implement directly or Tech planning | Other (exit)
+- **Quick:** Confirmation gate only — no transition menu. Skill exits after user confirms understanding.
+- **Standard:** Implement directly (recommended) | Create a tech plan | Other (exit)
 - **Full:** Review PRD (recommended first pass) | Design exploration (conditional) | Research (conditional) | Tech planning | Other (exit)
 
-All scopes respect the 4-option limit for interactive questions. See Phase 5 for the priority rules when more options apply than slots allow.
-
-After the first review round (Standard/Full), do not mark any option as recommended — just present the choices.
+After the first review round (Full), do not mark any option as recommended — just present the choices.
 
 **Never skip this step.** Do not proceed to tech-planning, announce "the PRD is ready," or let the conversation drift without presenting these options first.
 

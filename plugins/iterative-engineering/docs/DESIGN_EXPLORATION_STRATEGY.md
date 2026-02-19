@@ -10,7 +10,7 @@ Design decisions made without seeing alternatives are guesses. Seeing 6 differen
 
 ## Where It Fits in the Workflow
 
-Design exploration can run at three points:
+Design exploration can run at four points:
 
 ```
                     ┌──── standalone ────┐
@@ -20,16 +20,18 @@ prompt ──► design exploration ──► design direction doc
                     ^                    │
                     │                    v
 brainstorming ──────┤              brainstorming (PRD updated)
-                    │                    │
-                    │                    v
-                    │              tech planning
-                    │                    │
-                    └── iterate ─────────┘
+  (before)          │                    │
+  (during: at       │                    v
+   Broad Directions)│              tech planning
+  (after: at        │                    │
+   Review/Handoff)  └── iterate ─────────┘
 ```
 
 **Before brainstorming.** Anchors a greenfield discussion with visual options. The design direction becomes input to brainstorming, narrowing the exploration space without locking it as a final spec. Brainstorming builds on what the exploration established.
 
-**After brainstorming.** Explores how requirements could look and feel before committing to implementation. The PRD maps the problem space; the exploration tests visual and interaction possibilities that requirements alone can't express. The design direction folds back into the PRD.
+**During brainstorming (at Broad Directions).** For design and interaction-heavy tasks (visual redesigns, marketing pages, onboarding flows), brainstorming offers design exploration at the Broad Directions stage instead of presenting text-described options. This is the right timing: Map the Space questions have gathered initial constraints, but no direction has been locked in yet. Text descriptions of visual or interaction concepts are the wrong tool — the user needs to see or experience options to meaningfully choose. The chosen direction feeds into Deep Exploration for remaining requirements, then into the PRD.
+
+**After brainstorming (at Review and Handoff).** Explores how requirements could look and feel before committing to implementation. The PRD maps the problem space; the exploration tests visual and interaction possibilities that requirements alone can't express. The design direction folds back into the PRD.
 
 **Standalone.** When someone wants to see design options for any page, component, or feature, without the full brainstorming→planning pipeline.
 
