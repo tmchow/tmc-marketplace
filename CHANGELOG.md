@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.1] - 2026-02-19
+
+### Changed
+
+- **Design controls reframe** — replaced "tuning" language with "design controls" throughout the design-exploration skill to prime toward meaningful, visible design decisions. Restructured control guidance to lead with variation-specific controls before universal ones. Added "across the room" litmus test for control impact. ([#65](https://github.com/tmchow/tmc-marketplace/pull/65))
+
+### Added
+
+- **Reload button in tune panel** — new button and `R` keyboard shortcut to reload the current variation's iframe, replaying entrance animations with current control values. ([#65](https://github.com/tmchow/tmc-marketplace/pull/65))
+
+### Fixed
+
+- **TaskOutput framing** — sleep-polling prevention instruction now framed as a Claude Code example rather than the only pattern, for platform-agnostic correctness. ([#65](https://github.com/tmchow/tmc-marketplace/pull/65))
+
+---
+
 ## [1.9.0] - 2026-02-19
 
 ### Changed
@@ -17,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Design exploration skill** — new skill replacing the spike skill. Generates interactive HTML galleries with per-variation tuning controls, star ratings, and structured export for multi-round iteration. Parallel subagent architecture keeps context windows small. Concludes with a design direction document. ([#62](https://github.com/tmchow/tmc-marketplace/pull/62))
+- **Design exploration skill** — new skill replacing the spike skill. Generates interactive HTML galleries with per-variation design controls, star ratings, and structured export for multi-round iteration. Parallel subagent architecture keeps context windows small. Concludes with a design direction document. ([#62](https://github.com/tmchow/tmc-marketplace/pull/62))
 - **BRAINSTORMING_STRATEGY.md** — strategy doc capturing design decisions behind the restructure: scope-first routing, three self-contained paths, what/how boundary, no documents for Quick/Standard, design exploration timing. ([#63](https://github.com/tmchow/tmc-marketplace/pull/63))
 
 ### Fixed
@@ -272,6 +288,7 @@ Initial release — 11 skills, 13 agents. ([#10](https://github.com/tmchow/tmc-m
 Core workflow: brainstorming → research → spike → tech planning → implementing, with multi-agent reviews at each stage.
 
 <!-- Version comparison links -->
+[1.9.1]: https://github.com/tmchow/tmc-marketplace/compare/v1.9.0...v1.9.1
 [1.9.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.8.0...v1.9.0
 [1.8.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.7.5...v1.8.0
 [1.7.5]: https://github.com/tmchow/tmc-marketplace/compare/v1.7.4...v1.7.5
