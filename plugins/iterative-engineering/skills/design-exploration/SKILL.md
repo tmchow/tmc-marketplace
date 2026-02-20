@@ -415,7 +415,20 @@ The shell template (`references/shell-template.html`) is a complete gallery page
 
 For each planned variation, spawn a background **subagent** (model: `sonnet` or equivalent capable general-purpose model). Subagents must have write permissions — they need to create files without interactive approval since they run in the background. Launch all subagents in a single message so they run in parallel.
 
-**Wait for subagents using agent tools, not sleep polling.** After spawning, collect each subagent's result using the platform's agent output tool (e.g., `TaskOutput` with `block=true` in Claude Code). Do NOT use `sleep N && ls` to poll for file creation. Sleep polling wastes time, triggers permission prompts, and can proceed before all agents finish. The agent output tool blocks until the subagent completes and returns its result directly.
+**Waiting for subagents — MANDATORY PATTERN:**
+
+After spawning all subagents, you MUST wait for each one using the agent output tool. Do NOT use `sleep`, `ls`, or any bash polling. The exact pattern in Claude Code:
+
+```
+# In a single message, call TaskOutput for each background agent:
+TaskOutput(task_id=<agent_1_id>, block=true, timeout=300000)
+TaskOutput(task_id=<agent_2_id>, block=true, timeout=300000)
+... one per subagent, all in parallel
+```
+
+`block=true` makes each call wait until that subagent finishes, then returns its result. Call all TaskOutput calls in a single message so they resolve in parallel. Once all return, every subagent is done and you can proceed to assembly.
+
+**NEVER use `sleep N && ls` to check if files exist.** This is the single most common orchestrator mistake. It wastes tokens, adds latency, triggers permission prompts, and can proceed before subagents finish writing.
 
 **CRITICAL: Subagents are single-turn generators, not exploratory agents.** The orchestrator must frame each subagent's task as structured output generation — not an open-ended build task. If the prompt reads like "here's a creative brief, go build something," the subagent will act like an agent (read files, explore, burn context). If it reads like "here's the complete spec, write these files," it acts like a generator.
 
@@ -719,4 +732,4 @@ if the user adjusted controls from defaults. Include any notes the user added.]
 - **Orchestrator reading variation files to fix partial subagent output** — If a subagent wrote JS but not HTML (or vice versa), do NOT read the existing file to "understand what's needed." This reads variation content into the orchestrator's context. Instead, delete the partial output and re-spawn the subagent.
 - **Wrong round number** — Check existing files in the directory before naming.
 - **Unnecessary filesystem checks** — Don't verify plugin file paths (`ls`, `find`) before running commands. Run commands directly.
-- **Sleep-polling for subagent completion** — Never use `sleep N && ls` to check if subagents finished writing files. Use the platform's agent output tool (e.g., `TaskOutput` with `block=true` in Claude Code) to wait for each subagent to complete. Sleep polling wastes time, can miss incomplete output, and triggers unnecessary permission prompts.
+- **Sleep-polling for subagent completion (THE #2 mistake)** — Never use `sleep N && ls` to check if subagents finished. After spawning, call `TaskOutput(task_id=<id>, block=true, timeout=300000)` for each subagent in a single message. All calls resolve in parallel. This is mandatory, not a suggestion. `sleep && ls` wastes minutes of wall time, burns tokens on repeated bash calls, and can proceed to assembly before a subagent finishes writing.
