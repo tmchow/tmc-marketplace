@@ -267,7 +267,17 @@
           </template>
         </div>
         <!-- Footer -->
-        <div class="px-3 py-2 text-right flex-shrink-0" style="border-top: 1px solid var(--shell-border)">
+        <div class="px-3 py-2 flex items-center justify-between flex-shrink-0" style="border-top: 1px solid var(--shell-border)">
+          <button @click="replayVariation()"
+                  class="flex items-center gap-1"
+                  style="font-size: 11px; color: var(--shell-text-dim); transition: color 150ms; background: none; border: none; cursor: pointer"
+                  @mouseover="$el.style.color='var(--shell-text-bright)'"
+                  @mouseout="$el.style.color='var(--shell-text-dim)'">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 4v5h5"/><path d="M3.51 10a6 6 0 1 0 .49-5.5L1 9"/>
+            </svg>
+            Reload
+          </button>
           <button @click="resetControls()"
                   style="font-size: 11px; color: var(--shell-text-dim); transition: color 150ms; background: none; border: none; cursor: pointer"
                   @mouseover="$el.style.color='var(--shell-text-bright)'"
@@ -451,6 +461,7 @@
           ['0', 'Skip (mark as skip)'],
           ['1-5', 'Rate (stars)'],
           ['L', 'Toggle Tune'],
+          ['R', 'Reload Variation'],
           ['E', 'Open Export'],
           ['?', 'Show Shortcuts'],
           ['Esc', 'Close Panels']
@@ -652,6 +663,10 @@
           this.saveControlState();
           this.applyControlsToIframe();
         },
+        replayVariation() {
+          this.isTransitioning = true;
+          setTimeout(() => this.loadVariationInIframe(), 150);
+        },
 
         // --- Rating ---
         rate(stars) {
@@ -678,7 +693,7 @@
           const low = this.variations.filter(v => this.ratings[v.id]?.stars === 1);
           const skipped = this.variations.filter(v => this.ratings[v.id]?.stars === 0);
           const unreviewed = this.variations.filter(v => this.ratings[v.id]?.stars == null);
-          const fmtTuning = (v) => {
+          const fmtAdjusted = (v) => {
             const adjusted = v.controls.filter(c => {
               if (c.defaultValue == null) return false;
               return JSON.stringify(c.value) !== JSON.stringify(c.defaultValue);
@@ -703,7 +718,7 @@
             line += famApproach(v);
             line += `  ${v.layoutType} / ${v.aesthetic}: ${v.description}\n`;
             if (rt.notes) line += `  Note: ${rt.notes}\n`;
-            line += fmtTuning(v);
+            line += fmtAdjusted(v);
             return line;
           };
           if (loved.length) { out += `\n**Loved (4-5\u2605)**\n`; loved.forEach(v => out += fmt(v)); }
@@ -717,7 +732,7 @@
               line += `  ${v.layoutType} / ${v.aesthetic}: ${v.description}\n`;
               const rt = this.ratings[v.id];
               if (rt?.notes) line += `  Note: ${rt.notes}\n`;
-              line += fmtTuning(v);
+              line += fmtAdjusted(v);
               out += line;
             });
           }
@@ -765,13 +780,13 @@
           const fam = m.families?.find(f => f.letter === v.family);
           if (fam?.approach) out += `Approach: ${fam.approach}\n`;
           out += `${v.layoutType} / ${v.aesthetic}: ${v.description}\n`;
-          // Tuning as absolute design specs
+          // Adjusted controls as absolute design specs
           const tuned = v.controls.filter(c => {
             if (c.defaultValue == null) return false;
             return JSON.stringify(c.value) !== JSON.stringify(c.defaultValue);
           });
           if (tuned.length) {
-            out += `\nDesign specs (tuned from defaults):\n`;
+            out += `\nDesign specs (adjusted from defaults):\n`;
             tuned.forEach(c => {
               const u = c.unit || '';
               if (c.type === 'toggle') out += `- ${c.label}: ${c.value ? 'on' : 'off'}\n`;
@@ -799,6 +814,7 @@
             case '1': case '2': case '3': case '4': case '5': this.rate(+e.key); break;
             case 'l': case 'L': this.showControls = !this.showControls; break;
             case 'e': case 'E': this.showExport = !this.showExport; break;
+            case 'r': case 'R': this.replayVariation(); break;
             case '?': this.showShortcuts = !this.showShortcuts; break;
             case 'Escape': this.showControls = false; this.showExport = false; this.showFinalize = false; this.showShortcuts = false; break;
           }
