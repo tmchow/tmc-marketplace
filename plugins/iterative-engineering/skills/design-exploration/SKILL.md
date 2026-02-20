@@ -417,7 +417,7 @@ For each planned variation, spawn a background **subagent** (model: `sonnet` or 
 
 **Waiting for subagents — MANDATORY PATTERN:**
 
-After spawning all subagents, you MUST wait for each one using the agent output tool. Do NOT use `sleep`, `ls`, or any bash polling. The exact pattern in Claude Code:
+After spawning all subagents, you MUST wait for each one using your platform's agent output tool. Do NOT use `sleep`, `ls`, or any bash polling. For example, in Claude Code:
 
 ```
 # In a single message, call TaskOutput for each background agent:
@@ -426,7 +426,7 @@ TaskOutput(task_id=<agent_2_id>, block=true, timeout=300000)
 ... one per subagent, all in parallel
 ```
 
-`block=true` makes each call wait until that subagent finishes, then returns its result. Call all TaskOutput calls in a single message so they resolve in parallel. Once all return, every subagent is done and you can proceed to assembly.
+`block=true` makes each call wait until that subagent finishes, then returns its result. Call all of them in a single message so they resolve in parallel. Once all return, every subagent is done and you can proceed to assembly. Other coding agent platforms have equivalent mechanisms; use whatever your platform provides to block until a background agent completes.
 
 **NEVER use `sleep N && ls` to check if files exist.** This is the single most common orchestrator mistake. It wastes tokens, adds latency, triggers permission prompts, and can proceed before subagents finish writing.
 
