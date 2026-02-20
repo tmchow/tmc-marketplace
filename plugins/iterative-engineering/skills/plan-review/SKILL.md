@@ -105,9 +105,9 @@ METHODOLOGY:
 2. Evaluate against focus areas below.
 
 FOCUS AREAS (use exact names):
-1. Clarity — Vague language, ambiguity, undefined terms, unclear ownership, passive voice hiding responsibility
-2. Completeness — Missing sections, unaddressed edge cases, undefined dependencies, incomplete specifications
-3. Specificity — Abstract statements not actionable for the next step, missing criteria, hand-wavy estimates
+1. Clarity — Genuine ambiguity where readers would diverge in interpretation, vague language, passive voice hiding responsibility. Technology/product names that communicate a directional choice are NOT unclear even if informal — resolving exact identifiers is downstream work.
+2. Completeness — Missing product decisions, unaddressed dependencies, incomplete specifications for the next step. For PRDs: don't flag missing data models, error handling, or storage details — those are tech plan concerns.
+3. Specificity — Abstract statements not actionable for the next step, unresolved direction masquerading as decisions. For PRDs: "next step" means tech planning, not implementation. Don't demand KPIs, quantitative metrics, or exact API identifiers.
 4. Complexity & Debt — Unjustified complexity, premature abstraction, dead flexibility, maintenance burden without proportional value
 
 CONSTRAINTS:

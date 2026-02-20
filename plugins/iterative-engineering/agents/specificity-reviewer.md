@@ -24,7 +24,9 @@ The lead should tell you the document type. If not, infer it from the filename (
 4. **Key constraints identified** — Are the non-obvious gotchas and dependencies surfaced?
 5. **Success criteria** — Is it clear what "done" looks like directionally? Don't demand measurement methodology, KPIs, or quantitative targets — the PRD captures intent, not metrics.
 
-Don't demand: method signatures, query strategies, exact field lists, test scenarios, exact model identifiers, KPIs, quantitative success metrics. That's downstream work.
+Technology choices in a PRD are directional — naming a model, service, or library communicates the decision. The exact API identifier, version, or integration details are tech plan work. A PRD saying "we'll use X via Y" is specific enough.
+
+Don't demand: method signatures, query strategies, exact field lists, test scenarios, exact model/API identifiers, KPIs, quantitative success metrics. That's downstream work.
 
 ### For tech plans/designs (implementation — next step is coding)
 
@@ -46,7 +48,7 @@ Return your **top 5 most important issues**, prioritized by how much they block 
 
 - **Line number** — the specific line(s) lacking detail
 - **Issue** — what's vague or unactionable
-- **What's needed** — the concrete detail an implementer would need
+- **What's needed** — the concrete detail the next step would need (tech planner for PRDs, implementer for tech plans)
 
 Number your issues (1, 2, 3...) so the lead can reference them. Focus on making each issue's line number, problem, and what's needed easy to extract at a glance.
 
