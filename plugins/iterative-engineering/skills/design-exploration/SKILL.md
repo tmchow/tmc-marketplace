@@ -2,7 +2,7 @@
 name: iterative:design-exploration
 description: >
   Explore radically different design approaches for any page, component,
-  or feature. Generates an interactive gallery with per-variation tuning
+  or feature. Generates an interactive gallery with per-variation design
   controls, star ratings, and AI-ready export for iterating across multiple
   rounds. Concludes with a design direction document. Also triggers when the
   user pastes design exploration feedback (starts with "## Design Exploration
@@ -244,22 +244,17 @@ Commit to a clear direction for each family before writing HTML. The divergence 
 - **Include at least one unexpected approach.** A pattern from a different domain, an unconventional interaction model, something the user probably hasn't considered.
 - **Design-preview quality, not production build.** Show the IDEA of the design efficiently. A well-composed preview with 3-4 content items beats a bloated one with 12 repetitive cards. For interaction-axis explorations, the preview must make the interaction model obvious even in a static mockup — use state indicators, clear affordances, and layout that implies the flow.
 
-### Per-variation controls
+### Per-variation design controls
 
-Determine 4-8 interactive controls per variation that make sense for THAT variation's structure. Controls modify CSS custom properties on the variation's wrapper.
+Each variation gets 4-8 controls that let the user explore design decisions without generating a whole new variant. Controls modify CSS custom properties on the variation's iframe.
 
-**Universal controls — scale to scope:**
-- **Full page / feature**: include spacing density, font scale, and 1-2 color/appearance controls in every variation
-- **Component**: skip spacing density and font scale — they're noise at component scale. Use 1 accent/mood control at most. Dedicate most controls (4-6) to the interaction parameters that make THIS variation's UX tuneable.
-- Visual axis (any scope): explore color as a primary dimension — accent + mood, multiple independent color axes
-- Interaction axis (any scope): prioritize behavior-relevant controls over cosmetic ones
+**The litmus test:** if someone across the room can't tell the control changed something, it's too subtle. Each control should represent a decision a designer would credibly debate. Switching between options should produce a *visibly different* result.
 
-**Interaction-axis controls (prioritize these, especially for components):**
-- Controls that expose the variation's UX parameters — the things that make THIS interaction model tuneable
-- Examples: disclosure speed, animation style, label placement, validation display mode, information density, field grouping
-- The goal: let the user tune the BEHAVIOR, not just the paint. Each variation should have mostly DIFFERENT controls, reflecting its unique interaction model. If 4 out of 6 controls are identical across all variations, the controls aren't differentiated enough.
+**Start with what makes this variation unique.** The most valuable controls expose the decisions specific to THIS variation's structure and interaction model. Two variations with different interaction models should have mostly different controls.
 
-**Structure-specific controls (include only if relevant):**
+- **Interaction-axis explorations:** Lead with behavior controls. Disclosure speed, animation style, label placement, validation display mode, information density, field grouping, element visibility, progressive disclosure threshold. These are the controls that let someone experience how the interaction model *feels* at different settings.
+- **Visual-axis explorations:** Lead with aesthetic controls. Color mood (not a single warm/cool preset, but 2-3 independent color dimensions the user can mix), typography personality, gradient intensity, texture density, contrast level.
+- **Structure-specific controls** (include only when the variation has the element):
 
 | Structure element | Controls |
 |---|---|
@@ -268,7 +263,8 @@ Determine 4-8 interactive controls per variation that make sense for THAT variat
 | Content area | Max width (narrow/medium/wide/full) |
 | Hero section | Height (range), Alignment (left/center) |
 | Table/list | Row density, Stripe toggle, Border style |
-| Typography | Heading font family, Line height |
+
+**Full-page additions (optional, only for full-page scope):** For full pages, you may add 1-2 global controls like spacing density or content width if they meaningfully reshape the layout. For components, skip these entirely; they're noise at component scale and eat the control budget.
 | Borders | Style (none/subtle/visible), Radius (range) |
 
 Control data model schema:
@@ -340,7 +336,7 @@ Control data model schema:
 - Select controls: MUST include `cssValues` mapping options → CSS values. Without it, the CSS var gets a label string like `--bg: warm` which is useless
 - Toggle controls: SHOULD include `cssValues` mapping `true`/`false` → CSS values. Without it, defaults to `1`/`0`
 - **Multi-var controls** — when one control needs to change multiple CSS properties (e.g. mood/mode changing background, text, and borders together), use an **object** as the `cssValues` value instead of a string. Set `cssVar: null`. See the "mood" example above.
-- **Every control must represent a meaningful design decision.** Controls let the user tune a variation without needing a whole new variant — they should surface the decisions that actually matter for that variation's design. The test: would a designer credibly debate between these options? If yes, it's a good control. If the difference is imperceptible or arbitrary, it's noise. Bad: switching between near-identical off-whites, 2px radius changes, shadow opacity going from 6% to 8%. Good: compact vs spacious density (reshapes the layout), rounded vs sharp corners (changes the personality), warm vs cool color mood, showing vs hiding a secondary element.
+- **Every control must represent a meaningful design decision.** Controls let the user explore a design dimension without needing a whole new variant. The test: can someone across the room tell the control changed something? If not, it's too subtle. Bad: switching between near-identical off-whites, 2px radius changes, shadow opacity going from 6% to 8%. Good: compact vs spacious density (reshapes the layout), rounded vs sharp corners (changes the personality), warm vs cool color mood, showing vs hiding a secondary element, gradient direction, animation style.
 - **Every `cssVar` must be used in the variation.** The HTML must reference it via Tailwind arbitrary values (e.g., `bg-[var(--bg)]`, `rounded-[var(--radius)]`) or the CSS must use it. If a control defines `--card-radius` but the HTML uses `rounded-xl`, the control does nothing. The assembly script validates this and prints warnings.
 - **ALL visual states must use `var()` for controlled properties.** Hover, active, and focus states must reference CSS vars, not hardcoded values. If `--accent` is `#BB6BD9`, don't write `:hover { color: #BB6BD9 }` — write `:hover { color: var(--accent) }`. Use `color-mix()` for derived colors: `color-mix(in srgb, var(--accent) 10%, transparent)`.
 - **Never use `[style*="..."]` attribute selectors** for CSS variable detection. Attribute selectors are fragile for detecting CSS custom property values and should not be used.
@@ -456,7 +452,7 @@ Then include ONLY:
    - **Tailwind-first styling** — use Tailwind utility classes for layout, spacing, colors, typography, borders, shadows. Custom CSS in `<style>` tags is for: (a) CSS custom property definitions on `:root`, (b) keyframe animations, (c) smooth transitions for control-driven changes, (d) scrollbar styling, (e) things Tailwind genuinely can't express.
    - CSS custom properties (`var(--xxx)`) for all theme values — colors, fonts, spacing, radii. Define on `:root` (not scoped by class — the iframe provides isolation). Use via Tailwind arbitrary values: `bg-[var(--bg)]`, `text-[var(--text)]`, `font-[var(--font-body)]`
    - Use unprefixed custom property names (`--bg`, `--text`, `--accent`) — never `--shell-*`
-   - Include 4-6 interactive controls in the JS file (provide the control schema inline). **Every control's `cssVar` must be actively used** in the variation's HTML via Tailwind arbitrary values (e.g., `rounded-[var(--card-radius)]`) or in the CSS. A control that defines `cssVar: '--card-radius'` is useless if the HTML uses `rounded-3xl` instead. Every control should represent a meaningful design decision — something a designer would credibly debate. If switching between options looks the same, it's not worth including. Prefer controls that change how the variation feels (density, color mood, corner personality, element visibility) over micro-adjustments that nobody would notice (2px radius tweaks, near-identical background shades). Controls are applied by the shell via `iframe.contentDocument.documentElement.style.setProperty()`.
+   - Include 4-6 design controls in the JS file (provide the control schema inline). **Every control's `cssVar` must be actively used** in the variation's HTML via Tailwind arbitrary values (e.g., `rounded-[var(--card-radius)]`) or in the CSS. A control that defines `cssVar: '--card-radius'` is useless if the HTML uses `rounded-3xl` instead. Each control should let the user explore a meaningful design decision, not make a micro-adjustment. The test: if someone across the room can't tell the control changed something, it's too subtle. Lead with controls unique to THIS variation's structure and interaction model before adding any generic controls. Controls are applied by the shell via `iframe.contentDocument.documentElement.style.setProperty()`.
    - Motion via CSS: hover transitions + one entrance animation with staggered delays. JavaScript is also allowed for interactive demonstrations.
    - Realistic content only, no lorem ipsum
    - Self-contained: no external images, use CSS gradients/inline SVG/Unicode
@@ -464,7 +460,7 @@ Then include ONLY:
    - Include transition CSS for smooth control changes: `:root * { transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease, padding 0.3s ease, gap 0.3s ease, font-size 0.3s ease, border-radius 0.3s ease, box-shadow 0.3s ease, max-width 0.3s ease, width 0.3s ease; }`
 6. **SIZE GUIDANCE** — state these explicitly in the prompt. The mockup must look and feel like a real product — not a wireframe. Use realistic content, icons (inline SVG), and interactions. But stay efficient:
    - **HTML page: 250-450 lines.** Enough for a full page with boilerplate, icons, multiple content sections, and realistic data. Use Tailwind density — one `<div>` with 8 utility classes replaces 15 lines of nested markup + custom CSS. Scale to scope: a full page needs ~350-450 lines; a component needs ~200-250.
-   - **Controls: 4-6 controls.** Each defined in ~8 lines.
+   - **Design controls: 4-6 per variation.** Each defined in ~8 lines.
    - **Total per file set: ~300-500 lines across the 2 files.**
 7. **The file format** — describe exactly what each file contains:
 
@@ -518,7 +514,7 @@ Then include ONLY:
   layoutType: 'Sidebar + Cards',
   aesthetic: 'Clean Light',
   description: 'Classic sidebar navigation with warm editorial card grid.',
-  controls: [ /* 4-6 controls with full schema */ ]
+  controls: [ /* 4-6 design controls with full schema */ ]
 }
 ```
 
@@ -606,7 +602,7 @@ The `families` array captures the conceptual approach behind each family — the
 
 ### Feedback Export
 
-The export modal (built into the shell template) produces a markdown document optimized for LLM consumption. Per variation it includes: the family approach concept ("What if it worked like...?"), layout/aesthetic labels, the variation description, user notes, and tuning adjustments showing direction of change (default → adjusted value). Grouped by rating tier (Loved/Mixed/Low/Skip/Not reviewed). Designed to be pasted back into the agent to trigger the next round. The format spec is documented in `references/export-formats.md` (for human reference — do not read at runtime).
+The export modal (built into the shell template) produces a markdown document optimized for LLM consumption. Per variation it includes: the family approach concept ("What if it worked like...?"), layout/aesthetic labels, the variation description, user notes, and control adjustments showing direction of change (default → adjusted value). Grouped by rating tier (Loved/Mixed/Low/Skip/Not reviewed). Designed to be pasted back into the agent to trigger the next round. The format spec is documented in `references/export-formats.md` (for human reference — do not read at runtime).
 
 ### Reference Files (do NOT read at runtime)
 
@@ -628,7 +624,7 @@ The gallery has two actions:
 - **"Next Round"** (sidebar footer) — exports feedback for iteration (another round)
 - **"Ship It"** (rating bar) — finalizes the currently viewed variation as the chosen direction
 
-When the user clicks "Ship It", the gallery generates a `## Design Direction` block containing the chosen variation's family approach, description, and tuned design specs (absolute values). The user adds notes and copies it to paste into the conversation.
+When the user clicks "Ship It", the gallery generates a `## Design Direction` block containing the chosen variation's family approach, description, and adjusted design specs (absolute values). The user adds notes and copies it to paste into the conversation.
 
 ### When the user pastes `## Design Direction`
 
@@ -666,8 +662,8 @@ The skill detects the header and runs the conclude sequence:
 **Approach:** [Family approach concept — "What if it worked like...?"]
 
 [What works about this direction. Key design decisions — interaction model,
-layout structure, typography, color direction, etc. Include tuned design specs
-if the user adjusted controls from defaults. Include any notes the user added.]
+layout structure, typography, color direction, etc. Include adjusted design specs
+if the user changed controls from defaults. Include any notes the user added.]
 
 ## Design Parameters
 
@@ -708,12 +704,12 @@ if the user adjusted controls from defaults. Include any notes the user added.]
 - **Variations are just color swaps** — Each family needs fundamentally different HTML structure or interaction model. Not the same tree with different colors.
 - **Controls don't work** — Common causes: (1) missing `id` field — control renders but clicks do nothing (template auto-fixes this but don't rely on it); (2) `cssVar: '--card-radius'` defined but HTML uses `rounded-3xl` instead of `rounded-[var(--card-radius)]` — the var is set but nothing reads it; (3) `unit: '%'` on a range control breaks `calc()` in CSS (use unitless values for percentage scales); (4) hover/active states use hardcoded colors instead of `var(--accent)` — the default state changes but hover doesn't; (5) `cssValues` written as an **array** instead of an object — `cssValues: ['0.75rem', '1rem']` MUST be `cssValues: { compact: '0.75rem', comfortable: '1rem' }` keyed by option labels (the template auto-fixes this but don't rely on it). Controls are applied via `iframe.contentDocument.documentElement.style.setProperty()`. The assembly script warns about orphaned CSS vars.
 - **Controls drive CSS classes instead of CSS vars** — The control system can ONLY set CSS custom properties. If a control's effect requires toggling CSS classes (e.g., `.input-bordered` vs `.input-underlined`), the control is dead. All controlled styling must flow through `var()` references. Use CSS that reads `var(--input-border)` rather than switching between `.input-bordered` and `.input-underlined` classes.
-- **Same controls on every variation** — Each variation's controls should reflect its unique structure. If 4 out of 6 controls are identical across all variations (e.g., every variation has spacing-density, font-scale, card-radius, accent-color), the tuning experience feels generic. Especially for components: skip boilerplate controls like spacing density and font scale, and dedicate all controls to the interaction parameters specific to that variation.
+- **Same controls on every variation** — Each variation's controls should reflect its unique structure. If 4 out of 6 controls are identical across all variations (e.g., every variation has spacing-density, font-scale, card-radius, accent-color), the controls aren't doing their job. The most valuable controls are the ones unique to a specific variation's interaction model. Especially for components: skip boilerplate controls like spacing density and font scale, and dedicate all controls to the design decisions specific to that variation.
 - **Generic AI aesthetics (visual axis)** — No Inter + purple gradients on white. Distinctive, intentional choices. Reference real products. Note: this applies to visual-axis explorations. For interaction-axis explorations, a clean professional style IS the goal — the aesthetics should be polished but not distracting from the UX being explored.
 - **Lorem ipsum** — Real content only. "$1,247,890 in revenue" beats "Lorem ipsum dolor sit amet."
 - **Export is just raw data** — The export must produce a ready-to-paste markdown prompt with structured JSON ratings, a human-readable summary, and a user-editable direction section.
 - **Too many controls** — 4-8 per variation.
-- **Controls too subtle to notice** — If switching between options looks the same, the control is noise. Common traps: page background switching between near-identical off-whites, corner radius changing by a few pixels, shadow opacity going from 6% to 8%. Each control should surface a design decision someone would actually care about — "do we want this compact or spacious?" not "should the shadow be 6% or 8% opacity?"
+- **Controls too subtle to notice** — If someone across the room can't tell the control changed something, it's too subtle. Common traps: page background switching between near-identical off-whites, corner radius changing by a few pixels, shadow opacity going from 6% to 8%. Each control should surface a design decision someone would actually care about. "Do we want this compact or spacious?" reshapes the layout. "Should the shadow be 6% or 8% opacity?" is invisible. Gradient direction, color mood, element visibility, animation style, density, disclosure model: these produce visible, debatable differences.
 - **Missing Google Fonts** — Every variation HTML file must include its own Google Fonts `<link>` in `<head>`. Each variation is a complete page inside an iframe and loads its own fonts.
 - **Missing metadata block** — Every HTML file needs the `exploration-metadata` JSON block for agent consumption.
 - **Shell chrome varies between files** — The gallery shell is a fixed product. Same design tokens, fonts, layout, and interaction across every file. Only the variations inside the preview stage differ. The template enforces this automatically.

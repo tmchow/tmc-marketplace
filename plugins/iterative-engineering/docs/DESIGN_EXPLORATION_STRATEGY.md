@@ -98,9 +98,11 @@ Within the chosen axis, the exploration is focused by a **specific design questi
 
 ### Controls as Design Decisions
 
-Each variation has 4-6 tuning controls that let the user adjust parameters without needing a whole new variant. Controls are applied across the iframe boundary via `setProperty()` on the iframe's `documentElement`.
+Each variation has 4-6 design controls that let the user explore design decisions without needing a whole new variant. Controls are applied across the iframe boundary via `setProperty()` on the iframe's `documentElement`.
 
-The key principle: **every control must represent a meaningful design decision.** Would a designer credibly debate between these options? If yes, it's a good control. If the difference is imperceptible or arbitrary, it's noise. Compact vs spacious density, rounded vs sharp corners, warm vs cool mood: meaningful. Near-identical off-whites, 2px radius changes, shadow opacity from 6% to 8%: not meaningful.
+The key principle: **every control must produce a visible difference.** The litmus test is whether someone across the room could tell the control changed something. Compact vs spacious density, rounded vs sharp corners, warm vs cool mood, gradient direction, animation style: these reshape how the variation looks or feels. Near-identical off-whites, 2px radius changes, shadow opacity from 6% to 8%: invisible.
+
+The word "tuning" was intentionally removed from the skill instructions (the UI panel label "Tune" is kept for brevity). "Tuning" frames controls as small incremental adjustments, which primes toward conservative, barely-noticeable parameter changes. "Design controls" frames them as decisions to explore. The instructions also restructured the guidance to lead with variation-specific controls (the interesting ones unique to each interaction model) rather than universal controls (spacing density, font scale) that eat the control budget with generic options.
 
 ### Multi-Round Iteration
 

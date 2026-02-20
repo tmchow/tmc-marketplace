@@ -111,7 +111,7 @@ Each subagent writes two files. The orchestrator never reads these into its own 
   aesthetic: 'Clean Light',
   description: 'Classic sidebar navigation with warm editorial card grid.',
   controls: [
-    // 4-6 controls (see control schema in SKILL.md)
+    // 4-6 design controls (see control schema in SKILL.md)
   ]
 }
 ```
