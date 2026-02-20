@@ -40,15 +40,25 @@ user-invocable: true             # false = Claude-only, hidden from /menu
 ---
 ```
 
-**Agent frontmatter (`agents/<name>/AGENT.md`):**
+**Agent frontmatter (`agents/<name>.md`):**
 ```yaml
 ---
 name: agent-name
 description: When Claude should use this agent
+tools: Read, Grep, Glob        # omit to inherit all tools
+model: sonnet                   # sonnet, opus, haiku, or inherit (default)
+permissionMode: default         # default, acceptEdits, dontAsk, bypassPermissions, plan
+maxTurns: 5                     # max agentic turns before stopping
+background: false               # true = runs concurrently
+skills:                         # full skill content injected at startup
+  - plugin-name:skill-name
+color: green                    # UI color for identifying the agent
 ---
 ```
 
-Always include a clear `description` that explains when the skill or agent should be used—this helps Claude decide when to invoke it automatically.
+See the [subagents documentation](https://code.claude.com/docs/en/sub-agents#supported-frontmatter-fields) for the complete field reference (including `disallowedTools`, `mcpServers`, `hooks`, `memory`, `isolation`).
+
+Always include a clear `description` that explains when the skill or agent should be used; Claude uses the description to decide when to delegate.
 
 See the [skills documentation](https://code.claude.com/docs/en/skills) for more details.
 
@@ -98,6 +108,69 @@ Use [Conventional Commits](https://www.conventionalcommits.org/) for commit mess
 - `refactor:` — restructuring without behavior change
 
 PR titles follow the same format. Keep them under 70 characters.
+
+## Plugin Development Learnings
+
+Patterns and pitfalls discovered while building skills, agents, and workflows.
+
+### Plugin skill namespacing in agent frontmatter
+
+When an agent's `skills:` field references a skill from the same plugin, use the full `plugin-name:skill-name` namespace. The bare skill name silently fails to resolve.
+
+```yaml
+# Wrong — skill won't load, no error
+skills:
+  - design-prototyping
+
+# Correct
+skills:
+  - iterative-engineering:design-prototyping
+```
+
+### Agent invocation control
+
+Agents have no `disable-model-invocation` or `user-invocable` fields (those only exist for skills). The `description` is the only mechanism to prevent Claude from auto-invoking an agent. For internal agents that should only be spawned by a specific skill, lead with the constraint and explain why standalone invocation won't work:
+
+```yaml
+# Vague — Claude may match this to general user requests
+description: Generates HTML prototypes for design exploration.
+
+# Clear — Claude understands this can't be used standalone
+description: >
+  Internal implementation detail of the design-exploration skill.
+  Do not invoke directly — requires a structured variation spec
+  that only the design-exploration orchestrator provides.
+```
+
+### Skills as preloaded agent knowledge
+
+Non-user-invocable skills can carry invariant rules (file formats, schemas, validation checklists) that get injected into an agent's context at startup via the `skills:` frontmatter field. This separates what never changes (the craft) from what varies per invocation (the task).
+
+Use `user-invocable: false` to hide the skill from the `/` menu. Keep `disable-model-invocation: false` (or omit it) so the agent preloading system can discover and inject the skill content.
+
+```yaml
+---
+name: design-prototyping
+user-invocable: false
+disable-model-invocation: false
+---
+```
+
+**Warning:** Setting `disable-model-invocation: true` makes the skill invisible to Claude entirely — including agent `skills:` preloading. The skill silently fails to inject with no error. Only use `disable-model-invocation: true` for skills that are exclusively user-invoked via `/command`.
+
+### Custom agents save context
+
+Custom agents receive only their markdown body as the system prompt, not the full Claude Code system prompt. This saves significant context for single-turn agents where every token matters. Combine with `maxTurns: 1` to structurally prevent multi-turn exploration.
+
+### Agent + skill + orchestrator abstraction
+
+When a skill orchestrates parallel agents, split responsibilities cleanly:
+
+- **Agent definition** (the `.md` file): who it is and how it behaves. Keep minimal.
+- **Preloaded skill**: the craft. Invariant rules, file format, schema, validation checklist. Loaded once, shared across all invocations.
+- **Orchestrator prompt**: what to build. Per-invocation specifics (the brief, data, parameters). Don't repeat invariant content here.
+
+This keeps orchestrator prompts lean (the rules live in the skill) and agent definitions focused (the knowledge lives in the skill).
 
 ## Installation (for users)
 
