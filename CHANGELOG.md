@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.10.0] - 2026-02-20
+
+### Added
+
+- **html-prototyper agent** — custom single-turn agent (Sonnet, background, Write-only, `maxTurns: 1`) replaces generic subagents for variation generation. Receives only its minimal system prompt instead of the full Claude Code prompt, saving ~10K tokens of context per agent. ([#68](https://github.com/tmchow/tmc-marketplace/pull/68))
+- **design-prototyping skill** — non-user-invocable skill preloaded into html-prototyper at startup. Carries invariant rules (file format, control schema, styling conventions, pre-output checklist) so orchestrator prompts stay lean. Explicitly forbids building control panel UI into variation HTML. ([#68](https://github.com/tmchow/tmc-marketplace/pull/68))
+- **Plugin development learnings in AGENTS.md** — documented skill namespacing, agent invocation control, skill preloading patterns, and agent+skill+orchestrator abstraction. ([#68](https://github.com/tmchow/tmc-marketplace/pull/68))
+
+### Changed
+
+- **Single-file variation architecture** — variations now embed metadata in a `<script type="application/json" id="variation-meta">` block instead of separate JS files. Eliminates the second write turn that caused context overflow. Assembly script rewritten for new format. ([#68](https://github.com/tmchow/tmc-marketplace/pull/68))
+- **Orchestrator prompt trimmed** — invariant rules moved to preloaded skill, reducing per-agent prompt from ~2000 to ~1000 words. ([#68](https://github.com/tmchow/tmc-marketplace/pull/68))
+
+### Removed
+
+- **v1-backup files** — deleted `assemble-v1-backup.py` and `shell-template-v1-backup.html`. ([#68](https://github.com/tmchow/tmc-marketplace/pull/68))
+
+---
+
 ## [1.9.2] - 2026-02-19
 
 ### Fixed
@@ -296,6 +315,7 @@ Initial release — 11 skills, 13 agents. ([#10](https://github.com/tmchow/tmc-m
 Core workflow: brainstorming → research → spike → tech planning → implementing, with multi-agent reviews at each stage.
 
 <!-- Version comparison links -->
+[1.10.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.9.2...v1.10.0
 [1.9.2]: https://github.com/tmchow/tmc-marketplace/compare/v1.9.1...v1.9.2
 [1.9.1]: https://github.com/tmchow/tmc-marketplace/compare/v1.9.0...v1.9.1
 [1.9.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.8.0...v1.9.0
