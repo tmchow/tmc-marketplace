@@ -345,7 +345,7 @@ Control data model schema:
 
 ## Step 3: Generate the HTML File
 
-Generate a single self-contained HTML file (~3000-5000 lines total) using Tailwind CSS Play CDN + Alpine.js CDN + Google Fonts. This step uses **parallel subagents** to generate variation content, keeping context windows small and variation quality high.
+Generate a single self-contained HTML file (~3000-5000 lines total) using Tailwind CSS Play CDN + Alpine.js CDN + Google Fonts. This step uses **parallel `html-prototyper` agents** to generate variation content, keeping context windows small and variation quality high.
 
 ### File Naming and Location
 
@@ -381,7 +381,7 @@ This gives you the `families` array (each family's approach concept) and the `va
 - **Diversify family directions** — if v1 explored 2 families, aim for 2-3 different families in the continuation
 - **Reference what was tried** — include a `"previousVariations"` summary in the new round's metadata so the chain is traceable
 
-Include the prior family approaches and variation summary in each subagent prompt as a "do not repeat" constraint:
+Include the prior family approaches and variation summary in each agent prompt as a "do not repeat" constraint:
 
 ```
 Previous round explored these approaches (do NOT recreate these):
@@ -396,144 +396,55 @@ The file is too large for a single agent to generate well — quality degrades a
 
 **You (the orchestrator, Opus) handle:**
 - Writing `_metadata.json` (the only file the orchestrator creates directly)
-- Spawning variation subagents with complete prompts
+- Spawning `html-prototyper` agents with complete prompts
 - Running `assemble.py` which copies the template, injects all content, and produces the final HTML
 
-**Variation subagents (Sonnet, parallel) handle:**
-- One variation each — the creative work of generating a complete HTML page and metadata/controls for a single variation
+**`html-prototyper` agents (Sonnet, parallel, background) handle:**
+- One variation each — generating a single self-contained HTML file with embedded metadata and controls
 - Spawned in parallel since variations are independent
+- Each agent writes exactly one file (`_var-{ID}.html`) in one turn
 
 #### Step 3a: Understand the Shell (do NOT read reference files)
 
 The shell template (`references/shell-template.html`) is a complete gallery page with three placeholders: `__METADATA_JSON__`, `__VARIATIONS_ARRAY__`, and `__VARIATION_TEMPLATES__`. Each variation's HTML is a complete page rendered inside an `<iframe srcdoc>`. The assembly script copies the template, wraps each `_var-{ID}.html` file in a `<template id="tpl-{id}">` element, and fills all placeholders automatically — **the orchestrator never reads it**. Do NOT read any files in `references/` — all essential rules are in this document, and `assemble.py` handles the template. Reading plugin reference files triggers avoidable permission prompts.
 
-#### Step 3b: Spawn Variation Subagents
+#### Step 3b: Spawn html-prototyper Agents
 
-For each planned variation, spawn a background **subagent** (model: `sonnet` or equivalent capable general-purpose model). Subagents must have write permissions — they need to create files without interactive approval since they run in the background. Launch all subagents in a single message so they run in parallel.
+For each planned variation, spawn an `html-prototyper` agent (uses `subagent_type: "html-prototyper"` in Claude Code's Task tool). The agent is pre-configured as background with `acceptEdits` permissions and `maxTurns: 1`. Launch all agents in a single message so they run in parallel.
 
-**Waiting for subagents — MANDATORY PATTERN:**
+**Waiting for agents — MANDATORY PATTERN:**
 
-After spawning all subagents, you MUST wait for each one using your platform's agent output tool. Do NOT use `sleep`, `ls`, or any bash polling. For example, in Claude Code:
+After spawning all agents, you MUST wait for each one using your platform's agent output tool. Do NOT use `sleep`, `ls`, or any bash polling. For example, in Claude Code:
 
 ```
 # In a single message, call TaskOutput for each background agent:
 TaskOutput(task_id=<agent_1_id>, block=true, timeout=300000)
 TaskOutput(task_id=<agent_2_id>, block=true, timeout=300000)
-... one per subagent, all in parallel
+... one per agent, all in parallel
 ```
 
-`block=true` makes each call wait until that subagent finishes, then returns its result. Call all of them in a single message so they resolve in parallel. Once all return, every subagent is done and you can proceed to assembly. Other coding agent platforms have equivalent mechanisms; use whatever your platform provides to block until a background agent completes.
+`block=true` makes each call wait until that agent finishes, then returns its result. Call all of them in a single message so they resolve in parallel. Once all return, every agent is done and you can proceed to assembly. Other coding agent platforms have equivalent mechanisms; use whatever your platform provides to block until a background agent completes.
 
-**NEVER use `sleep N && ls` to check if files exist.** This is the single most common orchestrator mistake. It wastes tokens, adds latency, triggers permission prompts, and can proceed before subagents finish writing.
+**NEVER use `sleep N && ls` to check if files exist.** This is the single most common orchestrator mistake. It wastes tokens, adds latency, triggers permission prompts, and can proceed before agents finish writing.
 
-**CRITICAL: Subagents are single-turn generators, not exploratory agents.** The orchestrator must frame each subagent's task as structured output generation — not an open-ended build task. If the prompt reads like "here's a creative brief, go build something," the subagent will act like an agent (read files, explore, burn context). If it reads like "here's the complete spec, write these files," it acts like a generator.
+**Prompt structure for each agent:**
 
-**Set `max_turns: 2` on each subagent.** This structurally prevents multi-turn exploratory behavior (reading files, searching, retrying) that burns context. The subagent gets one turn to generate + write, and one safety buffer turn.
+The agent has the `design-prototyping` skill preloaded, which contains the complete file format, control schema, styling rules, and pre-output checklist. The orchestrator prompt only needs variation-specific content. Keep it lean.
 
-**Prompt structure for each subagent:**
-
-Open the prompt by setting the frame:
-
-> You are generating a complete HTML page and a JS metadata file for a single design variation. Everything you need is in this prompt. Do not read any files. Generate the content and write it to the 2 files specified below. No commentary — just write the files.
->
-> The HTML file is a COMPLETE page (with `<!DOCTYPE html>`, `<head>`, `<body>`, etc.) that will be rendered inside an iframe. It can include `<script>` and `<style>` tags. The ONLY tag you must NEVER include is `</template>` (the HTML is wrapped in a `<template>` element by the assembly script, and a closing `</template>` tag would break the wrapper).
+> Write `{exploration_dir}/_var-{ID}.html`. Follow the design-prototyping loaded in your context.
 
 Then include ONLY:
 
-1. **The output files** — tell the subagent exactly what to write and where. **Write the HTML file first** (it's the largest and most critical — if the subagent runs out of context, the HTML file is the one that must exist):
-   - `{exploration_dir}/_var-{ID}.html` — the complete HTML page (WRITE THIS FIRST)
-   - `{exploration_dir}/_var-{ID}.js` — the variation JavaScript object literal with metadata and controls (no `html` field)
-2. **The variation brief** — id, family, familyName, name, layoutType, aesthetic, description, what makes it memorable, the key design commitments for this variation
-3. **The shared realistic data** — the exact content (names, numbers, descriptions) to use. Keep this compact — just the data, no surrounding context about the project
-4. **The divergence axis and constraint level** — one sentence establishing both. For interaction-axis explorations, explicitly state: "Visual treatment is shared — use [font pairing] and [palette description]. Focus on making the INTERACTION MODEL distinct, not the visual style." For visual-axis, state: "Full creative freedom on visual treatment — make the aesthetic distinctive and memorable."
-5. **The rules** — distilled to essentials, NOT the full reference docs:
-   - **Complete HTML page** — the file is a full page rendered inside an iframe. Include `<!DOCTYPE html>`, `<html>`, `<head>`, `<body>`. Include Tailwind CDN (`<script src="https://cdn.tailwindcss.com"></script>`) and Google Fonts `<link>` in the `<head>`. `<script>` and `<style>` tags are allowed — use them for interactive demonstrations (toggles, wizards, live calculations, etc.)
-   - **The ONLY forbidden tag is `</template>`** — the assembly script wraps each HTML file in a `<template>` element. A literal `</template>` in the HTML would close the wrapper prematurely and break the gallery. This is extremely rare in practice. If needed inside a `<script>` tag, escape as `<\/template>`.
-   - **Tailwind-first styling** — use Tailwind utility classes for layout, spacing, colors, typography, borders, shadows. Custom CSS in `<style>` tags is for: (a) CSS custom property definitions on `:root`, (b) keyframe animations, (c) smooth transitions for control-driven changes, (d) scrollbar styling, (e) things Tailwind genuinely can't express.
-   - CSS custom properties (`var(--xxx)`) for all theme values — colors, fonts, spacing, radii. Define on `:root` (not scoped by class — the iframe provides isolation). Use via Tailwind arbitrary values: `bg-[var(--bg)]`, `text-[var(--text)]`, `font-[var(--font-body)]`
-   - Use unprefixed custom property names (`--bg`, `--text`, `--accent`) — never `--shell-*`
-   - Include 4-6 design controls in the JS file (provide the control schema inline). **Every control's `cssVar` must be actively used** in the variation's HTML via Tailwind arbitrary values (e.g., `rounded-[var(--card-radius)]`) or in the CSS. A control that defines `cssVar: '--card-radius'` is useless if the HTML uses `rounded-3xl` instead. Each control should let the user explore a meaningful design decision, not make a micro-adjustment. The test: if someone across the room can't tell the control changed something, it's too subtle. Lead with controls unique to THIS variation's structure and interaction model before adding any generic controls. Controls are applied by the shell via `iframe.contentDocument.documentElement.style.setProperty()`.
-   - Motion via CSS: hover transitions + one entrance animation with staggered delays. JavaScript is also allowed for interactive demonstrations.
-   - Realistic content only, no lorem ipsum
-   - Self-contained: no external images, use CSS gradients/inline SVG/Unicode
-   - **Component scope**: center content in the viewport (`min-h-screen flex items-center justify-center p-8` on `<body>`). Without this, small components get pinned to the top-left corner of the preview. Full pages don't need this — their own layout fills the space.
-   - Include transition CSS for smooth control changes: `:root * { transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease, padding 0.3s ease, gap 0.3s ease, font-size 0.3s ease, border-radius 0.3s ease, box-shadow 0.3s ease, max-width 0.3s ease, width 0.3s ease; }`
-6. **SIZE GUIDANCE** — state these explicitly in the prompt. The mockup must look and feel like a real product — not a wireframe. Use realistic content, icons (inline SVG), and interactions. But stay efficient:
-   - **HTML page: 250-450 lines.** Enough for a full page with boilerplate, icons, multiple content sections, and realistic data. Use Tailwind density — one `<div>` with 8 utility classes replaces 15 lines of nested markup + custom CSS. Scale to scope: a full page needs ~350-450 lines; a component needs ~200-250.
-   - **Design controls: 4-6 per variation.** Each defined in ~8 lines.
-   - **Total per file set: ~300-500 lines across the 2 files.**
-7. **The file format** — describe exactly what each file contains:
+1. **The variation brief** — id, family, familyName, name, layoutType, aesthetic, description, what makes it memorable, the key design commitments for this variation
+2. **The shared realistic data** — the exact content (names, numbers, descriptions) to use. Keep this compact — just the data, no surrounding context about the project
+3. **The divergence axis and constraint level** — one sentence establishing both. For interaction-axis explorations, explicitly state: "Visual treatment is shared — use [font pairing] and [palette description]. Focus on making the INTERACTION MODEL distinct, not the visual style." For visual-axis, state: "Full creative freedom on visual treatment — make the aesthetic distinctive and memorable."
+4. **The controls brief** — list the 4-6 controls for this variation. For each: label, type, cssVar, and the range/options. The agent knows the schema from its preloaded skill; you just specify WHICH controls this variation gets and their parameters.
+5. **Size guidance** — state explicitly. Scale to scope: a full page needs ~350-450 lines; a component needs ~200-250. The mockup must look like a real product, not a wireframe.
+6. **Scope-specific note** (if component) — "Center content in the viewport: `min-h-screen flex items-center justify-center p-8` on `<body>`."
 
-**`_var-{ID}.html`** — a complete HTML page:
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg: #faf9f7;
-      --text: #2d2a26;
-      --accent: #62929e;
-      --font-heading: 'Playfair Display', serif;
-      --font-body: 'DM Sans', sans-serif;
-      /* ... all custom properties ... */
-    }
-    :root * {
-      transition: color 0.3s ease, background-color 0.3s ease,
-                  border-color 0.3s ease, padding 0.3s ease,
-                  gap 0.3s ease, font-size 0.3s ease,
-                  border-radius 0.3s ease, box-shadow 0.3s ease,
-                  max-width 0.3s ease, width 0.3s ease;
-    }
-    /* scrollbar styling, keyframes, etc. */
-  </style>
-</head>
-<body class="min-h-screen bg-[var(--bg)] text-[var(--text)] font-[var(--font-body)]">
-  <!-- Variation content -->
-  ...
-  <script>
-    // Optional: JavaScript for interactive demonstrations
-  </script>
-</body>
-</html>
-```
+**Do NOT repeat the file format, control schema, styling rules, or checklist in the prompt.** The agent already has these from the design-prototyping skill. Repeating them wastes tokens and increases context pressure.
 
-**`_var-{ID}.js`** — a JavaScript object literal (no variable assignment, no semicolon, NO `html` field):
-```javascript
-{
-  id: 'A1',
-  family: 'A',
-  familyName: 'Sidebar Classic',
-  name: 'Shopify Morning',
-  layoutType: 'Sidebar + Cards',
-  aesthetic: 'Clean Light',
-  description: 'Classic sidebar navigation with warm editorial card grid.',
-  controls: [ /* 4-6 design controls with full schema */ ]
-}
-```
-
-8. **PRE-OUTPUT CHECKLIST** — include this in the subagent prompt as a mandatory verification step:
-
-> Before writing the files, verify:
-> - [ ] Every control has an `id` field (unique within this variation)
-> - [ ] Every control's `cssVar` appears as `var(--xxx)` in the HTML — if nothing reads the var, the control is dead
-> - [ ] `cssValues` is an OBJECT keyed by option labels (`{ compact: '0.75rem' }`), never an array
-> - [ ] All controlled styling uses `var()` references — no CSS class toggling (the control system can only set CSS vars)
-> - [ ] No range control uses `unit: '%'` — use unitless values for percentage scales
-> - [ ] Hover, active, and focus states use `var()` references, not hardcoded color values, for any property driven by a control
-> - [ ] HTML does NOT contain `</template>` (the only forbidden tag)
-> - [ ] CSS custom properties are defined on `:root` (not scoped by class)
-> - [ ] The JS file has NO `html` field (HTML is in the separate .html file)
-> - [ ] HTML includes Tailwind CDN and Google Fonts in `<head>`
-> - [ ] HTML includes transition CSS for smooth control changes
-
-The goal: a self-contained prompt under ~2000 words. The subagent generates content and writes 2 files. No file reads, no searches, no multi-step exploration.
+The goal: a self-contained prompt under ~1000 words. The agent generates content and writes one file.
 
 #### Step 3c: Assemble the Final File
 
@@ -549,16 +460,17 @@ python3 "{skill_base}/references/assemble.py" "{exploration_dir}" {round} "{skil
 
 The script handles everything:
 - Copies the shell template to `v{round}.html`
-- Validates both files exist per variation (`_var-{ID}.js` + `_var-{ID}.html`)
+- Validates each `_var-{ID}.html` exists and contains a valid `variation-meta` JSON block
 - Validates HTML files contain no `</template>` tag (the only danger tag)
+- Extracts metadata/controls from each HTML file's embedded JSON block
 - Wraps each HTML file in a `<template id="tpl-{id}">` element
-- Replaces all three template placeholders with subagent file contents
-- Reports exit code 1 (missing files), 2 (validation failure), or 0 (success)
-- Cleans up all temp files (`_var-*.js`, `_var-*.html`, `_metadata.json`)
+- Replaces all three template placeholders
+- Reports exit code 1 (missing files or metadata), 2 (validation failure), or 0 (success)
+- Cleans up all temp files (`_var-*.html`, `_metadata.json`)
 
-**If the script reports missing files** (e.g. "B1: missing HTML"), do NOT try to fix this by reading existing files and generating the missing ones. That approach reads variation content into the orchestrator's context and defeats the whole architecture. Instead:
-1. Delete the partial output for that variation: `rm -f {exploration_dir}/_var-{ID}*`
-2. Re-spawn the specific subagent with the same prompt
+**If the script reports missing files** (e.g. "B1: missing or invalid variation-meta"), do NOT try to fix this by reading existing files and generating the missing ones. That approach reads variation content into the orchestrator's context and defeats the whole architecture. Instead:
+1. Delete the partial output for that variation: `rm -f {exploration_dir}/_var-{ID}.html`
+2. Re-spawn the specific agent with the same prompt
 
 **If the script reports validation errors** (e.g. "contains `</template>`"), delete the variation's output and re-spawn with extra emphasis on the `</template>` restriction.
 
@@ -714,18 +626,18 @@ if the user changed controls from defaults. Include any notes the user added.]
 - **Missing metadata block** — Every HTML file needs the `exploration-metadata` JSON block for agent consumption.
 - **Shell chrome varies between files** — The gallery shell is a fixed product. Same design tokens, fonts, layout, and interaction across every file. Only the variations inside the preview stage differ. The template enforces this automatically.
 - **Reading reference files at runtime** — Never read files in `references/` during skill execution. The orchestrator has everything it needs in this document, and `assemble.py` handles the template. Reading plugin files triggers permission prompts that interrupt the user.
-- **Generating all variations in the orchestrator** — Don't skip the subagent pattern. Variation quality degrades when one agent generates all variations sequentially. Each variation deserves a focused subagent.
-- **Orchestrator reading variation content into context** — The orchestrator must assemble via bash/python file operations, not by reading each subagent's output. Reading 7 × 500-line files into the orchestrator's context will cause it to hit context limits during the write step.
-- **Inconsistent data across variations** — The orchestrator must include the same realistic data set in every subagent prompt. If subagents invent their own data, variations can't be fairly compared.
-- **Subagent or orchestrator context overflow** — Set `max_turns: 2` on subagents to prevent multi-turn exploration. Include size guidance (HTML page 250-450 lines). Critically, the orchestrator must NOT read variation file contents into its own context — use the file-based assembly pattern (bash/python to replace template placeholders with file contents). If the orchestrator reads all 7 variation files, it will hit context limits during assembly.
-- **Custom CSS instead of Tailwind** — When a subagent writes `margin-top: 24px; padding: 16px; border-radius: 12px; background: var(--bg);` as custom CSS, it should be `mt-6 p-4 rounded-xl bg-[var(--bg)]` in a Tailwind class string. Custom CSS is only for property definitions, keyframes, transitions, and things Tailwind genuinely can't express. Use Tailwind utility classes in the HTML and keep `<style>` blocks compact.
-- **`</template>` in variation HTML** — The only forbidden tag. The assembly script wraps each HTML file in a `<template>` element, and a literal `</template>` would close the wrapper prematurely. If it appears inside a `<script>` tag, the HTML parser handles it correctly (raw text mode), but the string-based validator flags it as a false positive. Subagents can escape as `<\/template>` in JS string literals if needed.
-- **JS file still has an `html` field** — The JS file should contain ONLY metadata and controls. The HTML is in the separate `_var-{ID}.html` file. An `html` field in the JS is ignored and wastes context.
+- **Generating all variations in the orchestrator** — Don't skip the agent pattern. Variation quality degrades when one agent generates all variations sequentially. Each variation deserves a focused agent.
+- **Orchestrator reading variation content into context** — The orchestrator must assemble via bash/python file operations, not by reading each agent's output. Reading 7 × 500-line files into the orchestrator's context will cause it to hit context limits during the write step.
+- **Inconsistent data across variations** — The orchestrator must include the same realistic data set in every agent prompt. If agents invent their own data, variations can't be fairly compared.
+- **Agent or orchestrator context overflow** — The `html-prototyper` agent is pre-configured with `maxTurns: 1` to prevent multi-turn exploration. Include size guidance (HTML page 250-450 lines). Critically, the orchestrator must NOT read variation file contents into its own context — use the file-based assembly pattern (bash/python to replace template placeholders with file contents). If the orchestrator reads all 7 variation files, it will hit context limits during assembly.
+- **Custom CSS instead of Tailwind** — When an agent writes `margin-top: 24px; padding: 16px; border-radius: 12px; background: var(--bg);` as custom CSS, it should be `mt-6 p-4 rounded-xl bg-[var(--bg)]` in a Tailwind class string. Custom CSS is only for property definitions, keyframes, transitions, and things Tailwind genuinely can't express. Use Tailwind utility classes in the HTML and keep `<style>` blocks compact.
+- **`</template>` in variation HTML** — The only forbidden tag. The assembly script wraps each HTML file in a `<template>` element, and a literal `</template>` would close the wrapper prematurely. If it appears inside a `<script>` tag, the HTML parser handles it correctly (raw text mode), but the string-based validator flags it as a false positive. Agents can escape as `<\/template>` in JS string literals if needed.
+- **Missing or invalid `variation-meta` block** — Every HTML file must contain a `<script type="application/json" id="variation-meta">` block in `<head>` with valid JSON. The assembly script extracts this to build the variations array. If the block is missing or contains invalid JSON, assembly fails.
 - **CSS scoped by class instead of `:root`** — Variations are isolated in iframes. Define custom properties on `:root`, not on `.v-a1`. Class-scoped properties won't be reached by `setProperty()` on `documentElement`.
 - **Missing transition CSS** — Each variation HTML must include the transition CSS rule (`:root * { transition: ... }`) for smooth control changes. Without it, control adjustments appear as jarring instant changes.
-- **Interim files not cleaned up** — The assembly script handles cleanup automatically. If you're not using the script, always run `rm -f _var-*.js _var-*.html _metadata.json` after assembly.
+- **Interim files not cleaned up** — The assembly script handles cleanup automatically. If you're not using the script, always run `rm -f _var-*.html _metadata.json` after assembly.
 - **Color controls as a single theme preset** — A single "warm/cool/neutral" select is too blunt. Prefer 2-3 independent color dimensions the viewer can mix. Use multi-var `cssValues` (object format) when one control needs to change multiple properties together.
-- **Orchestrator reading variation files to fix partial subagent output** — If a subagent wrote JS but not HTML (or vice versa), do NOT read the existing file to "understand what's needed." This reads variation content into the orchestrator's context. Instead, delete the partial output and re-spawn the subagent.
+- **Orchestrator reading variation files to fix partial output** — If an agent wrote a partial or invalid HTML file, do NOT read it to "understand what's needed." This reads variation content into the orchestrator's context. Instead, delete the file and re-spawn the agent.
 - **Wrong round number** — Check existing files in the directory before naming.
 - **Unnecessary filesystem checks** — Don't verify plugin file paths (`ls`, `find`) before running commands. Run commands directly.
-- **Sleep-polling for subagent completion (THE #2 mistake)** — Never use `sleep N && ls` to check if subagents finished. After spawning, call `TaskOutput(task_id=<id>, block=true, timeout=300000)` for each subagent in a single message. All calls resolve in parallel. This is mandatory, not a suggestion. `sleep && ls` wastes minutes of wall time, burns tokens on repeated bash calls, and can proceed to assembly before a subagent finishes writing.
+- **Sleep-polling for agent completion (THE #2 mistake)** — Never use `sleep N && ls` to check if agents finished. After spawning, call `TaskOutput(task_id=<id>, block=true, timeout=300000)` for each agent in a single message. All calls resolve in parallel. This is mandatory, not a suggestion. `sleep && ls` wastes minutes of wall time, burns tokens on repeated bash calls, and can proceed to assembly before an agent finishes writing.

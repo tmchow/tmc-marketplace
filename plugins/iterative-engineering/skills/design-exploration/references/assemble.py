@@ -1,18 +1,23 @@
 #!/usr/bin/env python3
-"""Assembly script for design exploration gallery (v2 — template + iframe architecture).
+"""Assembly script for design exploration gallery (v3 — single-file architecture).
 
 Usage: python3 assemble.py <exploration_dir> <round> <template_path>
 
 Input files per variation:
-  _var-{ID}.js    — JavaScript object literal (metadata + controls, NO html field)
-  _var-{ID}.html  — Complete HTML page (rendered inside an iframe)
+  _var-{ID}.html  — Complete HTML page with embedded variation-meta JSON block
   _metadata.json  — Exploration metadata
+
+Each HTML file contains a <script type="application/json" id="variation-meta">
+block in <head> with the variation's identity (id, family, name, etc.) and
+controls array. The assembly script extracts this JSON to build the variations
+array for the gallery shell.
 
 Steps:
   1. Copies shell template to exploration_dir/v{round}.html
-  2. Validates all subagent output files exist and are safe
-  3. Replaces 3 template placeholders with variation content
-  4. Cleans up temp files (_var-*.js, _var-*.html, _metadata.json)
+  2. Validates all agent output files exist and are safe
+  3. Extracts variation-meta JSON from each HTML file
+  4. Replaces 3 template placeholders with variation content
+  5. Cleans up temp files (_var-*.html, _metadata.json)
 
 Exit codes:
   0 — success
@@ -21,10 +26,39 @@ Exit codes:
   3 — usage error
 """
 import glob
+import json
 import os
 import re
 import shutil
 import sys
+
+
+def extract_variation_meta(html_content):
+    """Extract JSON from <script type="application/json" id="variation-meta"> block."""
+    # Match regardless of attribute order (type before id, or id before type)
+    pattern = r'<script\s+(?:type="application/json"\s+id="variation-meta"|id="variation-meta"\s+type="application/json")\s*>(.*?)</script>'
+    match = re.search(pattern, html_content, re.DOTALL)
+    if not match:
+        return None
+    try:
+        return json.loads(match.group(1).strip())
+    except json.JSONDecodeError:
+        return None
+
+
+def meta_to_js_object(meta):
+    """Convert a variation-meta dict to a JavaScript object literal string."""
+    lines = []
+    lines.append("{")
+    for key in ["id", "family", "familyName", "name", "layoutType", "aesthetic", "description"]:
+        val = meta.get(key, "")
+        escaped = str(val).replace("'", "\\'")
+        lines.append(f"  {key}: '{escaped}',")
+
+    controls = meta.get("controls", [])
+    lines.append(f"  controls: {json.dumps(controls, indent=4)}")
+    lines.append("}")
+    return "\n".join(lines)
 
 
 def main():
@@ -51,64 +85,54 @@ def main():
         sys.exit(1)
 
     # --- Step 3: Find and validate variation files ---
-    js_files = sorted(glob.glob(os.path.join(d, "_var-*.js")))
     html_files = sorted(glob.glob(os.path.join(d, "_var-*.html")))
 
-    if not js_files:
-        print("ERROR: No variation JS files found (_var-*.js)", file=sys.stderr)
-        sys.exit(1)
-
-    # Check for incomplete file sets — both JS and HTML required per variation
-    js_ids = {os.path.basename(f).replace("_var-", "").replace(".js", "") for f in js_files}
-    html_ids = {os.path.basename(f).replace("_var-", "").replace(".html", "") for f in html_files}
-    all_ids = js_ids | html_ids
-
-    missing = []
-    for vid in sorted(all_ids):
-        parts = []
-        if vid not in js_ids:
-            parts.append("JS")
-        if vid not in html_ids:
-            parts.append("HTML")
-        if parts:
-            missing.append(f"  {vid}: missing {', '.join(parts)}")
-
-    if missing:
-        print("ERROR: Incomplete variation file sets:", file=sys.stderr)
-        for line in missing:
-            print(line, file=sys.stderr)
+    if not html_files:
+        print("ERROR: No variation HTML files found (_var-*.html)", file=sys.stderr)
         sys.exit(1)
 
     # Validate HTML files — only danger tag is </template>
+    variation_data = []  # (vid, html_content, meta_dict)
+    errors = []
+
     for f in html_files:
+        vid = os.path.basename(f).replace("_var-", "").replace(".html", "")
         content = open(f).read()
+
         if "</template>" in content.lower():
-            vid = os.path.basename(f)
-            print(f"ERROR: {vid} contains \"</template>\" — this breaks the <template> wrapper", file=sys.stderr)
+            print(f"ERROR: _var-{vid}.html contains \"</template>\" — this breaks the <template> wrapper", file=sys.stderr)
             sys.exit(2)
 
-    print(f"Validated {len(js_files)} variations: {', '.join(sorted(all_ids))}")
+        meta = extract_variation_meta(content)
+        if meta is None:
+            errors.append(f"  {vid}: missing or invalid <script id=\"variation-meta\"> JSON block")
+        else:
+            variation_data.append((vid, content, meta))
+
+    if errors:
+        print("ERROR: Variation files with missing metadata:", file=sys.stderr)
+        for line in errors:
+            print(line, file=sys.stderr)
+        sys.exit(1)
+
+    var_ids = [vd[0] for vd in variation_data]
+    print(f"Validated {len(variation_data)} variations: {', '.join(var_ids)}")
 
     # --- Step 3b: Control quality checks (warnings, not errors) ---
     warnings = []
-    for f in js_files:
-        vid = os.path.basename(f).replace("_var-", "").replace(".js", "")
-        js_content = open(f).read()
-        html_var_path = os.path.join(d, f"_var-{vid}.html")
-        html_content = open(html_var_path).read() if os.path.exists(html_var_path) else ""
+    for vid, html_content, meta in variation_data:
+        controls = meta.get("controls", [])
 
         # Check for controls missing 'id' field
-        control_blocks = re.findall(r'\{[^{}]*?label\s*:\s*[\'"]([^"\']+)[\'"][^{}]*?\}', js_content, re.DOTALL)
-        id_fields = re.findall(r'id\s*:\s*[\'"]([^"\']+)[\'"]', js_content)
-        if control_blocks and not id_fields:
-            warnings.append(f"  {vid}: all controls missing 'id' field (template will auto-generate from label)")
+        has_ids = all(c.get("id") for c in controls)
+        if controls and not has_ids:
+            warnings.append(f"  {vid}: some controls missing 'id' field (template will auto-generate from label)")
 
         # Check for cssVar references in HTML
-        css_vars = re.findall(r"cssVar\s*:\s*['\"]([^'\"]+)['\"]", js_content)
-        for var in css_vars:
-            var_ref = f"var({var})"
-            if var_ref not in js_content and var_ref not in html_content:
-                warnings.append(f"  {vid}: control targets {var} but var({var}) not found in JS or HTML")
+        for c in controls:
+            css_var = c.get("cssVar")
+            if css_var and f"var({css_var})" not in html_content:
+                warnings.append(f"  {vid}: control '{c.get('label', '?')}' targets {css_var} but var({css_var}) not found in HTML")
 
     if warnings:
         print("WARNINGS (controls may not work as expected):")
@@ -123,15 +147,13 @@ def main():
     # Metadata
     html = html.replace("__METADATA_JSON__", open(meta_path).read())
 
-    # Variation JS objects — comma-join all JS files
-    objs = ",\n".join(open(f).read() for f in js_files)
+    # Variation JS objects — extract from embedded JSON, convert to JS object literals
+    objs = ",\n".join(meta_to_js_object(meta) for _, _, meta in variation_data)
     html = html.replace("__VARIATIONS_ARRAY__", objs)
 
     # Variation templates — wrap each HTML file in <template id="tpl-{id}">
     templates = []
-    for f in html_files:
-        vid = os.path.basename(f).replace("_var-", "").replace(".html", "")
-        content = open(f).read()
+    for vid, content, _ in variation_data:
         # Extract body class — the <template> HTML parser strips <body> attributes,
         # so we preserve them as a data attribute for the shell to reapply
         body_match = re.search(r'<body\s[^>]*class="([^"]*)"', content)
@@ -146,7 +168,7 @@ def main():
 
     # --- Step 5: Cleanup ---
     cleaned = 0
-    for pattern in ["_var-*.js", "_var-*.html", "_metadata.json"]:
+    for pattern in ["_var-*.html", "_metadata.json"]:
         for f in glob.glob(os.path.join(d, pattern)):
             os.remove(f)
             cleaned += 1

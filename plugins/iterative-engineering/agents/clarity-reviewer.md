@@ -40,7 +40,7 @@ The lead should tell you the document type. If not, infer it from the filename (
 - **Terms the audience understands** — A product name, model name, or commonly-understood concept is clear even if it's not formally defined or technically precise. "Visually consistent" is clear; "optimized" without context is not.
 - **Unmeasured is not unclear** — A requirement that lacks a quantitative metric is a specificity concern, not a clarity concern. "Visually consistent" has clear meaning even without "user rates 7/10."
 - **Missing implementation detail** — A PRD saying "lightweight backend" is clear about intent. The specific database or error handling approach is for the tech plan.
-- **Informal names** — If the document uses a product name (e.g., "Nano Banana Pro") and the audience knows what it refers to, it's clear. The exact API identifier is an implementation detail.
+- **Technology choices are directional** — When a PRD names a technology, model, service, or library, it's communicating a directional decision ("we're using X via Y"). Whether the name is the exact API-compatible identifier, a marketing name, or a common shorthand is irrelevant — the intent is clear. Resolving exact identifiers, versions, and integration details is tech plan work.
 
 ## Key Question
 
