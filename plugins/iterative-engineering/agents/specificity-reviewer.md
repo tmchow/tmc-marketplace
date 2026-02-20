@@ -22,9 +22,9 @@ The lead should tell you the document type. If not, infer it from the filename (
 2. **Scope clarity** — Is it clear what's in and out of scope?
 3. **Approach chosen** — Is there a decision on which approach, or unresolved ambiguity?
 4. **Key constraints identified** — Are the non-obvious gotchas and dependencies surfaced?
-5. **Success criteria** — Is it clear what "done" means at a high level?
+5. **Success criteria** — Is it clear what "done" looks like directionally? Don't demand measurement methodology, KPIs, or quantitative targets — the PRD captures intent, not metrics.
 
-Don't demand: method signatures, query strategies, exact field lists, test scenarios. That's tech planning work.
+Don't demand: method signatures, query strategies, exact field lists, test scenarios, exact model identifiers, KPIs, quantitative success metrics. That's downstream work.
 
 ### For tech plans/designs (implementation — next step is coding)
 
@@ -52,8 +52,9 @@ Number your issues (1, 2, 3...) so the lead can reference them. Focus on making 
 
 ## Guidelines
 
-- Focus on details that are necessary, not exhaustive
+- Focus on details that are necessary for the next step, not exhaustive specification
 - Consider the target audience's knowledge level
 - Flag abstract descriptions that need examples
 - Don't demand over-specification
+- Don't impose business measurement frameworks (KPIs, OKRs) the document doesn't call for — the PRD's job is to communicate intent clearly, not to satisfy an enterprise PM template
 - If document is specific enough, say so briefly

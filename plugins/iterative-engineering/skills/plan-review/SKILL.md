@@ -97,7 +97,7 @@ Read the document at the file path below, then review it. Do not modify any file
 DOCUMENT TYPE: {type}
 
 PERSPECTIVE:
-- PRD or brainstorm → Product strategy: Is the problem worth solving? Are user needs articulated? Is the chosen approach justified? Are success criteria measurable?
+- PRD or brainstorm → Product strategy: Is the problem worth solving? Are user needs articulated? Is the chosen approach justified? Is it clear what "done" looks like directionally? (Don't demand KPIs or quantitative metrics — the PRD captures intent for tech planning, not business measurement.)
 - Tech plan or design → Engineering leadership: Is this implementable? Are architecture decisions sound? Are dependencies mapped? Are test scenarios concrete?
 
 METHODOLOGY:
