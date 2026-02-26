@@ -1,6 +1,6 @@
 ---
 name: iterative:implementing
-description: Execute a tech plan with dependency-aware batching, TDD, code review, and PR creation. Triggers: "implement the plan", "start building", "start implementing", "execute the plan".
+description: 'Execute a tech plan with dependency-aware batching, TDD, code review, and PR creation. Triggers: "implement the plan", "start building", "start implementing", "execute the plan".'
 ---
 
 # Executing Work
