@@ -1,6 +1,6 @@
 ---
 name: iterative:research
-description: Investigate open questions through parallel research — prior art, constraints, competitive analysis. Triggers: "research this", "investigate questions", "resolve open questions", "look into this", or when a PRD has unresolved questions.
+description: 'Investigate open questions through parallel research — prior art, constraints, competitive analysis. Triggers: "research this", "investigate questions", "resolve open questions", "look into this", or when a PRD has unresolved questions.'
 ---
 
 # Research

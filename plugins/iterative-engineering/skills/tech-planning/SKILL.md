@@ -1,6 +1,6 @@
 ---
 name: iterative:tech-planning
-description: Turn requirements into a structured implementation plan with subtasks, dependencies, file paths, and test scenarios. Triggers: "create a plan", "tech planning", "write a tech plan", or has requirements ready to formalize.
+description: 'Turn requirements into a structured implementation plan with subtasks, dependencies, file paths, and test scenarios. Triggers: "create a plan", "tech planning", "write a tech plan", or has requirements ready to formalize.'
 ---
 
 # Create Technical Plan

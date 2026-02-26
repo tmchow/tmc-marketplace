@@ -1,6 +1,6 @@
 ---
 name: iterative:brainstorming
-description: Scope-first brainstorming with intelligent routing — assesses complexity upfront (Quick/Standard/Full), then adapts depth accordingly. Handles simple bug fixes in ~2 exchanges and complex features with full PRD ceremony. Triggers: "brainstorm", "create a PRD", "write requirements", "explore approaches", "think through options", or starting a new feature with unclear direction.
+description: 'Scope-first brainstorming with intelligent routing — assesses complexity upfront (Quick/Standard/Full), then adapts depth accordingly. Handles simple bug fixes in ~2 exchanges and complex features with full PRD ceremony. Triggers: "brainstorm", "create a PRD", "write requirements", "explore approaches", "think through options", or starting a new feature with unclear direction.'
 ---
 
 # Brainstorming
