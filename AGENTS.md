@@ -174,6 +174,19 @@ This keeps orchestrator prompts lean (the rules live in the skill) and agent def
 
 ## Installation (for users)
 
+```bash
+# Install both (default)
+curl -fsSL "https://raw.githubusercontent.com/tmchow/tmc-marketplace/main/scripts/install.sh?$(date +%s)" | bash
+
+# Codex skills only
+curl -fsSL "https://raw.githubusercontent.com/tmchow/tmc-marketplace/main/scripts/install.sh?$(date +%s)" | bash -s -- --codex-only
+
+# Claude Code plugin only
+curl -fsSL "https://raw.githubusercontent.com/tmchow/tmc-marketplace/main/scripts/install.sh?$(date +%s)" | bash -s -- --claude-only
+```
+
+Or install manually:
+
 ```
 /plugin marketplace add tmchow/tmc-marketplace
 /plugin install <plugin-name>@tmc-marketplace

@@ -4,6 +4,8 @@ set -euo pipefail
 # TMC Marketplace Installer
 # Usage:
 #   Install:   curl -fsSL "https://raw.githubusercontent.com/tmchow/tmc-marketplace/main/scripts/install.sh?$(date +%s)" | bash
+#   Codex only:  curl -fsSL "https://raw.githubusercontent.com/tmchow/tmc-marketplace/main/scripts/install.sh?$(date +%s)" | bash -s -- --codex-only
+#   Claude only: curl -fsSL "https://raw.githubusercontent.com/tmchow/tmc-marketplace/main/scripts/install.sh?$(date +%s)" | bash -s -- --claude-only
 #   Uninstall: curl -fsSL "https://raw.githubusercontent.com/tmchow/tmc-marketplace/main/scripts/install.sh?$(date +%s)" | bash -s -- --uninstall
 
 # --- Constants ---
@@ -26,6 +28,9 @@ NC='\033[0m'
 
 # --- State ---
 UNINSTALL=false
+INSTALL_CLAUDE=true
+INSTALL_CODEX=true
+INSTALL_TARGET="both"
 LAST_DOWNLOAD_ERROR=""
 
 # --- Utility functions ---
@@ -123,12 +128,17 @@ install_codex_skills() {
     local codex_home="${CODEX_HOME:-$HOME/.codex}"
 
     if [ ! -d "$codex_home" ]; then
-        log_warn "Codex not detected (~/.codex/ not found), skipping skill install"
-        echo -e "  ${YELLOW}→${NC} After installing Codex, re-run this script to add the skills" >&2
-        return 0
+        if command -v codex &>/dev/null; then
+            mkdir -p "$codex_home"
+        else
+            log_warn "Codex not detected (${codex_home} not found), skipping skill install"
+            echo -e "  ${YELLOW}→${NC} After installing Codex, re-run this script to add the skills" >&2
+            return 0
+        fi
     fi
 
     local skills_dir="${codex_home}/skills"
+    mkdir -p "$skills_dir"
     local tmp_dir
     tmp_dir=$(mktemp -d)
 
@@ -246,15 +256,33 @@ parse_args() {
                 UNINSTALL=true
                 shift
                 ;;
+            --claude-only)
+                if [[ "$INSTALL_TARGET" == "codex" ]]; then
+                    die "Cannot combine --claude-only with --codex-only"
+                fi
+                INSTALL_TARGET="claude"
+                shift
+                ;;
+            --codex-only)
+                if [[ "$INSTALL_TARGET" == "claude" ]]; then
+                    die "Cannot combine --claude-only with --codex-only"
+                fi
+                INSTALL_TARGET="codex"
+                shift
+                ;;
             --help|-h)
                 echo "TMC Marketplace Installer v${VERSION}"
                 echo ""
                 echo "Usage:"
                 echo "  Install:   curl -fsSL \"https://raw.githubusercontent.com/${REPO}/main/scripts/install.sh?\$(date +%s)\" | bash"
+                echo "  Codex:     curl -fsSL \"https://raw.githubusercontent.com/${REPO}/main/scripts/install.sh?\$(date +%s)\" | bash -s -- --codex-only"
+                echo "  Claude:    curl -fsSL \"https://raw.githubusercontent.com/${REPO}/main/scripts/install.sh?\$(date +%s)\" | bash -s -- --claude-only"
                 echo "  Uninstall: curl -fsSL \"https://raw.githubusercontent.com/${REPO}/main/scripts/install.sh?\$(date +%s)\" | bash -s -- --uninstall"
                 echo ""
                 echo "Options:"
                 echo "  --uninstall    Remove plugin and skills"
+                echo "  --codex-only   Install Codex skills only"
+                echo "  --claude-only  Install Claude Code plugin only"
                 echo "  --help, -h     Show this help message"
                 exit 0
                 ;;
@@ -263,6 +291,25 @@ parse_args() {
                 ;;
         esac
     done
+
+    if [[ "$UNINSTALL" == "true" && "$INSTALL_TARGET" != "both" ]]; then
+        die "--codex-only and --claude-only are install-only options"
+    fi
+
+    case "$INSTALL_TARGET" in
+        both)
+            INSTALL_CLAUDE=true
+            INSTALL_CODEX=true
+            ;;
+        claude)
+            INSTALL_CLAUDE=true
+            INSTALL_CODEX=false
+            ;;
+        codex)
+            INSTALL_CLAUDE=false
+            INSTALL_CODEX=true
+            ;;
+    esac
 }
 
 # --- Main ---
@@ -274,8 +321,12 @@ main() {
     if [[ "$UNINSTALL" == "true" ]]; then
         do_uninstall
     else
-        install_claude_plugin
-        install_codex_skills
+        if [[ "$INSTALL_CLAUDE" == "true" ]]; then
+            install_claude_plugin
+        fi
+        if [[ "$INSTALL_CODEX" == "true" ]]; then
+            install_codex_skills
+        fi
         print_success
     fi
 }

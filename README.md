@@ -12,6 +12,16 @@ curl -fsSL "https://raw.githubusercontent.com/tmchow/tmc-marketplace/main/script
 
 Installs the Claude Code plugin and Codex skills. Safe to re-run (idempotent). Skips anything not detected (e.g., no Codex installed).
 
+Install only one target:
+
+```bash
+# Codex skills only
+curl -fsSL "https://raw.githubusercontent.com/tmchow/tmc-marketplace/main/scripts/install.sh?$(date +%s)" | bash -s -- --codex-only
+
+# Claude Code plugin only
+curl -fsSL "https://raw.githubusercontent.com/tmchow/tmc-marketplace/main/scripts/install.sh?$(date +%s)" | bash -s -- --claude-only
+```
+
 To uninstall:
 
 ```bash
