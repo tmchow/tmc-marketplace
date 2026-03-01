@@ -132,7 +132,7 @@ only covers `ready` status which is too narrow — need all non-terminal statuse
 - Mix of blocked and unblocked tasks in single call → only blocked ones in map
 - Tasks in `draft` and `ready` status → included (not just `ready`)
 
-**Verify:** Run task-service tests
+**Verify:** Run user-service tests
 ```
 
 The implementer knows: which files, the query strategy, why this design, the return semantics, every test scenario. They write the actual code.

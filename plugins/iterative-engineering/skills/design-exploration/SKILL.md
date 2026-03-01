@@ -468,7 +468,7 @@ python3 "{skill_base}/references/assemble.py" "{exploration_dir}" {round} "{skil
 The script handles everything:
 - Copies the shell template to `v{round}.html`
 - Validates each `_var-{ID}.html` exists and contains a valid `variation-meta` JSON block
-- Validates HTML files contain no `</template>` tag (the only danger tag)
+- Validates HTML files have no orphaned `</template>` close tags (balanced nesting is safe)
 - Extracts metadata/controls from each HTML file's embedded JSON block
 - Wraps each HTML file in a `<template id="tpl-{id}">` element
 - Replaces all three template placeholders
