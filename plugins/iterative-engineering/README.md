@@ -229,12 +229,6 @@ The orchestrator self-identifies its model family and skips the matching CLI (e.
 
 Workflow agents run as isolated subagents. Each `task-worker` gets its own context window with just its subtask from the plan. Simplification is handled by `/simplify` (if available) rather than a dedicated agent.
 
-## HZL Integration (Optional)
-
-This plugin supports [HZL](https://github.com/tmchow/hzl) for persistent task tracking across sessions and agents. Implementing detects HZL automatically and offers the choice between built-in and HZL task tracking. Without HZL, the workflow uses built-in task management.
-
-See the [HZL repository](https://github.com/tmchow/hzl) for installation.
-
 ## Changelog
 
 See [CHANGELOG.md](../../CHANGELOG.md) for a detailed history of all changes, new features, and fixes across releases.

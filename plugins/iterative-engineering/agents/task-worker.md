@@ -3,8 +3,6 @@ name: task-worker
 description: Execute a single subtask from a technical plan. Reads plan context, loads referenced patterns, implements with TDD, and commits. Spawned by the iterative:implementing skill.
 model: inherit
 color: green
-skills:
-  - hzl
 ---
 
 # Task Worker
@@ -17,7 +15,7 @@ You receive:
 - Path to the technical plan document
 - Subtask number and title (e.g., "1.2 Add batched dependency lookup")
 - Parent task context
-- Task system being used (HZL or built-in tasks) and task ID
+- Task ID
 
 ## Execution Process
 
@@ -64,7 +62,7 @@ Non-feature subtasks (config, refactoring, infrastructure) skip this gate but st
 - Stage only files related to this subtask: `git add [files]`
 - Commit with conventional format: `git commit -m "feat(scope): [subtask description]"`
 - If the subtask is genuinely too small for a meaningful commit message, note this in the output — the lead will group it with the next subtask
-- Mark the task done before reporting completion (HZL: `hzl task done <id>`, built-in tasks: mark task as completed)
+- Mark the task as completed before reporting
 
 ## Output
 
@@ -76,7 +74,6 @@ Commit: [sha]
 Files: [list of modified files]
 Tests: [pass count] ([N] new tests written, [M] plan scenarios covered)
 Test file: [path to test file, or "N/A — non-feature subtask"]
-HZL: updated (if applicable)
 ```
 
 Or if blocked:

@@ -42,7 +42,6 @@ You receive:
 - Summarize what changed and why
 - List key changes as bullets
 - Reference any issues if applicable
-- Do NOT include HZL task IDs
 
 ### 3. Create PR
 ```bash
@@ -96,4 +95,3 @@ Reason: [what went wrong]
 
 - Follow repo conventions from AGENTS.md/CLAUDE.md
 - Keep descriptions concise but informative
-- Don't include HZL task references
