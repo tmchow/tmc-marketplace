@@ -634,7 +634,11 @@
                 doc.documentElement.style.setProperty(c.cssVar, String(val) + (c.unit || ''));
               }
             }
+            // Dispatch event for behavioral controls (and any variation listening)
+            try { doc.dispatchEvent(new CustomEvent('control-change', { detail: { id: c.id, value: val } })); } catch(e) {}
           });
+          // Signal that all controls have been applied (useful for initial load)
+          try { doc.dispatchEvent(new CustomEvent('controls-ready')); } catch(e) {}
         },
 
         // --- Navigation ---
