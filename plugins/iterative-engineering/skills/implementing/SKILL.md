@@ -63,7 +63,7 @@ Read the plan critically, create tasks, and implement with TDD, code review, and
 
 1. Verify: all tasks complete, all section-level code reviews passed.
 2. **Detect base branch.** `git rev-parse --verify origin/main >/dev/null 2>&1 && echo main || echo master`. Use this for all branch-level scoping in Phase 3.
-3. **Simplification pass.** Get changed files with `git diff --name-only $(git merge-base HEAD <base>)..HEAD`. Spawn the `code-simplifier` agent with this file list. The agent applies behavior-preserving simplifications, runs tests, and commits separately. This is a single bounded pass — not a refactor. **Wait for simplification to complete before proceeding** — the final review must see simplified code.
+3. **Simplification pass.** If `/simplify` is available, invoke it to review and clean up changed code. Otherwise, do a manual review of changed files (`git diff --name-only $(git merge-base HEAD <base>)..HEAD`) and apply behavior-preserving simplifications: flatten nesting, remove dead code, simplify expressions, collapse single-use variables. This is a single bounded pass — not a refactor. **Wait for simplification to complete before proceeding** — the final review must see simplified code.
 4. **Final review offer.** Present an interactive choice to the user (e.g., `AskUserQuestion` in Claude Code): A) Full code review of complete work (recommended), B) Quick review, C) Skip to finish.
 5. If review: invoke `code-review` skill with scope `git diff $(git merge-base HEAD <base>)..HEAD` (all branch changes including simplification).
 6. **Severity acceptance (separate prompt).** If the review found issues at any severity, present severity acceptance (see Severity Acceptance section). This is its own prompt — do not combine it with next-step options, and do not skip it even when all issues are Medium/Low. "Clean" means zero findings at any severity. If no findings, skip to step 7.
@@ -177,7 +177,7 @@ The subagent receives:
 - The affected file paths
 - Instruction to apply all fixes, run tests, and commit
 
-One subagent (not one per finding) because findings can interact — a security fix and a correctness fix in the same function need to see each other. This mirrors the `code-simplifier` pattern: one bounded pass, specific scope, commits separately.
+One subagent (not one per finding) because findings can interact — a security fix and a correctness fix in the same function need to see each other. This mirrors the simplification pattern: one bounded pass, specific scope, commits separately.
 
 Wait for the subagent to complete before proceeding. Next-step options come AFTER fixes land, as a separate prompt (Phase 3 step 7).
 
@@ -215,7 +215,7 @@ If reality diverges from the plan during implementation:
 | Committing feature subtask without writing tests | TDD: write tests first from plan's test scenarios, then implement |
 | Skipping Phase 1 because of prior conversation context | Prior context ≠ setup complete. If no tasks exist, run Phase 1 — HZL detection, task creation, workspace isolation |
 | Pushing through when blocked | Stop and ask for help |
-| Running code review in parallel with simplification or other code changes | Code review must see final code. Simplifier → wait → review. Never parallelize steps that change code with steps that review it |
+| Running code review in parallel with simplification or other code changes | Code review must see final code. Simplify → wait → review. Never parallelize steps that change code with steps that review it |
 | Full code review on trivial changes | Scale review to complexity — skip for config changes |
 | Modifying the plan silently | Report divergence and get user agreement |
 | Applying TDD rigidly to config/refactoring subtasks | TDD for feature work, verify for non-feature work |
