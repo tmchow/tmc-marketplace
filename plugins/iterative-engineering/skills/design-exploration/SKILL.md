@@ -410,12 +410,18 @@ The shell template (`references/shell-template.html`) is a complete gallery page
 
 #### Step 3b: Spawn html-prototyper Agents
 
-For each planned variation, spawn an `html-prototyper` agent (uses `subagent_type: "html-prototyper"` in Claude Code's Task tool). The agent is pre-configured as background with `acceptEdits` permissions and `maxTurns: 1`. Launch all agents in a single message so they run in parallel.
+For each planned variation, spawn an `html-prototyper` agent in the background with write permissions. Launch all agents in a single message so they run in parallel.
+
+**Critical — permissions:** The agent frontmatter declares `permissionMode: acceptEdits`, but this does NOT propagate automatically on all platforms. You MUST explicitly grant write/file permissions when spawning. Platform examples:
+
+- **Claude Code:** Use the Agent tool with `subagent_type: "iterative-engineering:html-prototyper"`, `mode: "bypassPermissions"`, and `run_in_background: true`.
+- **Other platforms:** Use whatever mechanism your platform provides to spawn a background agent with file-write permissions. The agent only needs the `Write` tool.
 
 **Waiting for agents — MANDATORY PATTERN:**
 
-After spawning all agents, you MUST wait for each one using your platform's agent output tool. Do NOT use `sleep`, `ls`, or any bash polling. For example, in Claude Code:
+After spawning all agents, you MUST wait for each one using your platform's blocking agent-output mechanism. Do NOT use `sleep`, `ls`, or any bash polling.
 
+**Claude Code example:**
 ```
 # In a single message, call TaskOutput for each background agent:
 TaskOutput(task_id=<agent_1_id>, block=true, timeout=300000)
@@ -423,7 +429,7 @@ TaskOutput(task_id=<agent_2_id>, block=true, timeout=300000)
 ... one per agent, all in parallel
 ```
 
-`block=true` makes each call wait until that agent finishes, then returns its result. Call all of them in a single message so they resolve in parallel. Once all return, every agent is done and you can proceed to assembly. Other coding agent platforms have equivalent mechanisms; use whatever your platform provides to block until a background agent completes.
+**Other platforms:** Use whatever your platform provides to block until a background agent completes (e.g., awaiting a task handle, polling an agent status API). The key requirement is: do NOT proceed to assembly until every agent has finished writing its file.
 
 **NEVER use `sleep N && ls` to check if files exist.** This is the single most common orchestrator mistake. It wastes tokens, adds latency, triggers permission prompts, and can proceed before agents finish writing.
 
@@ -438,9 +444,10 @@ Then include ONLY:
 1. **The variation brief** — id, family, familyName, name, layoutType, aesthetic, description, what makes it memorable, the key design commitments for this variation
 2. **The shared realistic data** — the exact content (names, numbers, descriptions) to use. Keep this compact — just the data, no surrounding context about the project
 3. **The divergence axis and constraint level** — one sentence establishing both. For interaction-axis explorations, explicitly state: "Visual treatment is shared — use [font pairing] and [palette description]. Focus on making the INTERACTION MODEL distinct, not the visual style." For visual-axis, state: "Full creative freedom on visual treatment — make the aesthetic distinctive and memorable."
-4. **The controls brief** — list the 4-6 controls for this variation. For each: label, type, cssVar, and the range/options. The agent knows the schema from its preloaded skill; you just specify WHICH controls this variation gets and their parameters.
-5. **Size guidance** — state explicitly. Scale to scope: a full page needs ~350-450 lines; a component needs ~200-250. The mockup must look like a real product, not a wireframe.
-6. **Scope-specific note** (if component) — "Center content in the viewport: `min-h-screen flex items-center justify-center p-8` on `<body>`."
+4. **The controls brief** — list the 4-6 controls for this variation. For each: label, type, cssVar, and the range/options. For behavioral controls (sort order, filter thresholds, expansion mode), add `"event": true` — this tells the agent the control needs a JS event listener, not just a CSS var. The agent knows the schema from its preloaded skill; you just specify WHICH controls this variation gets and their parameters.
+5. **Size guidance** — state explicitly. Scale to scope: a full page needs ~400-600 lines; a component needs ~250-350. The mockup must look like a real product, not a wireframe.
+6. **Data density** — state explicitly how much realistic data to include. For agent/user rosters: "populate at least 5-6 items with varied states." For dashboards: "show at least 8-10 data points." For lists: "include enough items to demonstrate scrolling and density." Sparse data makes explorations look like wireframes.
+7. **Scope-specific note** (if component) — "Center content in the viewport: `min-h-screen flex items-center justify-center p-8` on `<body>`."
 
 **Do NOT repeat the file format, control schema, styling rules, or checklist in the prompt.** The agent already has these from the design-prototyping skill. Repeating them wastes tokens and increases context pressure.
 
@@ -472,7 +479,7 @@ The script handles everything:
 1. Delete the partial output for that variation: `rm -f {exploration_dir}/_var-{ID}.html`
 2. Re-spawn the specific agent with the same prompt
 
-**If the script reports validation errors** (e.g. "contains `</template>`"), delete the variation's output and re-spawn with extra emphasis on the `</template>` restriction.
+**If the script reports validation errors** (e.g. "orphaned `</template>` close tags"), delete the variation's output and re-spawn with a note to ensure every `<template>` open tag has a matching close tag.
 
 The orchestrator's context only holds the conversation, the metadata JSON (small), and one bash command. It never reads the variation files.
 
@@ -596,8 +603,9 @@ if the user changed controls from defaults. Include any notes the user added.]
 - [ ] Each variation is MEANINGFULLY different on the chosen axis — interaction axis: different UX flow or interaction model; visual axis: different layout structure and aesthetic
 - [ ] Switching variations is instant (no janky reflows)
 - [ ] Per-variation controls update the preview in real time with smooth transitions
-- [ ] Each variation has 4-8 controls RELEVANT to its specific structure
-- [ ] Same realistic data across all variations
+- [ ] Each variation has 4-8 controls RELEVANT to its specific structure, with each control producing a visible change
+- [ ] Behavioral controls (sort, filter, threshold) use `"event": true` and have JS listeners in the variation
+- [ ] Same realistic data across all variations, with sufficient density (not sparse wireframe-like content)
 - [ ] Star ratings persist across page reloads
 - [ ] Export produces a single markdown document with JSON ratings, summary, and editable direction
 - [ ] All keyboard shortcuts work
@@ -615,7 +623,7 @@ if the user changed controls from defaults. Include any notes the user added.]
 - **Visual divergence on a functional problem (THE #1 mistake)** — When asked to explore a component or feature (e.g., "price input with sale toggle"), generating a neon cyberpunk version, a developer terminal version, and a boutique card version is NOT useful. Those are visually different but may have identical interaction patterns. The user wants to see different ways the pricing UX WORKS — inline toggle vs wizard vs side-by-side comparison — all rendered in a clean, professional style. Default to interaction-axis divergence. Only go visually wild when the user is explicitly exploring visual identity.
 - **Variations are just color swaps** — Each family needs fundamentally different HTML structure or interaction model. Not the same tree with different colors.
 - **Controls don't work** — Common causes: (1) missing `id` field — control renders but clicks do nothing (template auto-fixes this but don't rely on it); (2) `cssVar: '--card-radius'` defined but HTML uses `rounded-3xl` instead of `rounded-[var(--card-radius)]` — the var is set but nothing reads it; (3) `unit: '%'` on a range control breaks `calc()` in CSS (use unitless values for percentage scales); (4) hover/active states use hardcoded colors instead of `var(--accent)` — the default state changes but hover doesn't; (5) `cssValues` written as an **array** instead of an object — `cssValues: ['0.75rem', '1rem']` MUST be `cssValues: { compact: '0.75rem', comfortable: '1rem' }` keyed by option labels (the template auto-fixes this but don't rely on it). Controls are applied via `iframe.contentDocument.documentElement.style.setProperty()`. The assembly script warns about orphaned CSS vars.
-- **Controls drive CSS classes instead of CSS vars** — The control system can ONLY set CSS custom properties. If a control's effect requires toggling CSS classes (e.g., `.input-bordered` vs `.input-underlined`), the control is dead. All controlled styling must flow through `var()` references. Use CSS that reads `var(--input-border)` rather than switching between `.input-bordered` and `.input-underlined` classes.
+- **Controls drive CSS classes instead of CSS vars** — The control system sets CSS custom properties via `setProperty()`. For visual controls, all styling must flow through `var()` references. For behavioral controls that need DOM manipulation (sorting, filtering, showing/hiding sections), mark them `"event": true` and add a `control-change` event listener in the variation's JS. See the design-prototyping skill for the pattern.
 - **Same controls on every variation** — Each variation's controls should reflect its unique structure. If 4 out of 6 controls are identical across all variations (e.g., every variation has spacing-density, font-scale, card-radius, accent-color), the controls aren't doing their job. The most valuable controls are the ones unique to a specific variation's interaction model. Especially for components: skip boilerplate controls like spacing density and font scale, and dedicate all controls to the design decisions specific to that variation.
 - **Generic AI aesthetics (visual axis)** — No Inter + purple gradients on white. Distinctive, intentional choices. Reference real products. Note: this applies to visual-axis explorations. For interaction-axis explorations, a clean professional style IS the goal — the aesthetics should be polished but not distracting from the UX being explored.
 - **Lorem ipsum** — Real content only. "$1,247,890 in revenue" beats "Lorem ipsum dolor sit amet."
@@ -629,9 +637,11 @@ if the user changed controls from defaults. Include any notes the user added.]
 - **Generating all variations in the orchestrator** — Don't skip the agent pattern. Variation quality degrades when one agent generates all variations sequentially. Each variation deserves a focused agent.
 - **Orchestrator reading variation content into context** — The orchestrator must assemble via bash/python file operations, not by reading each agent's output. Reading 7 × 500-line files into the orchestrator's context will cause it to hit context limits during the write step.
 - **Inconsistent data across variations** — The orchestrator must include the same realistic data set in every agent prompt. If agents invent their own data, variations can't be fairly compared.
-- **Agent or orchestrator context overflow** — The `html-prototyper` agent is pre-configured with `maxTurns: 1` to prevent multi-turn exploration. Include size guidance (HTML page 250-450 lines). Critically, the orchestrator must NOT read variation file contents into its own context — use the file-based assembly pattern (bash/python to replace template placeholders with file contents). If the orchestrator reads all 7 variation files, it will hit context limits during assembly.
+- **Agent or orchestrator context overflow** — The `html-prototyper` agent is pre-configured with `maxTurns: 1` to prevent multi-turn exploration. Include size guidance (HTML page 250-600 lines depending on scope). Critically, the orchestrator must NOT read variation file contents into its own context — use the file-based assembly pattern (bash/python to replace template placeholders with file contents). If the orchestrator reads all 7 variation files, it will hit context limits during assembly.
 - **Custom CSS instead of Tailwind** — When an agent writes `margin-top: 24px; padding: 16px; border-radius: 12px; background: var(--bg);` as custom CSS, it should be `mt-6 p-4 rounded-xl bg-[var(--bg)]` in a Tailwind class string. Custom CSS is only for property definitions, keyframes, transitions, and things Tailwind genuinely can't express. Use Tailwind utility classes in the HTML and keep `<style>` blocks compact.
-- **`</template>` in variation HTML** — The only forbidden tag. The assembly script wraps each HTML file in a `<template>` element, and a literal `</template>` would close the wrapper prematurely. If it appears inside a `<script>` tag, the HTML parser handles it correctly (raw text mode), but the string-based validator flags it as a false positive. Agents can escape as `<\/template>` in JS string literals if needed.
+- **Orphaned `</template>` in variation HTML** — The assembly script wraps each file in a `<template>` element. Orphaned (unbalanced) `</template>` close tags break the wrapper. Balanced `<template>` nesting is safe (e.g., Alpine.js `<template x-for>`, `<template x-if>`) — the HTML parser closes the nearest open `<template>`, not the outer wrapper. The assembly script validates this: it strips `<script>` blocks (where `</template>` in string literals is inert), counts opens vs closes, and only errors if `closes > opens`.
+- **Controls that don't visibly change anything** — The most common quality issue. A control may be wired correctly (CSS var is set) but produce no visible change because: (a) the range is too narrow (radius 8-12px is invisible), (b) the property has no visual impact in context, or (c) the control is behavioral but has no JS listener. The design-prototyping skill includes a mandatory QA step — agents must audit each control's visible impact before finishing.
+- **Sparse data making explorations look like wireframes** — Agent prompts must specify minimum data counts. A 6-agent roster with one agent per status state tells a story; 2 agents with the same state looks like a skeleton. Include explicit data density guidance in every agent prompt.
 - **Missing or invalid `variation-meta` block** — Every HTML file must contain a `<script type="application/json" id="variation-meta">` block in `<head>` with valid JSON. The assembly script extracts this to build the variations array. If the block is missing or contains invalid JSON, assembly fails.
 - **CSS scoped by class instead of `:root`** — Variations are isolated in iframes. Define custom properties on `:root`, not on `.v-a1`. Class-scoped properties won't be reached by `setProperty()` on `documentElement`.
 - **Missing transition CSS** — Each variation HTML must include the transition CSS rule (`:root * { transition: ... }`) for smooth control changes. Without it, control adjustments appear as jarring instant changes.
@@ -640,4 +650,4 @@ if the user changed controls from defaults. Include any notes the user added.]
 - **Orchestrator reading variation files to fix partial output** — If an agent wrote a partial or invalid HTML file, do NOT read it to "understand what's needed." This reads variation content into the orchestrator's context. Instead, delete the file and re-spawn the agent.
 - **Wrong round number** — Check existing files in the directory before naming.
 - **Unnecessary filesystem checks** — Don't verify plugin file paths (`ls`, `find`) before running commands. Run commands directly.
-- **Sleep-polling for agent completion (THE #2 mistake)** — Never use `sleep N && ls` to check if agents finished. After spawning, call `TaskOutput(task_id=<id>, block=true, timeout=300000)` for each agent in a single message. All calls resolve in parallel. This is mandatory, not a suggestion. `sleep && ls` wastes minutes of wall time, burns tokens on repeated bash calls, and can proceed to assembly before an agent finishes writing.
+- **Sleep-polling for agent completion (THE #2 mistake)** — Never use `sleep N && ls` to check if agents finished. Use your platform's blocking mechanism to wait for each agent (e.g., Claude Code: `TaskOutput(task_id=<id>, block=true, timeout=300000)` for each agent in a single message). This is mandatory, not a suggestion. `sleep && ls` wastes minutes of wall time, burns tokens on repeated bash calls, and can proceed to assembly before an agent finishes writing.

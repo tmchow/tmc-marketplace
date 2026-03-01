@@ -79,15 +79,26 @@ Populate all fields from the variation brief provided in the prompt.
 - **Realistic content only.** Never lorem ipsum. Use the data from the prompt.
 - **Motion.** Hover transitions on interactive elements. At least one entrance animation with staggered delays. JavaScript is allowed for interactive demonstrations (accordions, toggles, wizards).
 - **Component scope.** For components (not full pages), center content in the viewport: `min-h-screen flex items-center justify-center p-8` on `<body>`.
+- **Viewport containment.** The outermost container element must use `overflow-hidden` (or `overflow-auto` if scrolling is intentional). This prevents content from breaking out of the iframe bounds. Apply to the root layout wrapper, not `<body>`.
 - **Transition CSS required.** The `:root * { transition: ... }` rule (shown in file format above) must be included for smooth control changes.
 
 ## Control Schema
 
-Controls are **JSON metadata only**. Define them in the `controls` array inside the variation-meta block. A separate gallery shell reads this JSON and renders the control UI (sliders, dropdowns, toggles) outside the iframe. The shell applies values to the iframe via `style.setProperty()` on `:root`.
+Controls are **JSON metadata only**. Define them in the `controls` array inside the variation-meta block. A separate gallery shell reads this JSON and renders the control UI (sliders, dropdowns, toggles) outside the iframe.
 
 **Do NOT build any control panel, settings panel, or configuration UI into the variation HTML.** The variation contains only the design content. All control rendering and interaction is handled by the shell.
 
 Include 4-6 controls in the `controls` array.
+
+### Two types of controls
+
+**CSS controls** (default) — The shell sets a CSS custom property on `:root` via `style.setProperty()`. The HTML references it via `var()`. This is automatic — no JS needed in the variation. Use for visual parameters: colors, spacing, radii, opacity, font sizes, layout widths.
+
+**Event controls** — For behavioral parameters that CSS can't express (sort order, filter thresholds, data grouping, expansion mode). The shell sets the CSS var AND dispatches a `CustomEvent` on the iframe's `document`. The variation includes a JS listener that reads the value and updates the DOM.
+
+To make a control an event control, add `"event": true` to the control JSON. The shell dispatches `control-change` events with `{ detail: { id, value } }` for all controls, but only event controls need a listener.
+
+Event controls still need a `cssVar` (it can be a dummy like `"--sort-order"`) so the shell has something to set. The actual work happens in your listener.
 
 ### Range
 
@@ -168,6 +179,46 @@ Maps `true`/`false` to CSS values. Without `cssValues`, defaults to `"1"`/`"0"`.
 }
 ```
 
+### Event Control Pattern
+
+When a control needs to drive behavior (not just CSS), mark it with `"event": true` and add a listener in the variation's `<script>`:
+
+```json
+{
+  "id": "sort-order",
+  "label": "Sort By",
+  "type": "select",
+  "options": ["status", "last-active", "name"],
+  "cssValues": { "status": "status", "last-active": "last-active", "name": "name" },
+  "value": "status",
+  "defaultValue": "status",
+  "unit": "",
+  "cssVar": "--sort-order",
+  "event": true
+}
+```
+
+```html
+<script>
+  document.addEventListener('control-change', (e) => {
+    const { id, value } = e.detail;
+    if (id === 'sort-order') {
+      sortAgents(value);  // your function that re-sorts the DOM
+    }
+  });
+
+  // Also handle initial state — controls-ready fires once after all
+  // CSS vars are set on first iframe load
+  document.addEventListener('controls-ready', () => {
+    const sort = getComputedStyle(document.documentElement)
+      .getPropertyValue('--sort-order').trim();
+    if (sort) sortAgents(sort);
+  });
+</script>
+```
+
+The `controls-ready` event fires once after all controls are applied on iframe load. Use it to read initial CSS var values and set up initial state. Individual `control-change` events fire on each subsequent control adjustment.
+
 ## Control Rules
 
 - **`id` is required.** Unique within the variation. Without it, the control renders but interactions do nothing.
@@ -180,6 +231,7 @@ Maps `true`/`false` to CSS values. Without `cssValues`, defaults to `"1"`/`"0"`.
 - **Never use `[style*="..."]` attribute selectors** for CSS variable detection. They are fragile.
 - **CSS custom properties on `:root` only.** Not scoped by class. The iframe provides isolation. Controls apply via `documentElement.style.setProperty()`.
 - **The control system can only set CSS custom properties.** It cannot toggle CSS classes. All controlled styling must flow through `var()` references.
+- **Behavioral controls need `"event": true` and a JS listener.** If a control drives behavior (sorting, filtering, thresholds, expansion mode), mark it `"event": true` and add a `control-change` event listener. Without the listener, the CSS var is set but nothing reads it.
 
 ## Pre-Output Checklist
 
@@ -187,18 +239,30 @@ Verify before writing:
 
 - [ ] `<script type="application/json" id="variation-meta">` block is in `<head>` with valid JSON
 - [ ] Every control has an `id` field (unique within this variation)
-- [ ] Every control's `cssVar` appears as `var(--xxx)` in the HTML
+- [ ] Every control's `cssVar` appears as `var(--xxx)` in the HTML or is consumed by a `control-change` event listener
 - [ ] `cssValues` is an object keyed by option labels, never an array
 - [ ] All controlled styling uses `var()` references, no CSS class toggling
 - [ ] No range control uses `unit: "%"`
 - [ ] Hover/active/focus states use `var()` for any property driven by a control
-- [ ] HTML does NOT contain `</template>` (the only forbidden tag)
+- [ ] Every `<template>` open tag has a matching `</template>` close tag (balanced nesting is safe; orphaned close tags break assembly)
 - [ ] CSS custom properties are defined on `:root` (not scoped by class)
 - [ ] HTML includes Tailwind CDN and Google Fonts in `<head>`
 - [ ] HTML includes transition CSS for smooth control changes
 - [ ] HTML contains NO control panel UI (no sliders, dropdowns, toggles, settings panels)
+- [ ] The outermost container uses `overflow-hidden` or `overflow-auto`
+
+### Mandatory QA — Controls Audit
+
+**After writing the HTML, before finishing**, audit every control against its wiring:
+
+For each control in the `controls` array:
+1. **Find where it's consumed.** Search the HTML for `var(--{cssVar})` or the `control-change` listener handling its `id`.
+2. **If not consumed, fix it.** Either: (a) add the `var()` reference to the HTML where the property should apply, or (b) add a `control-change` listener if the control is behavioral.
+3. **Verify visible impact.** Ask: "If I move this slider from min to max (or toggle this), would the change be obvious to someone across the room?" If not, widen the range or choose a more impactful property.
+
+This audit catches the most common failure mode: controls that are defined in JSON but have no effect on the rendered output.
 
 ## Forbidden
 
 - **No control UI in the variation.** Never build sliders, dropdowns, toggle switches, settings panels, or any control interface into the HTML. Controls are JSON metadata; the gallery shell renders all control UI.
-- **No `</template>` tag.** The assembly system wraps each file in a `<template>` element; a closing tag would break the wrapper. If needed in a `<script>` string, escape as `<\/template>`.
+- **No orphaned `</template>` tags.** Every `</template>` must have a matching `<template>` open tag. The assembly system wraps each file in a `<template>` element; an orphaned close tag would break the wrapper. Balanced `<template>` nesting (e.g., Alpine.js `<template x-for>`, `<template x-if>`) is safe.
