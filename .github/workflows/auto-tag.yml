@@ -30,7 +30,7 @@ jobs:
           if git rev-parse "$TAG" >/dev/null 2>&1; then
             echo "Tag $TAG already exists, skipping"
             echo "should_tag=false" >> "$GITHUB_OUTPUT"
-          elif ! grep -q "\[${VERSION}\]" plugins/iterative-engineering/CHANGELOG.md; then
+          elif ! grep -q "\[${VERSION}\]" CHANGELOG.md; then
             echo "No changelog entry for $VERSION, skipping"
             echo "should_tag=false" >> "$GITHUB_OUTPUT"
           else

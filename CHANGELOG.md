@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.11.0] - 2026-03-01
+
+### Added
+
+- **Install target options** — `--codex-only` and `--claude-only` flags for the install script, letting users install just the Codex skills or Claude Code plugin instead of both. ([#70](https://github.com/tmchow/tmc-marketplace/pull/70))
+
+### Fixed
+
+- **YAML frontmatter parsing** — quoted skill descriptions containing colons that broke YAML parsing, fixing six iterative-engineering skills that were silently skipped. ([#71](https://github.com/tmchow/tmc-marketplace/pull/71))
+- **Design exploration controls** — `assemble.py` now allows balanced `<template>` nesting (Alpine.js) while catching orphaned close tags. Added two-tier control system (CSS automatic + event-based) with JS event bridge. ([#72](https://github.com/tmchow/tmc-marketplace/pull/72))
+
+### Removed
+
+- **code-simplifier agent** — replaced with `/simplify` skill. ([#72](https://github.com/tmchow/tmc-marketplace/pull/72))
+- **HZL integration** — collapsed all HZL-or-builtin conditional logic to built-in only across 8 files. ([#72](https://github.com/tmchow/tmc-marketplace/pull/72))
+
+---
+
 ## [1.10.0] - 2026-02-20
 
 ### Added
@@ -315,6 +333,7 @@ Initial release — 11 skills, 13 agents. ([#10](https://github.com/tmchow/tmc-m
 Core workflow: brainstorming → research → spike → tech planning → implementing, with multi-agent reviews at each stage.
 
 <!-- Version comparison links -->
+[1.11.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.10.0...v1.11.0
 [1.10.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.9.2...v1.10.0
 [1.9.2]: https://github.com/tmchow/tmc-marketplace/compare/v1.9.1...v1.9.2
 [1.9.1]: https://github.com/tmchow/tmc-marketplace/compare/v1.9.0...v1.9.1
