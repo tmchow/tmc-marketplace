@@ -20,9 +20,9 @@ Steps:
   5. Cleans up temp files (_var-*.html, _metadata.json)
 
 Exit codes:
-  0 — success
+  0 — success (warnings may be printed)
   1 — missing files (lists which variations are incomplete)
-  2 — validation failure (dangerous content in variation html)
+  2 — validation failure (orphaned </template> tags)
   3 — usage error
 """
 import glob
@@ -91,7 +91,7 @@ def main():
         print("ERROR: No variation HTML files found (_var-*.html)", file=sys.stderr)
         sys.exit(1)
 
-    # Validate HTML files — only danger tag is </template>
+    # Validate HTML files
     variation_data = []  # (vid, html_content, meta_dict)
     errors = []
 
@@ -99,9 +99,20 @@ def main():
         vid = os.path.basename(f).replace("_var-", "").replace(".html", "")
         content = open(f).read()
 
+        # Check for unbalanced </template> tags — only orphaned close tags break
+        # the <template> wrapper. Balanced nesting (e.g., Alpine.js <template x-for>)
+        # is safe because the HTML parser closes the nearest open <template>.
         if "</template>" in content.lower():
-            print(f"ERROR: _var-{vid}.html contains \"</template>\" — this breaks the <template> wrapper", file=sys.stderr)
-            sys.exit(2)
+            # Strip <script>...</script> blocks first — </template> inside JS
+            # string literals is inert (HTML parser treats <script> as raw text)
+            stripped = re.sub(r'<script[\s>].*?</script>', '', content, flags=re.DOTALL | re.IGNORECASE)
+            opens = len(re.findall(r'<template[\s>]', stripped, re.IGNORECASE))
+            closes = len(re.findall(r'</template\s*>', stripped, re.IGNORECASE))
+            if closes > opens:
+                print(f"ERROR: _var-{vid}.html has {closes - opens} orphaned </template> close tag(s) — this breaks the gallery wrapper. Remove unmatched </template> tags.", file=sys.stderr)
+                sys.exit(2)
+            elif opens > 0:
+                print(f"  {vid}: {opens} balanced <template> tags (safe — e.g., Alpine.js x-for/x-if)")
 
         meta = extract_variation_meta(content)
         if meta is None:
@@ -128,11 +139,14 @@ def main():
         if controls and not has_ids:
             warnings.append(f"  {vid}: some controls missing 'id' field (template will auto-generate from label)")
 
-        # Check for cssVar references in HTML
+        # Check for cssVar references in HTML (skip event controls — they use JS listeners)
         for c in controls:
             css_var = c.get("cssVar")
-            if css_var and f"var({css_var})" not in html_content:
+            is_event = c.get("event", False)
+            if css_var and not is_event and f"var({css_var})" not in html_content:
                 warnings.append(f"  {vid}: control '{c.get('label', '?')}' targets {css_var} but var({css_var}) not found in HTML")
+            if is_event and "control-change" not in html_content:
+                warnings.append(f"  {vid}: event control '{c.get('label', '?')}' but no 'control-change' listener found in HTML")
 
     if warnings:
         print("WARNINGS (controls may not work as expected):")

@@ -81,7 +81,7 @@ implementing
      ├─ code-review (per plan section)
      │   fix selected severities
      │
-     ├─ code-simplifier (cleanup pass)
+     ├─ simplify (cleanup pass)
      │
      ├─ final code-review (all changes)
      │   fix selected severities
@@ -115,7 +115,7 @@ Implementing executes the tech plan with dependency-aware batching. Subtasks are
 
 Code review happens throughout. Large plan sections (6+ subtasks) get automatic incremental reviews between batches to catch issues before later batches build on flawed code. Every section gets a code review when complete, using 5 built-in reviewers (correctness, security, performance, simplicity, testing) via agent team with cross-validation. In full mode, external model CLIs (Gemini, Codex, Claude) can optionally provide independent perspectives — the orchestrator self-identifies and skips the matching model family's CLI. Severity-based fix acceptance keeps the user in control — they pick which levels to address, not all-or-nothing.
 
-After all sections finish, a code-simplifier agent makes a single bounded pass of behavior-preserving cleanup on changed files, followed by a final code review of all branch changes. Wrapup verifies tests pass and creates the PR.
+After all sections finish, a simplification pass (via `/simplify` if available, otherwise manual review) makes a single bounded cleanup of changed files, followed by a final code review of all branch changes. Wrapup verifies tests pass and creates the PR.
 
 ### Stage Boundaries
 
@@ -224,17 +224,10 @@ The orchestrator self-identifies its model family and skips the matching CLI (e.
 | Agent | Purpose |
 |-------|---------|
 | `task-worker` | Executes subtasks — reads plan context, loads patterns, implements with TDD, commits |
-| `code-simplifier` | Behavior-preserving simplification pass on changed files before final review |
 | `branch-setup-worker` | Creates git worktrees or branches for isolation |
 | `pr-creator-worker` | Creates pull requests following repo conventions |
 
-Workflow agents run as isolated subagents. Each `task-worker` gets its own context window with just its subtask from the plan.
-
-## HZL Integration (Optional)
-
-This plugin supports [HZL](https://github.com/tmchow/hzl) for persistent task tracking across sessions and agents. Implementing detects HZL automatically and offers the choice between built-in and HZL task tracking. Without HZL, the workflow uses built-in task management.
-
-See the [HZL repository](https://github.com/tmchow/hzl) for installation.
+Workflow agents run as isolated subagents. Each `task-worker` gets its own context window with just its subtask from the plan. Simplification is handled by `/simplify` (if available) rather than a dedicated agent.
 
 ## Changelog
 
@@ -247,7 +240,6 @@ This plugin draws inspiration from:
 - [superpowers](https://github.com/obra/superpowers) by Jesse Vincent
 - [compound-engineering](https://github.com/EveryInc/compound-engineering-plugin) by [Kieran Klaassen](https://x.com/kieranklaassen) / [Every](https://every.to)
 - [pr-review-toolkit](https://github.com/anthropics/claude-code-pr-review) by Anthropic
-- [code-simplifier](https://github.com/anthropics/claude-code-code-simplifier) by Anthropic
 - [Shape Up](https://basecamp.com/shapeup) by Ryan Singer
 - [Shaping Skills](https://github.com/rjs/shaping-skills) by Ryan Singer
 

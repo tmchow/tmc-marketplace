@@ -93,7 +93,7 @@ rationale. Free-form but specific enough to act on without clarifying questions.
 #### 1.1 Add dependency lookup
 
 **Depends on:** none
-**Files:** `packages/hzl-core/src/services/task-service.ts`
+**Files:** `src/services/user-service.ts`
 
 Add a method to get blocking dependencies for tasks.
 
@@ -109,22 +109,22 @@ An implementer would need to ask: blocking how? What query strategy? What does t
 ### Enough (decisions are clear, implementer can act)
 
 ```markdown
-#### 1.1 Add batched blocking dependency lookup to TaskService
+#### 1.1 Add batched blocking dependency lookup to UserService
 
 **Depends on:** none
-**Files:** `packages/hzl-core/src/services/task-service.ts`, `packages/hzl-core/src/services/task-service.test.ts`
+**Files:** `src/services/user-service.ts`, `src/services/user-service.test.ts`
 
-Add a method that takes an array of task IDs and returns which ones have
-incomplete dependencies blocking them. Query `task_dependencies` joined
-with `tasks_current` to find deps where status != 'done'. Use parameterized
-IN clause (same pattern as `getTaskTitlesByIds`). Return a map keyed by
-task ID — absent keys mean no blockers.
+Add a method that takes an array of user IDs and returns which ones have
+incomplete dependencies blocking them. Query `user_dependencies` joined
+with `users_current` to find deps where status != 'done'. Use parameterized
+IN clause (same pattern as `getTitlesByIds`). Return a map keyed by
+user ID — absent keys mean no blockers.
 
-Standalone method rather than extending `getSubtasks()` — keeps it
+Standalone method rather than extending `getSubItems()` — keeps it
 unchanged and composable for other callers. The existing `getBlockedByMap()`
 only covers `ready` status which is too narrow — need all non-terminal statuses.
 
-**Test scenarios:** (`packages/hzl-core/src/services/task-service.test.ts`)
+**Test scenarios:** (`src/services/user-service.test.ts`)
 - Empty input → empty map
 - Tasks with no dependencies → empty map
 - Tasks with incomplete dependencies → map of task_id to blocking dep IDs
@@ -132,7 +132,7 @@ only covers `ready` status which is too narrow — need all non-terminal statuse
 - Mix of blocked and unblocked tasks in single call → only blocked ones in map
 - Tasks in `draft` and `ready` status → included (not just `ready`)
 
-**Verify:** Run task-service tests
+**Verify:** Run user-service tests
 ```
 
 The implementer knows: which files, the query strategy, why this design, the return semantics, every test scenario. They write the actual code.

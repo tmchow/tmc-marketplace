@@ -73,7 +73,6 @@ When creating a PR:
 - If no conventions: use conventional commits style
 - Generate description from commit messages
 - Keep title succinct and descriptive
-- Do NOT include HZL task IDs in PR description
 
 ## Output Format
 

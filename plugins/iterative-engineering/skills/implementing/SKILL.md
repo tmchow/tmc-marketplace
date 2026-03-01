@@ -11,7 +11,7 @@ Read the plan critically, create tasks, and implement with TDD, code review, and
 
 - After `iterative:tech-planning` skill completes a plan
 - When a plan document exists and is ready to implement
-- When tasks already exist (HZL or built-in tasks) from a prior session
+- When tasks already exist from a prior session
 - Can be invoked standalone with a plan document path
 
 ## Key Principles
@@ -27,9 +27,9 @@ Read the plan critically, create tasks, and implement with TDD, code review, and
 
 ### Phase 0: Detect Resume
 
-1. Check for in-progress HZL tasks or built-in task items related to this plan.
+1. Check for in-progress tasks related to this plan.
 2. If tasks exist and work is in progress: load the plan document, summarize current state, show completed vs remaining subtasks, continue from next incomplete subtask (skip to Phase 2).
-3. If no tasks exist: proceed to Phase 1 — **even if you have prior conversation context.** Having discussed the plan in a previous session is not the same as having set up tasks and workspace. Phase 1 setup (task creation, HZL detection, workspace isolation) must run before any implementation begins.
+3. If no tasks exist: proceed to Phase 1 — **even if you have prior conversation context.** Having discussed the plan in a previous session is not the same as having set up tasks and workspace. Phase 1 setup (task creation, workspace isolation) must run before any implementation begins.
 
 ### Phase 1: Understand and Setup
 
@@ -47,7 +47,7 @@ Read the plan critically, create tasks, and implement with TDD, code review, and
    - Path to the tech plan document
    - Subtask number and title
    - Parent task context
-   - Task system (HZL or built-in tasks) and task ID
+   - Task ID
 4. Worker reads subtask from plan, loads referenced patterns, implements with TDD (tests first), commits, and updates task status (see task-worker agent for details).
 5. **Wait for batch completion.** All subagents in the batch must finish before the next batch starts.
 6. **Test verification gate.** After each batch completes, verify that feature subtasks produced test files. For each completed feature subtask, check: does the test file listed in the plan's `**Files:**` field exist, and does it contain tests matching the plan's `**Test scenarios:**`? If a feature subtask committed without tests, flag it immediately — do not continue to the next batch until resolved.
@@ -63,7 +63,7 @@ Read the plan critically, create tasks, and implement with TDD, code review, and
 
 1. Verify: all tasks complete, all section-level code reviews passed.
 2. **Detect base branch.** `git rev-parse --verify origin/main >/dev/null 2>&1 && echo main || echo master`. Use this for all branch-level scoping in Phase 3.
-3. **Simplification pass.** Get changed files with `git diff --name-only $(git merge-base HEAD <base>)..HEAD`. Spawn the `code-simplifier` agent with this file list. The agent applies behavior-preserving simplifications, runs tests, and commits separately. This is a single bounded pass — not a refactor. **Wait for simplification to complete before proceeding** — the final review must see simplified code.
+3. **Simplification pass.** If `/simplify` is available, invoke it to review and clean up changed code. Otherwise, do a manual review of changed files (`git diff --name-only $(git merge-base HEAD <base>)..HEAD`) and apply behavior-preserving simplifications: flatten nesting, remove dead code, simplify expressions, collapse single-use variables. This is a single bounded pass — not a refactor. **Wait for simplification to complete before proceeding** — the final review must see simplified code.
 4. **Final review offer.** Present an interactive choice to the user (e.g., `AskUserQuestion` in Claude Code): A) Full code review of complete work (recommended), B) Quick review, C) Skip to finish.
 5. If review: invoke `code-review` skill with scope `git diff $(git merge-base HEAD <base>)..HEAD` (all branch changes including simplification).
 6. **Severity acceptance (separate prompt).** If the review found issues at any severity, present severity acceptance (see Severity Acceptance section). This is its own prompt — do not combine it with next-step options, and do not skip it even when all issues are Medium/Low. "Clean" means zero findings at any severity. If no findings, skip to step 7.
@@ -91,15 +91,9 @@ Invoke the `git-worktree` skill if a worktree is needed.
 
 Task creation happens inside Phase 1, after the plan is read and clarified. This ensures the implementer understands the plan before tasks are locked in.
 
-### Task System Selection
+### Task Tracking
 
-Check whether HZL is installed (e.g., `hzl status`) and the project uses HZL for task tracking (e.g., AGENTS.md/CLAUDE.md).
-
-- **HZL not detected** → Use built-in task tracking automatically, no question needed
-- **HZL detected, small plan** (single section or ≤5 total subtasks) → Use built-in task tracking automatically. HZL's cross-session history doesn't justify the overhead for work that will complete in one session. Mention HZL is available if the user wants it, but don't prompt.
-- **HZL detected, large plan** (multiple sections or 6+ total subtasks) → Present an interactive choice to the user (e.g., `AskUserQuestion` in Claude Code):
-  - **Built-in tasks** — lightweight, session-scoped
-  - **HZL tasks** — task tracking with history across sessions, allows easy resume of work
+Use built-in task tracking for all plans. Tasks are lightweight and session-scoped.
 
 ### Parsing the Plan
 
@@ -107,15 +101,13 @@ The plan's standardized subtask format (numbered, with dependencies and files) m
 - Plan sections → parent tasks
 - Numbered subtasks → child tasks
 - `Depends on` fields → task dependencies
-- `Files` fields → task links (HZL) or description references (built-in tasks)
+- `Files` fields → description references in tasks
 
 Show the proposed task structure to the user for approval before creating.
 
 ### Parent Task Descriptions
 
-- Always link to the technical plan document
-  - HZL: `-l docs/plans/[plan].md`
-  - Built-in tasks: include plan file path in description
+- Always link to the technical plan document — include the plan file path in the description
 - **Single parent:** description includes the plan overview — what's being built and why
 - **Multiple parents:** each describes its relationship to the feature and what subset of work it covers
 
@@ -177,7 +169,7 @@ The subagent receives:
 - The affected file paths
 - Instruction to apply all fixes, run tests, and commit
 
-One subagent (not one per finding) because findings can interact — a security fix and a correctness fix in the same function need to see each other. This mirrors the `code-simplifier` pattern: one bounded pass, specific scope, commits separately.
+One subagent (not one per finding) because findings can interact — a security fix and a correctness fix in the same function need to see each other. This mirrors the simplification pattern: one bounded pass, specific scope, commits separately.
 
 Wait for the subagent to complete before proceeding. Next-step options come AFTER fixes land, as a separate prompt (Phase 3 step 7).
 
@@ -213,9 +205,9 @@ If reality diverges from the plan during implementation:
 | Creating tasks before understanding the plan | Read and clarify the plan, then create tasks |
 | Committing with failing tests | Only commit when tests pass |
 | Committing feature subtask without writing tests | TDD: write tests first from plan's test scenarios, then implement |
-| Skipping Phase 1 because of prior conversation context | Prior context ≠ setup complete. If no tasks exist, run Phase 1 — HZL detection, task creation, workspace isolation |
+| Skipping Phase 1 because of prior conversation context | Prior context ≠ setup complete. If no tasks exist, run Phase 1 — task creation, workspace isolation |
 | Pushing through when blocked | Stop and ask for help |
-| Running code review in parallel with simplification or other code changes | Code review must see final code. Simplifier → wait → review. Never parallelize steps that change code with steps that review it |
+| Running code review in parallel with simplification or other code changes | Code review must see final code. Simplify → wait → review. Never parallelize steps that change code with steps that review it |
 | Full code review on trivial changes | Scale review to complexity — skip for config changes |
 | Modifying the plan silently | Report divergence and get user agreement |
 | Applying TDD rigidly to config/refactoring subtasks | TDD for feature work, verify for non-feature work |
