@@ -27,7 +27,7 @@ Three external CLIs are supported:
 
 | CLI | Invocation | Safety mode |
 |-----|------------|-------------|
-| Google Gemini | `gemini -s -p "..."` | Sandboxed (document inlined, no tool access needed) |
+| Google Gemini | `gemini -s -p "..."` | Sandboxed (reads document from workspace, no write access) |
 | OpenAI Codex | `codex exec --sandbox read-only "..."` | Sandboxed read-only, non-interactive |
 | Anthropic Claude | `claude -p "..." --max-turns 3` | Bounded turns, no session persistence |
 
@@ -51,11 +51,11 @@ CLIs that aren't installed are also skipped (checked via `which`).
 
 ### Document Handling (vs. Code Review)
 
-Code review feeds external CLIs a `git diff` (inlined, since diffs aren't files). Plan review gives them a **file path** and lets each CLI read the document itself. This avoids context-limit issues with large documents, since each model manages its own context budget.
+Code review stages the diff to a local file (`.external-review-diff.txt`) and the prompt instructs each CLI to read it from disk. Plan review gives them a **file path** to the document and lets each CLI read it directly. Both approaches avoid inlining large content in CLI arguments, preventing shell `ARG_MAX` limits.
 
 | Dimension | Code Review | Plan Review |
 |-----------|------------|-------------|
-| Input | `$(git diff -U10 <range>)` (inlined) | File path (CLI reads document) |
+| Input | Diff staged to file (CLI reads `.external-review-diff.txt`) | Document path (CLI reads document) |
 | Scope model | Diff-anchored (changed vs. pre-existing) | Document-anchored (full content) |
 | Focus areas | Correctness, Security, Performance, Simplicity, Testing | Clarity, Completeness, Specificity, Complexity/Debt |
 | Output framing | Severity (Critical/High/Medium/Low) + merge verdict | Priority (High/Medium/Low) + suggestions |
@@ -77,11 +77,11 @@ The document type is determined in Step 1 and baked into the staged prompt templ
 
 ### Safety
 
-Each CLI runs in its most restrictive mode. Since the document is inlined in the prompt, no CLI needs tool access:
+Each CLI runs in its most restrictive mode. The document path is embedded in the prompt; each CLI reads the document from disk using its sandbox file access:
 
 | CLI | Safety flags | Effect |
 |-----|-------------|--------|
-| Gemini | `-s` | Sandboxed (document inlined, no tool access needed) |
+| Gemini | `-s` | Sandboxed (reads document from workspace, no write access) |
 | Codex | `codex exec --sandbox read-only` | Sandboxed read-only; `exec` subcommand for non-interactive use |
 | Claude | `-p "..." --max-turns 3 --no-session-persistence` | Bounded turns; `-p` requires prompt as immediately following arg |
 
@@ -89,12 +89,12 @@ Codex uses the `exec` subcommand because the base `codex` command starts an inte
 
 ### Why `codex` Instead of `codex review`
 
-Code review uses `codex review`, which is Codex's dedicated review subcommand (inherently read-only, no `--sandbox` flag needed). Plan review uses `codex exec --sandbox read-only` instead because:
+Code review uses `codex exec review --base <branch>`, which invokes Codex's built-in review preset — it computes the branch diff internally and has read-only filesystem access. Plan review uses `codex exec --sandbox read-only` with a custom prompt instead because:
 
-1. `codex review` is optimized for code diffs and may add its own code-review framing
-2. `codex exec` is designed for non-interactive, headless execution; the base `codex` command starts an interactive TUI that hangs when invoked from agent Bash tools
-3. For document review, `codex exec` with a custom prompt gives full control over the evaluation perspective
-4. `codex exec` requires explicit `--sandbox read-only` since it's a general-purpose subcommand (unlike `review`, which is inherently read-only)
+1. The `review` preset is optimized for code diffs and adds its own code-review framing
+2. For document review, a custom prompt gives full control over the evaluation perspective (product vs. engineering lens)
+3. Both use `codex exec` for non-interactive, headless execution — the base `codex` command starts an interactive TUI that hangs when invoked from agent Bash tools
+4. `codex exec --sandbox read-only` gives the model read-only file access with no ability to modify anything
 
 ### Graceful Degradation
 
@@ -146,7 +146,7 @@ The external review prompt differs from the code review prompt in several key wa
 | Output anchor | File path + line number | Line number + suggestion |
 
 Shared design decisions:
-- **No tool calls.** Document inlined, model told not to run commands.
+- **File-based input.** Document path embedded in prompt; model reads from disk. Told not to modify files.
 - **Headless, no interaction.** State assumptions, don't ask questions.
 - **Constraint-heavy.** Over half the prompt is about what NOT to do.
 - **Structured output.** Numbered findings with consistent format.
