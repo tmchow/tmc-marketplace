@@ -1,5 +1,5 @@
 ---
-name: yagni-reviewer
+name: complexity-reviewer
 description: Review a plan or PRD for unjustified complexity and maintenance burden. Identifies premature abstraction, dead flexibility, and scope that adds debt without proportional value. Spawned by the plan-review skill as part of a reviewer ensemble.
 model: inherit
 color: cyan

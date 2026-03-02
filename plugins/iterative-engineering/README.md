@@ -191,7 +191,7 @@ The core workflow skills use an `iterative:` prefix in their name (e.g., `/itera
 | `clarity-reviewer` | Vague language, ambiguity, structure |
 | `completeness-reviewer` | Missing sections, gaps, dependencies |
 | `specificity-reviewer` | Actionability, concrete details |
-| `yagni-reviewer` | Unjustified complexity, maintenance burden, dead flexibility |
+| `complexity-reviewer` | Unjustified complexity, maintenance burden, dead flexibility |
 
 ### Review Agents (Code Review)
 
