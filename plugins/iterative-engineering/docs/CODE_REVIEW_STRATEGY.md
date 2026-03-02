@@ -26,8 +26,8 @@ Three external CLIs are supported:
 
 | CLI | Invocation | Safety mode |
 |-----|------------|-------------|
-| Google Gemini | `gemini -s -p "..."` | Sandboxed (diff inlined, no tool access needed) |
-| OpenAI Codex | `codex review` | Review-dedicated subcommand (inherently read-only) |
+| Google Gemini | `gemini -s -p "..."` | Sandboxed (reads diff file, no write access) |
+| OpenAI Codex | `codex exec review --base <branch>` | Built-in review preset (read-only, filesystem access) |
 | Anthropic Claude | `claude -p "..." --max-turns 3` | Bounded turns, no session persistence |
 
 ### Execution Model
@@ -47,25 +47,25 @@ CLIs that aren't installed are also skipped (checked via `which`).
 
 ### Diff Handling
 
-All external CLIs receive the same unified prompt with the diff injected at runtime via `$(git diff ...)` command substitution. The diff is not pre-computed and pasted into the prompt. Instead, each CLI command uses an unquoted heredoc (`<<PROMPT`, not `<<'PROMPT'`) or string argument containing `$(git diff -U10 <range> -- . ':!*.md')`, which the shell expands at execution time. Two benefits:
+The diff and prompt are staged as local files rather than inlined in CLI arguments. The orchestrator writes the diff to `.external-review-diff.txt` and the prompt template to `.external-review-prompt.txt` in the repo root. Each CLI reads these files from disk. Two benefits:
 
-1. **Clean permission prompts.** In Claude Code (and similar agent frameworks), Bash calls show the full command text for user approval. Command substitution keeps the approval prompt short and readable: the user sees `$(git diff ...)` rather than thousands of lines of diff text.
-2. **Local prompt staging.** The review prompt template is embedded in the skill definition (SKILL.md). The plugin directory (`~/.claude/plugins/...`) is outside the project sandbox, and any tool accessing it triggers a permission dialog with no global-approve option. By embedding the template, the orchestrator writes it to `.external-review-prompt.txt` using the Write tool (no permission needed for local paths), then CLI invocations reference the local copy via `$(cat .external-review-prompt.txt)`. The file is deleted during synthesis (Step 4).
+1. **Avoids shell `ARG_MAX` limits.** Large diffs can exceed the maximum argument length for shell commands. File-based input has no such constraint.
+2. **Clean permission prompts.** In Claude Code (and similar agent frameworks), Bash calls show the full command text for user approval. Staging to files keeps the approval prompt short and readable: the user sees `$(cat .external-review-prompt.txt)` rather than thousands of lines of diff text.
 
-Each CLI re-runs `git diff` via the command substitution. This is a fast local operation (negligible compared to model inference time) and guarantees each CLI analyzes the exact same repo state.
+The review prompt template is embedded in the skill definition (SKILL.md). The plugin directory (`~/.claude/plugins/...`) is outside the project sandbox, and any tool accessing it triggers a permission dialog with no global-approve option. By embedding the template, the orchestrator writes it locally using the Write tool (no permission needed for local paths), then CLI invocations reference the local copy via `$(cat .external-review-prompt.txt)`. Both staged files are deleted during synthesis (Step 4).
 
-The prompt explicitly instructs the model: "DO NOT run any commands, read files, or use tools." Each CLI also enforces restrictions at the invocation level: Gemini uses `-s` (sandbox mode); Codex uses its `review` subcommand which is inherently read-only (no `--sandbox` flag needed or accepted); Claude is bounded to 3 turns with no session persistence. The invocation syntax also differs: Gemini and Claude use `-p "prompt"` (string argument), while Codex uses heredoc stdin to its `review` subcommand. Claude's `-p` flag consumes the immediately following token as the prompt, so other flags like `--max-turns` must come after the prompt string, not between `-p` and the prompt.
+The prompt instructs the model to read the diff from `.external-review-diff.txt`. Gemini and Claude receive the prompt via `$(cat ...)` and then read the diff file as instructed. Codex uses its built-in `review` preset with `--base`, which computes and reviews the branch diff internally — it does not use the staged files. Claude's `-p` flag consumes the immediately following token as the prompt, so other flags like `--max-turns` must come after the prompt string, not between `-p` and the prompt.
 
-Extended context (`-U10` = 10 lines before/after each hunk instead of the default 3) compensates for the model not being able to read full files. This adds some tokens but far fewer than letting each CLI make tool calls to read entire files. Markdown files are excluded because they are token-heavy and reviewed separately by plan reviews.
+Extended context (`-U10` = 10 lines before/after each hunk instead of the default 3) compensates for the model not being able to read full files. This adds some tokens but far fewer than letting each CLI make tool calls to read entire files. Markdown files are excluded via `':!*.md'` in the git diff command because they are token-heavy and reviewed separately by plan reviews.
 
 ### Safety
 
-Each CLI runs in its most restrictive read-only mode. Since the diff is inlined in the prompt, no CLI needs tool access to perform the review:
+Each CLI runs in its most restrictive read-only mode. Gemini and Claude read the staged diff file from disk; Codex computes the diff internally via its `review` preset:
 
 | CLI | Safety flags | Effect |
 |-----|-------------|--------|
-| Gemini | `-s` | Sandboxed (diff inlined, no tool access needed) |
-| Codex | `codex review` | Review-dedicated subcommand (inherently read-only, no `--sandbox` flag) |
+| Gemini | `-s` | Sandboxed (reads diff file from workspace, no write access) |
+| Codex | `codex exec review --base <branch>` | Built-in review preset (read-only, filesystem access) |
 | Claude | `-p "..." --max-turns 3 --no-session-persistence` | Bounded turns; `-p` requires prompt as immediately following arg |
 
 ### Graceful Degradation
@@ -128,11 +128,11 @@ The skill orchestrator (not the individual reviewers) synthesizes all findings:
 
 ## Unified Prompt Design
 
-All three external CLIs (Gemini, Codex, Claude) use the same unified review prompt template with the diff inlined. The template is embedded directly in the skill definition (SKILL.md) rather than a separate file, so the orchestrator can write it locally without accessing plugin directory paths that trigger sandbox permission prompts.
+Gemini and Claude use the same unified review prompt template. The template is embedded directly in the skill definition (SKILL.md) rather than a separate file, so the orchestrator can write it locally without accessing plugin directory paths that trigger sandbox permission prompts. Codex uses its built-in `review` preset, which has its own review prompt and computes the diff internally — it does not use the staged prompt or diff files.
 
 Key design decisions:
 
-- **Diff inlined, no tool calls.** The full diff is embedded in the prompt. The model is explicitly told not to run any commands. This eliminates wasted turns on redundant `git diff` calls and ensures all CLIs analyze identical input.
+- **File-based diff input.** The diff is staged to `.external-review-diff.txt` and the prompt instructs the model to read it from disk. This avoids shell `ARG_MAX` limits on large diffs and keeps CLI invocation commands short for clean permission prompts. Codex is the exception — its `review` preset handles diff computation internally.
 - **Focus areas match built-in reviewers.** The 5 focus areas (Correctness, Security, Performance, Simplicity, Testing) are identical to the built-in reviewer domains. Each finding includes a `FOCUS_AREA` label, so the orchestrator can slot external findings directly into the matching reviewer section during reconciliation.
 - **Headless, no interaction.** The prompt explicitly says "Do not ask clarifying questions" because these are headless CLI invocations with no user interaction. If context is ambiguous, the model states its assumption and proceeds.
 - **Intent-first methodology.** Summarize the change's purpose before looking for issues.
@@ -140,7 +140,7 @@ Key design decisions:
 - **Diff-anchored.** Only comment on changed lines; pre-existing issues go under a separate header.
 - **Structured output.** Numbered findings with severity, focus area, location, issue, and fix.
 - **Deduplication instruction.** State repeated issues once, list other locations.
-- **Markdown excluded.** Markdown files are filtered out of the diff before inlining. They are token-heavy and reviewed separately by plan reviews, not code review.
+- **Markdown excluded.** Markdown files are filtered out of the diff via `':!*.md'` in the git diff command. They are token-heavy and reviewed separately by plan reviews, not code review.
 
 This design reduces the most common LLM code review failure modes: hand-wavy non-actionable feedback, reviewing the entire file instead of the changes, and walls of repeated findings.
 

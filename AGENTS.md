@@ -162,6 +162,16 @@ disable-model-invocation: false
 
 Custom agents receive only their markdown body as the system prompt, not the full Claude Code system prompt. This saves significant context for single-turn agents where every token matters. Combine with `maxTurns: 1` to structurally prevent multi-turn exploration.
 
+### Keep docs in sync with skill changes
+
+Strategy docs (`plugins/<name>/docs/`) describe the rationale and mechanics behind each skill. When a skill's behavior changes — new invocation syntax, different file handling, renamed agents — the corresponding strategy doc must be updated in the same PR. The README (`plugins/<name>/README.md`) must also reflect new skills, agents, or workflow changes.
+
+Docs that commonly drift:
+- **External CLI invocations** — when the exact command syntax changes (e.g., `codex review` → `codex exec review --base`), update the strategy doc's invocation tables and safety tables
+- **Input handling** — when the mechanism for passing data to external CLIs changes (e.g., inline → file-based), update the Diff Handling / Document Handling sections
+- **Agent/skill additions or renames** — when agents or skills are added, removed, or renamed, update the README's skills tables, agents tables, and any cross-references in strategy docs
+- **Workflow changes** — when the end-to-end workflow changes (new stages, reordered steps), update the README's workflow diagram and stage boundaries table
+
 ### Agent + skill + orchestrator abstraction
 
 When a skill orchestrates parallel agents, split responsibilities cleanly:
