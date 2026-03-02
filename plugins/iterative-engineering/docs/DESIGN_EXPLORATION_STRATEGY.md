@@ -1,144 +1,134 @@
 # Design Exploration Strategy
 
-## Why This Skill Exists
+## What It Does
 
-Requirements documents describe what to build. They don't show what it feels like. A PRD can say "discount-first pricing input with live preview," but that sentence maps to dozens of different interaction models, layouts, and progressive disclosure strategies. Until you see them side by side, you can't meaningfully choose.
+You describe a design problem — "a notification center for our admin panel," "a landing page for a new product," "a pricing input with sale toggle" — and the system generates 6-8 fully interactive HTML prototypes in parallel, each representing a fundamentally different approach. Not mockups. Not wireframes. Complete, functional pages you can click through, scroll, and interact with, rendered side by side in a gallery with controls, ratings, and structured export.
 
-Design exploration generates fundamentally different approaches to a design problem: different answers to the question "how should this work?" (or, when appropriate, "how should this look?"). The user sees, rates, and refines. The output is a design direction document that captures what was chosen and why.
+The gallery opens in a browser. You flip between variations, adjust design controls (spacing, color mood, density, animation style), rate each one 1-5 stars, add notes, and export structured feedback. Paste that feedback back to start a refined round. When you've converged on a direction, click "Ship It" and the system writes a design direction document — a durable record of what was chosen, what was rejected, and why.
 
-Design decisions made without seeing alternatives are guesses. Seeing 6 different interaction models for the same component, rendered as realistic UI you can actually interact with, changes the conversation from "I think it should work like X" to "I've seen how X, Y, and Z work, and X is right because..."
+The entire cycle — from text description to interactive gallery — takes one conversation turn.
 
-## Where It Fits in the Workflow
+## Why It Matters
 
-Design exploration can run at four points:
+### Parallel creative exploration at a scale humans can't match
 
-```
-                    ┌──── standalone ────┐
-                    │                    │
-                    v                    v
-prompt ──► design exploration ──► design direction doc
-                    ^                    │
-                    │                    v
-brainstorming ──────┤              brainstorming (PRD updated)
-  (before)          │                    │
-  (during: at       │                    v
-   Broad Directions)│              tech planning
-  (after: at        │                    │
-   Review/Handoff)  └── iterate ─────────┘
-```
+A designer exploring a notification center might develop 2-3 approaches over the course of a week. That's not a limitation of skill — it's a limitation of time and attention. Each approach requires committing to a direction, building it out, evaluating it, and deciding whether to try another. The cost of each additional approach is high, so exploration gets cut short.
 
-**Before brainstorming.** Anchors a greenfield discussion with visual options. The design direction becomes input to brainstorming, narrowing the exploration space without locking it as a final spec. Brainstorming builds on what the exploration established.
+AI agents don't have that constraint. Six agents can pursue six fundamentally different directions simultaneously, each working from only its own brief with no knowledge of what the others are building. The result is genuine creative divergence — not six riffs on the same idea, but six independent answers to the same design question, generated in minutes instead of days.
 
-**During brainstorming (at Broad Directions).** For design and interaction-heavy tasks (visual redesigns, marketing pages, onboarding flows), brainstorming offers design exploration at the Broad Directions stage instead of presenting text-described options. This is the right timing: Map the Space questions have gathered initial constraints, but no direction has been locked in yet. Text descriptions of visual or interaction concepts are the wrong tool — the user needs to see or experience options to meaningfully choose. The chosen direction feeds into Deep Exploration for remaining requirements, then into the PRD.
+This isn't about replacing designers. It's about giving anyone in the design process — designers, engineers, product managers, founders — the ability to see a breadth of approaches that's impractical to produce manually. A designer uses this to rapidly externalize ideas they'd normally have to pick between in their head. An engineer uses it to understand the UX implications of a feature before committing to an implementation. A PM uses it to ground a requirements discussion in something concrete rather than abstract.
 
-**After brainstorming (at Review and Handoff).** Explores how requirements could look and feel before committing to implementation. The PRD maps the problem space; the exploration tests visual and interaction possibilities that requirements alone can't express. The design direction folds back into the PRD.
+### Design decisions without alternatives are guesses
 
-**Standalone.** When someone wants to see design options for any page, component, or feature, without the full brainstorming→planning pipeline.
+A PRD can say "discount-first pricing input with live preview," but that sentence maps to dozens of different interaction models, layouts, and progressive disclosure strategies. A sidebar with inline editing? A stepped wizard? A side-by-side comparison view with a live storefront preview? These are fundamentally different user experiences that feel identical as text descriptions.
 
-In all cases, the skill adapts to whatever context is available. Rich context (a PRD, detailed requirements) means the problem space is already mapped, so proceed to divergence planning. Light context (a sentence) means a few scoping questions may be needed. The skill reads the context, not the source.
+Seeing 6 different interaction models for the same component, rendered as realistic UI you can actually interact with, changes the conversation from "I think it should work like X" to "I've seen how X, Y, and Z work, and X is right because..."
 
-## Core Design Decisions
+### Interactive prototypes, not static mockups
 
-### Single-File Portability
+The output isn't screenshots or Figma frames — it's functional HTML. Each variation has working toggles, wizards, live calculations, animations, and design controls you can adjust in real time. You're evaluating how something *feels to use*, not how it looks in a picture. That's a different kind of feedback, and it surfaces different problems. A layout that looks great as a static comp might feel claustrophobic when you're actually clicking through it.
 
-Every gallery is a single self-contained HTML file. No build step, no dependencies, no server. Open it in any browser, share it as an attachment, archive it in the repo. The gallery is a working artifact that needs to survive outside the development environment, so single-file portability is non-negotiable.
+This makes the tool useful at stages where traditional prototyping is too expensive. Exploring 8 interaction models for a component before a single design review? Generating a gallery to align stakeholders before any detailed design work begins? These aren't things teams typically do — not because they wouldn't be valuable, but because the cost has always been prohibitive.
 
-### Iframe Isolation via `<template>` + `srcdoc`
+### The rejection record matters as much as the selection
 
-Each variation is a complete HTML page stored in a `<template>` element and loaded into an `<iframe srcdoc>`. This replaced the original approach of injecting HTML fragments via Alpine.js `x-html`.
+After exploring, you don't just have a chosen direction — you have a written record of what was discarded and why. That prevents "what about this approach?" from recurring in every future meeting. The design direction document captures both the positive case (why this works) and the negative case (why the alternatives didn't).
 
-**What iframe isolation enables:**
-- `<script>` and `<style>` tags in variations, which is critical for interactive demonstrations (toggles, wizards, live calculations)
-- Full CSS isolation, so each variation's `:root` properties don't conflict with others or the shell
-- Complete creative freedom: variations can load their own fonts, define their own keyframes, use any CSS technique
-- Realistic rendering: variations render as they would in production, not as sanitized fragments
+## Key Concepts
 
-**What it preserves:**
-- Single-file portability (everything is still one HTML file)
-- Shell consistency (the gallery chrome is identical across every file, defined by the template)
+### The divergence axis
 
-**The body class preservation problem.** The HTML parser strips `<body>` attributes when parsing content inside `<template>` elements. Since variations put critical styling on `<body>` (centering for components, background colors, typography base), the assembly script extracts `<body class="...">` and stores it as `data-body-class` on the template element. The shell reapplies it to the iframe's body after load.
+The most important decision in any exploration is **what varies between approaches**. Getting this wrong produces galleries that are visually impressive but practically useless.
 
-### Orchestrator + Parallel html-prototyper Agents
+**Interaction divergence (the default).** Approaches explore different ways the thing *works*. All variations share a clean, professional visual treatment. The user is comparing interaction models, not color palettes. This is right for components, features, anything inside an existing app, anything with a clear functional problem.
 
-The gallery is generated by an orchestrator (which owns the file and the process) delegating to parallel `html-prototyper` agents (one per variation). This separation exists for two reasons.
+Example: "price input with sale toggle" generates one approach using an inline toggle that reveals progressive detail, another using a side-by-side comparison layout, another using a stepped wizard, another embedding a live storefront preview. All look like the same professional admin panel — the differences are in how the UX works.
 
-**Context window protection.** Each variation is 250-500 lines of HTML. With 6-8 variations, that's 1500-4000 lines of generated content. If the orchestrator generated this itself, its context window would be consumed by HTML output, leaving no room for reasoning about the exploration as a whole. Agents generate in isolation; the orchestrator never reads their output.
-
-**Creative independence.** Each agent knows only its variation's brief: the approach concept, the design parameters, the control requirements. It has no knowledge of the shell, Alpine.js, or other variations. This prevents convergence, since agents can't unconsciously copy each other's patterns.
-
-**Single-file architecture.** Each agent writes one self-contained HTML file with embedded metadata (a `<script type="application/json" id="variation-meta">` block in `<head>`). This eliminates the second write turn that the previous two-file format required, which was the primary cause of context overflow. The assembly script extracts the metadata JSON to build the variations array for the gallery shell.
-
-**The `html-prototyper` agent** is a custom agent with minimal overhead: `tools: Write`, `permissionMode: acceptEdits`, `background: true`, `maxTurns: 1`. It receives only its own system prompt (not the full Claude Code system prompt), keeping context consumption low. The agent is configured as Sonnet for the right balance of creative capability and efficiency.
-
-**File-based assembly.** The orchestrator runs a Python assembly script that reads agent output files, validates them, extracts embedded metadata, wraps them in template elements, and fills in the shell template placeholders. The orchestrator never reads variation content into its own context. Assembly is a file operation, not a context operation.
-
-### Defensive normalizeControl
-
-Agents deviate from the control schema in predictable ways. Rather than failing on malformed controls (which would require re-running the agent), the shell template includes a `normalizeControl()` function that fixes common deviations at load time:
-
-- Missing `id` → auto-generated from label
-- Alternate type names (`boolean` → `toggle`, `slider` → `range`, `dropdown` → `select`)
-- Missing type → inferred from data shape (has `min`/`max` → range, has `options` → select, boolean value → toggle)
-- `cssValues` without `options` array → options derived from `cssValues` keys
-- Range values as strings with units (`'0.5s'`) → parsed to number
-- Missing `defaultValue` → copied from initial `value`
-
-Normalizing is cheaper than re-generating. The template is the last line of defense; it should render something useful even when agent output is slightly off-spec.
-
-### Divergence Axis Model
-
-The most important decision in any exploration is what varies between families. Getting this wrong produces galleries that are visually impressive but practically useless.
-
-**Interaction divergence (default).** Families explore different ways the thing WORKS. All variations share a professional visual treatment. The user is comparing interaction models, not color palettes. This is the right axis for components, features, anything inside an existing app, anything with a clear functional problem.
-
-**Visual divergence.** Families explore different ways the thing LOOKS. Same functional structure, different aesthetics. Right for landing pages, brand exploration, design system foundations.
+**Visual divergence.** Approaches explore different ways the thing *looks*. Same functional structure, different aesthetics, typography, spatial composition, atmosphere. Right for landing pages, brand exploration, design system foundations.
 
 **Both.** Rare. Only when the entire page or app is genuinely open in both dimensions.
 
-Interaction is the default because it's almost always what people need. "Show me different ways a price input could work" is a more useful exploration than "show me the same price input in six different color schemes." The axis is determined from context, not surfaced as a user-facing choice.
+Interaction is the default because it's almost always what people need. "Show me different ways a price input could work" is more useful than "show me the same price input in six different color schemes."
 
-Within the chosen axis, the exploration is focused by a **specific design question.** "Explore different ways a price input works" is too broad. "Explore different mental models for how a user sets a sale price" is specific enough to produce meaningfully different families.
+### The specific design question
 
-### Controls as Design Decisions
+Within the chosen axis, every exploration is focused by a specific question. "Explore different ways a price input works" is too broad. "Explore different mental models for how a user sets a sale price" is specific enough to produce meaningfully different approaches.
 
-Each variation has 4-6 design controls that let the user explore design decisions without needing a whole new variant. Controls are applied across the iframe boundary via `setProperty()` on the iframe's `documentElement`.
+The question determines the quality of the exploration. It's the difference between generating random variations and generating variations that represent genuinely different answers to a real design problem.
 
-The key principle: **every control must produce a visible difference.** The litmus test is whether someone across the room could tell the control changed something. Compact vs spacious density, rounded vs sharp corners, warm vs cool mood, gradient direction, animation style: these reshape how the variation looks or feels. Near-identical off-whites, 2px radius changes, shadow opacity from 6% to 8%: invisible.
+### Controls as design decisions
 
-The word "tuning" was intentionally removed from the skill instructions (the UI panel label "Tune" is kept for brevity). "Tuning" frames controls as small incremental adjustments, which primes toward conservative, barely-noticeable parameter changes. "Design controls" frames them as decisions to explore. The instructions also restructured the guidance to lead with variation-specific controls (the interesting ones unique to each interaction model) rather than universal controls (spacing density, font scale) that eat the control budget with generic options.
+Each variation has 4-8 design controls — sliders, dropdowns, toggles — that let you explore decisions within a single approach without generating a whole new variant. Adjust spacing density, switch color mood, toggle element visibility, change animation style, shift layout width.
 
-### Multi-Round Iteration
+The key principle: **every control must produce a visible difference.** The litmus test is whether someone across the room could tell the control changed something. Compact vs. spacious density reshapes the layout. Warm vs. cool color mood shifts the entire atmosphere. Show vs. hide a sidebar changes the spatial model. These are design decisions worth debating. Shadow opacity from 6% to 8% is invisible — that's parameter tweaking, not design exploration.
 
-The first round is broad exploration. Subsequent rounds refine based on feedback. The skill supports this loop natively:
+Controls prioritize what's unique to each variation's structure. Two variations with different interaction models should have mostly different controls. The most valuable controls are the ones specific to *this* approach's design decisions, not generic options that apply to any UI.
+
+## The Workflow
+
+### Single round
+
+1. **Describe the problem.** A sentence, a paragraph, or a full PRD — the system adapts.
+2. **See the gallery.** Open the HTML file. 6-8 variations organized into families (approaches), each with its own design controls.
+3. **Explore and rate.** Flip between variations. Adjust controls. Rate 1-5 stars. Add notes. Skip ones that aren't relevant.
+4. **Converge.** Click "Ship It" on the variation you want to move forward with. A design direction document is written.
+
+### Multi-round iteration
+
+The first round is broad exploration. Subsequent rounds refine.
 
 1. **Explore.** Generate gallery with divergent variations.
-2. **Rate.** User rates each variation (1-5 stars), adds notes, can skip.
-3. **Export.** Structured feedback with ratings, notes, and direction for next round.
-4. **Iterate.** Paste feedback back; skill reads prior metadata and generates a refined round (drops rejected families, goes deeper on liked ones).
-5. **Converge.** User finalizes a direction.
+2. **Rate.** Stars, notes, skips.
+3. **Export.** "Next Round" produces structured feedback — markdown with embedded JSON ratings that the system can parse.
+4. **Iterate.** Paste feedback back. The system reads your ratings and generates a refined round — drops rejected approaches, goes deeper on the ones you liked.
+5. **Converge.** Finalize a direction when ready.
 
-The export format closes the loop: markdown with embedded JSON ratings that the skill can parse when pasted back in. The "Ship It" button captures the chosen direction directly.
+The feedback format closes the loop. It's designed to be pasted directly into the next conversation turn.
 
-### The Direction Doc as Durable Output
+### Four entry points
 
-HTML galleries are working artifacts. They're large, they reference CDN resources, they're meant to be opened and interacted with. The **design direction document** is the durable output. It captures:
+**Standalone.** "Explore designs for a notification center." The system asks 0-2 scoping questions based on ambiguity, then generates.
 
-- What was chosen and why (specific elements that worked)
-- What was discarded and why (prevents future rehashing)
-- Cross-cutting design parameters (spacing philosophy, color temperature, interaction patterns)
-- Context (when standalone, so the doc is self-sufficient)
+**Before brainstorming.** Anchors a greenfield discussion with visual options. The design direction becomes input to brainstorming, narrowing the space without locking it as a spec.
 
-When brainstorming produces a PRD that leads to design exploration, the direction doc folds back into the PRD by reference, not duplication. The PRD says "see design direction doc for visual/interaction decisions." The direction doc stands alone as a record of what was explored and what was chosen.
+**During brainstorming.** For design-heavy tasks, brainstorming offers design exploration instead of text-described options at the point where directions are being compared. Text descriptions of visual or interaction concepts are the wrong medium — you need to see them.
 
-## Context-Aware Handoffs
+**After brainstorming.** A PRD maps the problem space; the exploration tests visual and interaction possibilities that requirements alone can't express. The design direction folds back into the PRD.
 
-The skill adapts its behavior based on available context rather than checking which specific skill invoked it.
+The system adapts to whatever context exists. Rich context (a PRD) means the problem space is already mapped — proceed directly to variation planning. Light context (a sentence) means a few scoping questions may be needed. The behavior is driven by what's available, not by which workflow stage triggered it.
 
-**Rich context (PRD, detailed requirements).** The problem space is mapped. Skip Q&A, determine divergence axis from context, proceed to variation planning. The exploration tests possibilities that requirements alone can't express.
+## Architecture
 
-**Design direction as input to brainstorming.** Narrows the exploration space but isn't a final spec. Strong input about interaction model and visual direction, not locked requirements. Brainstorming builds on what the exploration established; explores what it doesn't answer (requirements, behaviors, scope, edge cases). Technology and implementation questions belong in planning, not brainstorming.
+### Single-file portability
 
-**Light context (brief prompt).** Ask 0-2 scoping questions calibrated to how much ambiguity exists. The inform-vs-constrain test: does knowing the answer change which approaches you'd explore, or does it just eliminate options the user should see?
+Every gallery is one self-contained HTML file. No build step, no dependencies, no server. Open it in any browser, share it as an attachment, archive it in the repo. This is non-negotiable — the artifact needs to survive outside the development environment.
 
-This principle (adapt to context, not source) keeps the skills loosely coupled. Each skill describes how to handle types of input, not specific upstream skill names.
+### Parallel agent generation
+
+The gallery is generated by an orchestrator delegating to parallel agents (one per variation). This separation exists for two reasons:
+
+- **Context protection.** 6-8 variations at 250-500 lines each would consume the orchestrator's entire context window. Agents generate in isolation; the orchestrator never reads their output.
+- **Creative independence.** Each agent knows only its own variation's brief. No knowledge of other variations prevents unconscious convergence — agents can't copy each other's patterns.
+
+A Python assembly script combines the agent output files into the final gallery HTML. The orchestrator runs one command; it never reads variation content into its own context. Assembly is a file operation, not a context operation.
+
+### Iframe isolation
+
+Each variation is a complete HTML page rendered in an iframe. This provides full CSS and JavaScript isolation — variations can have their own fonts, animations, scripts, and styles without conflicting with each other or the gallery shell. Controls reach across the iframe boundary by setting CSS custom properties on the variation's root element.
+
+### Resilient to imperfect output
+
+The gallery shell normalizes common deviations in agent output at load time — missing IDs, alternate type names, misformatted values. Normalizing is cheaper than re-generating. The system renders something useful even when agent output is slightly off-spec.
+
+For deeper architectural detail — the template placeholder system, CSS architecture, control wiring mechanics, assembly script behavior — see `references/html-architecture.md`.
+
+## The Direction Doc
+
+HTML galleries are working artifacts — large, interactive, meant to be opened and explored. The **design direction document** is the durable output. It captures:
+
+- **What was chosen and why** — the specific interaction model, layout, and design decisions that worked
+- **What was discarded and why** — prevents future rehashing of approaches that were already evaluated
+- **Design parameters** — cross-cutting decisions (spacing philosophy, color temperature, density, animation style) that carry forward into implementation
+- **Context** — when standalone, so the doc is self-sufficient without a PRD
+
+The direction doc is a decision record. When it exists alongside a PRD, the PRD references it rather than duplicating it. The direction doc stands alone as evidence of what was explored and what was chosen — and more importantly, that the choice was informed by seeing real alternatives.
