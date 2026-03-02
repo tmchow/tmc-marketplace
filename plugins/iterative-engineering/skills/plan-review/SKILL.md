@@ -21,7 +21,7 @@ Reviews PRDs, implementation briefs, and technical plans using 4 specialized rev
 | `clarity-reviewer` | Vague language, ambiguity, structure | Is this understandable? |
 | `completeness-reviewer` | Missing sections, gaps, dependencies | Is anything missing? |
 | `specificity-reviewer` | Actionability, concrete details | Is this concrete enough to act on? |
-| `yagni-reviewer` | Unjustified complexity, maintenance burden, dead flexibility | Is the complexity justified? |
+| `complexity-reviewer` | Unjustified complexity, maintenance burden, dead flexibility | Is the complexity justified? |
 
 Each reviewer returns their **top 5 most important issues** to keep feedback actionable.
 
