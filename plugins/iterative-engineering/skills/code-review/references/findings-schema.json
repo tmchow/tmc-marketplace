@@ -1,0 +1,90 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Code Review Findings",
+  "description": "Structured output schema for code review sub-agents",
+  "type": "object",
+  "required": ["reviewer", "findings", "residual_risks", "testing_gaps"],
+  "properties": {
+    "reviewer": {
+      "type": "string",
+      "description": "Persona name that produced this output (e.g., 'correctness', 'security')"
+    },
+    "findings": {
+      "type": "array",
+      "description": "List of code review findings. Empty array if no issues found.",
+      "items": {
+        "type": "object",
+        "required": ["title", "severity", "file", "line", "why_it_matters", "confidence", "evidence", "pre_existing"],
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Short, specific issue title. 10 words or fewer.",
+            "maxLength": 100
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["P0", "P1", "P2", "P3"],
+            "description": "Issue severity level"
+          },
+          "file": {
+            "type": "string",
+            "description": "Relative file path from repository root"
+          },
+          "line": {
+            "type": "integer",
+            "description": "Primary line number of the issue",
+            "minimum": 1
+          },
+          "why_it_matters": {
+            "type": "string",
+            "description": "Impact and failure mode — not 'what is wrong' but 'what breaks'"
+          },
+          "suggested_fix": {
+            "type": ["string", "null"],
+            "description": "Concrete minimal fix. Omit or null if no good fix is obvious — a bad suggestion is worse than none."
+          },
+          "confidence": {
+            "type": "number",
+            "description": "Reviewer confidence in this finding, calibrated per persona",
+            "minimum": 0.0,
+            "maximum": 1.0
+          },
+          "evidence": {
+            "type": "array",
+            "description": "Code-grounded evidence: snippets, line references, or pattern descriptions. At least 1 item.",
+            "items": { "type": "string" },
+            "minItems": 1
+          },
+          "pre_existing": {
+            "type": "boolean",
+            "description": "True if this issue exists in unchanged code unrelated to the current diff"
+          }
+        }
+      }
+    },
+    "residual_risks": {
+      "type": "array",
+      "description": "Risks the reviewer noticed but could not confirm as findings",
+      "items": { "type": "string" }
+    },
+    "testing_gaps": {
+      "type": "array",
+      "description": "Missing test coverage the reviewer identified",
+      "items": { "type": "string" }
+    }
+  },
+
+  "_meta": {
+    "confidence_thresholds": {
+      "suppress": "Below 0.50 — do not report. Finding is speculative.",
+      "flag": "0.50–0.69 — include but low confidence. Per-persona calibration applies (security at 0.60 is actionable; performance at 0.60 is noise).",
+      "report": "0.70+ — report with full confidence."
+    },
+    "severity_definitions": {
+      "P0": "Critical breakage, exploitable vulnerability, data loss/corruption. Must fix before merge.",
+      "P1": "High-impact defect likely hit in normal usage, breaking contract. Should fix.",
+      "P2": "Moderate issue with meaningful downside (edge case, perf regression, maintainability trap). Fix if straightforward.",
+      "P3": "Low-impact, narrow scope, minor improvement. User's discretion."
+    }
+  }
+}

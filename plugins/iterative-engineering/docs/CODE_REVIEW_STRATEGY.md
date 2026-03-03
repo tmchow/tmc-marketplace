@@ -2,161 +2,98 @@
 
 ## Overview
 
-The code review system combines 5 built-in domain experts with up to 2 external reviewers from different model families.
+The code review system uses 8 reviewer personas organized in two tiers (3 always-on, 5 conditional). Reviewers run as parallel sub-agents returning structured JSON. A merge pipeline deduplicates, confidence-gates, and severity-normalizes findings before presenting them.
 
-## Built-in Reviewers
+## Reviewer Personas
 
-Five reviewers run natively on the host platform, each focused on a specific domain:
+### Always-on (every review)
 
-| Reviewer | Domain | Key Question |
-|----------|--------|--------------|
-| Correctness | Logic, edge cases, bugs, error handling | Does this work correctly? |
-| Security | Vulnerabilities, auth, input validation | Is this safe? |
-| Performance | Complexity, queries, memory, caching | Is this fast enough? |
-| Simplicity | Unjustified complexity, over-engineering, abstraction | Is the complexity justified? |
-| Testing | Coverage, quality, edge cases, plan scenarios | Is this well-tested? |
+| Persona | Focus |
+|---------|-------|
+| `correctness` | Logic errors, edge cases, state bugs, error propagation, intent compliance |
+| `testing` | Coverage gaps, weak assertions, brittle tests, missing edge case coverage |
+| `maintainability` | Coupling, complexity, naming, dead code, premature abstraction |
 
-Built-in reviewers run as an agent team, enabling cross-validation: reviewers can read each other's findings and challenge them.
+### Conditional (selected per diff)
 
-## External Reviewers (Experimental)
+| Persona | Select when diff touches... |
+|---------|---------------------------|
+| `security` | Auth middleware, public endpoints, user input handling, permissions |
+| `performance` | Database queries, data transforms, caching, async code |
+| `api-contract` | Route definitions, serializers, type signatures, versioning |
+| `data-migrations` | Migration files, schema changes, backfill scripts |
+| `reliability` | Error handling, retries, timeouts, background jobs, async handlers |
 
-Five reviewers powered by the same model share the same training data, reasoning patterns, and blind spots. External reviewers address this by invoking a different model family's CLI for an independent review. This feature is experimental; CLI availability and behavior may vary. Codex reviews can take 5+ minutes.
+### Dynamic selection
 
-Three external CLIs are supported:
+The orchestrator reads the full diff and reasons about which conditional personas are warranted. This is agent judgment — not keyword matching (brittle) or a scoring formula (fragile). The orchestrator announces the selected team with a one-line justification per conditional reviewer, making selection auditable and debuggable.
 
-| CLI | Invocation | Safety mode |
-|-----|------------|-------------|
-| Google Gemini | `gemini -s -p "..."` | Sandboxed (reads diff file, no write access) |
-| OpenAI Codex | `codex exec review --base <branch>` | Built-in review preset (read-only, filesystem access) |
-| Anthropic Claude | `claude -p "..." --max-turns 3` | Bounded turns, no session persistence |
+## Persona Definition Structure
 
-### Execution Model
+Each persona follows a 4-section structure designed to activate expert reasoning rather than checklist execution:
 
-The orchestrator runs external CLIs **directly** via Bash, not via subagents. This ensures CLI commands execute in the main agent context where the user can approve Bash access normally, avoiding permission issues that occur when subagents try to invoke CLIs.
+1. **Identity statement** — 2-sentence expert framing. "You ARE this expert" produces different results than "verify this checklist."
+2. **What you're hunting for** — 3-5 concrete failure modes recognizable on sight. Specific enough to pattern-match against code, broad enough to avoid becoming a narrow checklist.
+3. **Confidence calibration** — Per-persona guidance on what raises confidence from 0.50 to 0.90. This varies by domain: a security finding at 0.60 is actionable (cost of miss is high); a performance finding at 0.60 is noise (cost of miss is low, easy to measure later).
+4. **What you don't flag** — Front-loaded suppress conditions. The biggest quality problem in AI code review is noise. Leading with what NOT to flag trains the persona to self-filter before generating.
 
-In Full mode, the user selects which external CLIs to include (multi-select when 2+ are available, yes/no for a single CLI). The orchestrator runs the selected CLIs in parallel alongside the built-in reviewer team. The orchestrating skill reconciles findings from both sources during synthesis.
+## Intent Discovery
 
-### Self-Identification
+Before selecting reviewers, the orchestrator understands what the change is trying to accomplish. Intent shapes *how hard each reviewer looks*, not which reviewers are selected. A 2-3 line summary is derived from commit messages and conversation context, then passed to every reviewer.
 
-The orchestrator determines its own model family and skips the matching CLI:
+## Sub-agent Execution
 
-- Running in Claude Code: Gemini + Codex CLIs run, Claude CLI skipped
-- Running in Codex: Gemini + Claude CLIs run, Codex CLI skipped
+Reviewers run as parallel sub-agents (not Agent Teams). Each receives a structured prompt assembled from:
+- Their persona definition file
+- Shared diff-scope rules
+- The JSON output contract
+- Review context (intent, files, diff)
 
-CLIs that aren't installed are also skipped (checked via `which`).
+Sub-agents are read-only: they return structured JSON and do not edit files, run commands, or propose refactors.
 
-### Diff Handling
+## JSON Output and Merge Pipeline
 
-The diff and prompt are staged as local files rather than inlined in CLI arguments. The orchestrator writes the diff to `.external-review-diff.txt` and the prompt template to `.external-review-prompt.txt` in the repo root. Each CLI reads these files from disk. Two benefits:
+Every reviewer returns JSON matching a shared schema with typed fields: title, severity (P0-P3), file, line, why_it_matters, confidence, evidence, pre_existing, and optional suggested_fix.
 
-1. **Avoids shell `ARG_MAX` limits.** Large diffs can exceed the maximum argument length for shell commands. File-based input has no such constraint.
-2. **Clean permission prompts.** In Claude Code (and similar agent frameworks), Bash calls show the full command text for user approval. Staging to files keeps the approval prompt short and readable: the user sees `$(cat .external-review-prompt.txt)` rather than thousands of lines of diff text.
-
-The review prompt template is embedded in the skill definition (SKILL.md). The plugin directory (`~/.claude/plugins/...`) is outside the project sandbox, and any tool accessing it triggers a permission dialog with no global-approve option. By embedding the template, the orchestrator writes it locally using the Write tool (no permission needed for local paths), then CLI invocations reference the local copy via `$(cat .external-review-prompt.txt)`. Both staged files are deleted during synthesis (Step 4).
-
-The prompt instructs the model to read the diff from `.external-review-diff.txt`. Gemini and Claude receive the prompt via `$(cat ...)` and then read the diff file as instructed. Codex uses its built-in `review` preset with `--base`, which computes and reviews the branch diff internally — it does not use the staged files. Claude's `-p` flag consumes the immediately following token as the prompt, so other flags like `--max-turns` must come after the prompt string, not between `-p` and the prompt.
-
-Extended context (`-U10` = 10 lines before/after each hunk instead of the default 3) compensates for the model not being able to read full files. This adds some tokens but far fewer than letting each CLI make tool calls to read entire files. Markdown files are excluded via `':!*.md'` in the git diff command because they are token-heavy and reviewed separately by plan reviews.
-
-### Safety
-
-Each CLI runs in its most restrictive read-only mode. Gemini and Claude read the staged diff file from disk; Codex computes the diff internally via its `review` preset:
-
-| CLI | Safety flags | Effect |
-|-----|-------------|--------|
-| Gemini | `-s` | Sandboxed (reads diff file from workspace, no write access) |
-| Codex | `codex exec review --base <branch>` | Built-in review preset (read-only, filesystem access) |
-| Claude | `-p "..." --max-turns 3 --no-session-persistence` | Bounded turns; `-p` requires prompt as immediately following arg |
-
-### Graceful Degradation
-
-External CLIs are additive and opt-in. If a CLI isn't installed, the orchestrator notes it and moves on. If all external CLIs are unavailable or the user declines, the review proceeds with the 5 built-in reviewers. The system never fails because of a missing external tool.
+The merge pipeline:
+1. **Validates** output against the schema, dropping malformed findings
+2. **Confidence-gates** at 0.50 (suppresses speculative findings)
+3. **Deduplicates** via fingerprint: `normalize(file) + line_bucket(line, ±3) + normalize(title)`. Merges keep highest severity, strongest evidence, and note cross-reviewer agreement.
+4. **Separates pre-existing** findings for independent triage
+5. **Sorts** by severity → confidence → file → line
 
 ## Diff-Anchored Scope
 
-All reviewers (built-in and external) follow a three-tier scope model:
+All reviewers follow a three-tier scope model defined in a shared reference file:
 
 | Tier | Rule |
 |------|------|
 | **Primary** | Issues in the changed lines themselves |
 | **Secondary** | Issues in unchanged code directly caused or exposed by the changes |
-| **Pre-existing** | Significant issues in unchanged code unrelated to the changes, tagged `[Pre-existing]` |
+| **Pre-existing** | Significant issues in unchanged code unrelated to the changes, marked `pre_existing: true` |
 
-This prevents two failure modes:
-1. **Noise**: Flagging pre-existing issues at the same priority as change-related findings, overwhelming the author
-2. **Suppression**: Ignoring a real vulnerability just because it wasn't in the diff
+Pre-existing findings are separated in the output and excluded from the verdict.
 
-Pre-existing findings are separated in the final output and excluded from the merge verdict. They can be triaged independently (e.g., filed as a separate issue).
+## Review Scope
 
-## Review Modes
+The always-on/conditional tier model naturally right-sizes reviews. A small config diff triggers 0 conditionals = 3 reviewers. A large feature diff touching auth and migrations triggers security + data-migrations = 5 reviewers. No separate "mode" is needed.
 
-### Full Mode (default)
-All 5 built-in reviewers + external model CLIs (opt-in). Used for final branch reviews and standalone reviews.
+## Output Format
 
-### Quick Mode
-2-3 built-in reviewers auto-selected by change type. No external reviewers. Used for incremental section reviews during implementation.
-
-| Changed files | Reviewers |
-|---------------|-----------|
-| Auth/security code | Security + Correctness |
-| Database/queries | Performance + Correctness |
-| New feature code | Correctness + Testing |
-| Refactoring | Correctness + Simplicity |
-| Tests only | Correctness + Testing |
-| Config/CI only | Correctness (minimal) |
-
-## Synthesis
-
-The skill orchestrator (not the individual reviewers) synthesizes all findings:
-
-1. **Reconciliation.** Merge findings from two sources: the built-in team's collaborative results and any external CLI results. When multiple reviewers flag the same issue, merge them and note agreement. Cross-model agreement (built-in team + external CLI flagging the same issue independently) strengthens confidence.
-2. **Pre-existing separation.** Findings tagged `[Pre-existing]` are pulled into their own section, excluded from the verdict.
-3. **Structured output.** Strengths section, then per-reviewer findings tables, then pre-existing issues, then verdict.
-4. **Verdict.** Based only on change-related findings: Ready to merge / Ready with fixes / Not ready.
-
-## Design Principles
-
-**Model diversity over model quantity.** Two models catching the same bug is stronger signal than five instances of the same model agreeing. External reviewers exist for genuine perspective diversity, not throughput.
-
-**Reviewers report, the skill synthesizes.** Individual reviewers (built-in or external) only find and report issues. They never fix code, invoke other skills, or make decisions about what to do with findings. The orchestrating skill owns deduplication, presentation, and next-step decisions.
-
-**Inline for opaque wrappers, teams for collaborators.** External CLIs are opaque wrappers that can't cross-validate, so they run inline via the orchestrator. Built-in reviewers can read each other's findings and challenge them, so they belong as team members. Match the execution model to the agent's actual capabilities.
-
-**Graceful degradation everywhere.** No component is required for the system to function. Missing CLI? Skip. Missing agent teams? Fall back to parallel subagents. Missing all external reviewers? The 5 built-in reviewers still provide comprehensive coverage.
-
-**Diff-anchored, not file-anchored.** Reviewers focus on what changed, flag what's caused by the changes, and separately tag what's pre-existing. This keeps reviews actionable for the PR author while not discarding useful observations.
-
-## Unified Prompt Design
-
-Gemini and Claude use the same unified review prompt template. The template is embedded directly in the skill definition (SKILL.md) rather than a separate file, so the orchestrator can write it locally without accessing plugin directory paths that trigger sandbox permission prompts. Codex uses its built-in `review` preset, which has its own review prompt and computes the diff internally — it does not use the staged prompt or diff files.
-
-Key design decisions:
-
-- **File-based diff input.** The diff is staged to `.external-review-diff.txt` and the prompt instructs the model to read it from disk. This avoids shell `ARG_MAX` limits on large diffs and keeps CLI invocation commands short for clean permission prompts. Codex is the exception — its `review` preset handles diff computation internally.
-- **Focus areas match built-in reviewers.** The 5 focus areas (Correctness, Security, Performance, Simplicity, Testing) are identical to the built-in reviewer domains. Each finding includes a `FOCUS_AREA` label, so the orchestrator can slot external findings directly into the matching reviewer section during reconciliation.
-- **Headless, no interaction.** The prompt explicitly says "Do not ask clarifying questions" because these are headless CLI invocations with no user interaction. If context is ambiguous, the model states its assumption and proceeds.
-- **Intent-first methodology.** Summarize the change's purpose before looking for issues.
-- **Constraint-heavy.** Over half the prompt is about what NOT to do (don't explain code, don't nitpick style, don't say "check" or "verify").
-- **Diff-anchored.** Only comment on changed lines; pre-existing issues go under a separate header.
-- **Structured output.** Numbered findings with severity, focus area, location, issue, and fix.
-- **Deduplication instruction.** State repeated issues once, list other locations.
-- **Markdown excluded.** Markdown files are filtered out of the diff via `':!*.md'` in the git diff command. They are token-heavy and reviewed separately by plan reviews, not code review.
-
-This design reduces the most common LLM code review failure modes: hand-wavy non-actionable feedback, reviewing the entire file instead of the changes, and walls of repeated findings.
+Findings are grouped by severity (P0, P1, P2, P3) rather than by reviewer. Each finding shows file, issue, reviewer(s), and confidence. Cross-reviewer agreement is shown inline. A coverage section reports suppressed findings, residual risks, and testing gaps.
 
 ## Standalone Fix Loop
 
-When code-review runs standalone (not invoked from `iterative:implementing`), it owns the full fix-review cycle after presenting findings. When invoked from implementing, it returns findings directly; implementing has its own severity acceptance, subagent fix, and re-review loop.
+When running standalone (not from `iterative:implementing`), the skill owns the full fix-review cycle: severity acceptance → subagent fixes → re-review offer → post-fix options. When invoked from implementing, findings return directly; implementing has its own severity acceptance flow.
 
-### Why Two Modes
+## Design Principles
 
-Implementing orchestrates a multi-phase workflow (task execution, simplification, review, wrapup) and needs to control fix decisions within that broader context. Standalone code-review has no outer orchestrator, so it must handle the cycle itself. Both modes use the same pattern (severity acceptance, subagent fix, re-review) but ownership differs.
+**Reviewers report, the orchestrator synthesizes.** Individual reviewers find and report issues as structured JSON. They never fix code, invoke other skills, or make decisions about findings. The orchestrator owns deduplication, presentation, and next-step decisions.
 
-### Standalone Flow
+**Dynamic selection over fixed roster.** Not every diff needs every reviewer. The orchestrator selects the right reviewers for each diff, reducing noise from irrelevant domains.
 
-After synthesizing findings (Step 4), the standalone flow adds:
+**Structured output over prose.** JSON with typed fields enables deterministic dedup, confidence gating, and severity normalization. Prose output requires ad-hoc reconciliation.
 
-1. **Severity acceptance (Step 5).** Same pattern as implementing: Critical/High present, recommend fixing them; Medium/Low only, recommend proceeding. Interactive prompt, never combined with next-step options.
-2. **Subagent fix (Step 6).** A single subagent receives the filtered findings, affected files, and instructions to fix, test, and commit. Runs outside the main thread to preserve context for re-review. One agent handles all findings because fixes can interact across files.
-3. **Re-review (Step 7).** After fixes land, offer another round. Each round runs the full review flow (fresh team, fresh scope). Continues until clean or the user stops.
-4. **Post-fix options (Step 8).** PR creation (if on a feature branch), continue, or exit. Handled inline; no other skills invoked.
+**Per-persona confidence calibration.** A uniform "80% confidence threshold" ignores that confidence means different things per domain. Each persona calibrates its own threshold.
+
+**Diff-anchored, not file-anchored.** Reviewers focus on what changed, flag what's caused by the changes, and separately tag what's pre-existing. This keeps reviews actionable.
