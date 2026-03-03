@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.12.0] - 2026-03-02
+
+### Added
+
+- **Feedback-driven iteration planning** — principles for translating ratings, notes, and control adjustments into Round 2+ plans. Covers rating tier interpretation (Loved/Mixed/Skip), treating user notes as design requirements, carrying forward control adjustments, balancing exploration with convergence, and handling the Direction for Next Round field. Includes a worked example. ([#77](https://github.com/tmchow/tmc-marketplace/pull/77))
+- **Scope surfacing** — when input covers multiple UI surfaces, ask the user what to explore instead of silently picking one or exploring everything. ([#77](https://github.com/tmchow/tmc-marketplace/pull/77))
+- **variation-meta ID constraint** — explicit guidance in both orchestrator prompt and prototyping skill to prevent agents from using wrong metadata IDs that cause silent assembly failures. ([#77](https://github.com/tmchow/tmc-marketplace/pull/77))
+
+### Fixed
+
+- **html-prototyper write permissions** — `acceptEdits` only covers the Edit tool, not Write. Background agents with `maxTurns: 1` can't prompt interactively, so Write calls were silently failing. Changed to `bypassPermissions`, which is safe given the agent is constrained to `tools: Write`. ([#77](https://github.com/tmchow/tmc-marketplace/pull/77))
+- **Design exploration visibility in brainstorming** — broadened when the "Explore design directions" option appears to include any work with a user-facing surface, not just explicit UI/UX work. ([#77](https://github.com/tmchow/tmc-marketplace/pull/77))
+
+### Changed
+
+- **Renamed yagni-reviewer to complexity-reviewer** — better reflects what the agent actually reviews. ([#74](https://github.com/tmchow/tmc-marketplace/pull/74))
+
+### Docs
+
+- Restructured README and updated strategy docs for clarity. ([#75](https://github.com/tmchow/tmc-marketplace/pull/75), [#76](https://github.com/tmchow/tmc-marketplace/pull/76))
+
+---
+
 ## [1.11.0] - 2026-03-01
 
 ### Added
@@ -333,6 +356,7 @@ Initial release — 11 skills, 13 agents. ([#10](https://github.com/tmchow/tmc-m
 Core workflow: brainstorming → research → spike → tech planning → implementing, with multi-agent reviews at each stage.
 
 <!-- Version comparison links -->
+[1.12.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.11.0...v1.12.0
 [1.11.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.10.0...v1.11.0
 [1.10.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.9.2...v1.10.0
 [1.9.2]: https://github.com/tmchow/tmc-marketplace/compare/v1.9.1...v1.9.2
