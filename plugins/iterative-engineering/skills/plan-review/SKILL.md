@@ -5,7 +5,7 @@ description: This skill should be used when the user says "review the plan", "re
 
 # Plan Review
 
-Reviews PRDs, implementation briefs, and technical plans using 4 specialized reviewers. Uses agent teams when available for richer cross-validation. The document size naturally regulates the review — shorter documents get fewer findings, not fewer reviewers.
+Reviews PRDs, brainstorms, and technical plans using dynamically selected reviewer personas. Spawns parallel sub-agents that return structured JSON, then merges and deduplicates findings into a single report.
 
 ## When to Use
 
@@ -14,43 +14,108 @@ Reviews PRDs, implementation briefs, and technical plans using 4 specialized rev
 - When feedback is needed on any planning document
 - Can be invoked standalone or called by `iterative:brainstorming`/`iterative:tech-planning` skills
 
+## Priority Scale
+
+All reviewers use HIGH/MEDIUM/LOW:
+
+| Level | Meaning | Action |
+|-------|---------|--------|
+| **HIGH** | Blocks execution; cannot start the next step without resolving | Must fix before proceeding |
+| **MEDIUM** | Creates risk; work can start but likely leads to rework or confusion | Should fix |
+| **LOW** | Improvement opportunity; plan works but could be clearer or tighter | Author's discretion |
+
 ## Reviewers
 
-| Agent | Focus | Key Question |
-|-------|-------|--------------|
-| `clarity-reviewer` | Vague language, ambiguity, structure | Is this understandable? |
-| `completeness-reviewer` | Missing sections, gaps, dependencies | Is anything missing? |
-| `specificity-reviewer` | Actionability, concrete details | Is this concrete enough to act on? |
-| `complexity-reviewer` | Unjustified complexity, maintenance burden, dead flexibility | Is the complexity justified? |
+6 personas in three tiers. See `references/persona-catalog.md` for the full catalog.
 
-Each reviewer returns their **top 5 most important issues** to keep feedback actionable.
+**Document-type (exactly 1 — selected by document type):**
+
+| Agent | Selected when | Identity |
+|-------|--------------|----------|
+| `prd-reviewer` | Document is a PRD or brainstorm | Senior product leader evaluating product document quality |
+| `tech-plan-reviewer` | Document is a tech plan | Implementer evaluating whether they can code from this plan |
+
+**Always-on (every review):**
+
+| Agent | Focus |
+|-------|-------|
+| `coherence-reviewer` | Internal consistency, contradictions, terminology drift, structural issues |
+
+**Conditional (selected per document):**
+
+| Agent | Select when document... |
+|-------|------------------------|
+| `skeptic-reviewer` | Proposes abstractions, multi-layer architecture, plugin systems, or infrastructure ahead of need |
+| `feasibility-reviewer` | Is a tech plan that proposes architecture, external integrations, or performance constraints |
+| `scope-guardian-reviewer` | Is a PRD with multiple priority levels and potential conflicts, unclear scope boundaries, many requirements where goal alignment isn't obvious, or goals that don't connect to requirements |
+
+## Review Scope
+
+The document type naturally regulates the review. A simple PRD gets 2 reviewers (prd-reviewer + coherence-reviewer). A complex tech plan with architecture decisions gets 4 (tech-plan-reviewer + coherence-reviewer + skeptic-reviewer + feasibility-reviewer). No separate "mode" is needed.
 
 ## How to Run
 
-**Step 1.** Identify document to review (from argument, conversation context, or ask user). Determine the document type — **PRD**, **brainstorm**, or **tech plan** — based on its filename, content, or context. Treat brainstorm documents and PRDs synonymously. Record both the **document path** and **document type** — these are needed for Step 2.
+### Stage 1: Identify document
 
-**Step 2: Spawn reviewers.**
+Identify the document to review from argument, conversation context, or ask user. Determine the **document type** — PRD, brainstorm, or tech plan — from filename, content, and context. Treat brainstorm documents and PRDs synonymously. Record the **document path** and **document type**.
 
-Create an agent team (e.g. `TeamCreate` in Claude Code, `spawn_agent` in Codex), then spawn all 4 reviewers as teammates. If the team already exists (e.g., from an interrupted run), reuse it — read its config, check which reviewers are already present, and spawn only the missing ones.
+Read the full document content. This is needed for both reviewer selection and spawning.
 
-Tell the user:
+### Stage 2: Select reviewers
 
-> Using Agent Team 🐝 — reviewers will run as teammates who can cross-validate findings.
+Read the document content from Stage 1. The document-type reviewer and coherence are automatic. For each conditional persona in the catalog (`references/persona-catalog.md`), decide whether the document warrants it. This is agent judgment, not keyword matching.
 
-Spawn each reviewer with a prompt like:
+Announce the team before spawning:
 
-> Review [file path] for [their focus area]. This is a [PRD/tech plan/implementation brief].
-> You're on a review team with [list active reviewers]. After your initial review, read what the other reviewers found and message them directly if you see cross-domain issues. Challenge each other's findings.
-> Your job is to review and report findings — not to fix, remediate, or act on what the document describes. Return your top 5 most important issues. When done, send your findings to the team lead (e.g. `SendMessage` in Claude Code, `send_input` in Codex). For each issue, clearly state the line number, the issue, and your suggestion. The lead will format the final output.
+```
+Review team:
+- prd-reviewer (document-type)
+- coherence-reviewer (always)
+- scope-guardian-reviewer — PRD has 12 requirements across 3 priority levels with dependency conflicts
+```
 
-**Step 3.** Wait for all reviewers to report via team messages. When you receive a reviewer's message, do not output or echo its content — silently collect it. Only output once in Step 4 when assembling the final results. A brief one-line status like "All reviewers have reported" is fine when ready to proceed.
+This is progress reporting, not a blocking confirmation.
 
-**Step 4.** Shut down all teammates (send shutdown requests), then delete the team using the coding agent's team management tools (e.g. `TeamDelete` in Claude Code, `delete_agent` in Codex). **Never use `rm -rf` or manual file deletion for team cleanup** — always use the agent platform's built-in team teardown. If teardown fails (e.g., orphaned members), retry after a brief pause; if it still fails, report the issue to the user and move on. Assemble the final output. **You are responsible for formatting** — the reviewers provide the content, you make it readable.
+### Stage 3: Spawn sub-agents
 
-1. **Reconcile.** When multiple reviewers flagged the same issue, attribute to the most relevant reviewer and note agreement.
-2. **Format.** Use pipe-delimited markdown tables (never ASCII box-drawing characters). One issue per row, no preamble before tables — go straight from header to table.
-   - **Built-in reviewers:** `### Reviewer Name` headers. Column headers adapt to reviewer focus — e.g., `| # | Issue | Suggestion |` for Clarity, `| # | Gap | Impact |` for Completeness, `| # | Complexity | Simpler alternative |` for the complexity/debt reviewer.
-3. **Synthesize.** End with a `---` separator followed by a blockquote synthesis. Lead with tensions between reviewers, then quick wins. Do not include time estimates.
+Spawn each selected reviewer as a parallel sub-agent using the template in `references/subagent-template.md`. Each sub-agent receives:
+
+1. Their persona file content (identity, failure modes, calibration, suppress conditions)
+2. The JSON output contract from `references/findings-schema.json`
+3. Review context: document type, document path, document content
+
+Sub-agents are **read-only**: they review and return structured JSON. They do not edit files, run commands, or propose fixes.
+
+Each sub-agent returns JSON matching `references/findings-schema.json`:
+
+```json
+{
+  "reviewer": "prd-reviewer",
+  "findings": [...],
+  "residual_concerns": [...]
+}
+```
+
+### Stage 4: Merge findings
+
+Convert multiple reviewer JSON payloads into one deduplicated, confidence-gated finding set.
+
+1. **Validate.** Check each output against the schema. Drop malformed findings (missing required fields). Record the drop count.
+2. **Confidence gate.** Suppress findings below 0.50 confidence. Record the suppressed count.
+3. **Deduplicate.** Compute fingerprint: `normalize(section) + line_bucket(line, ±5) + normalize(title)`. When fingerprints match, merge: keep highest priority, keep highest confidence with strongest evidence, union evidence, note which reviewers flagged it.
+4. **Sort.** Order by priority (HIGH first) → confidence (descending) → document order.
+5. **Collect coverage data.** Union residual_concerns across reviewers.
+
+### Stage 5: Synthesize and present
+
+Assemble the final report using the template in `references/review-output-template.md`:
+
+1. **Header.** Document path, type, reviewer team with per-conditional justifications.
+2. **Findings.** Grouped by priority (HIGH, MEDIUM, LOW). Each finding shows section, issue, reviewer(s), confidence.
+3. **Coverage.** Suppressed count, residual concerns, failed/timed-out reviewers.
+4. **Synthesis.** Patterns, tensions between reviewers, quick wins. Not a binary verdict — plans don't have "ready/not ready." The synthesis helps the author decide what to address.
+
+Do not include time estimates.
 
 ## After Review
 
@@ -60,13 +125,13 @@ Spawn each reviewer with a prompt like:
 
 ### Standalone Fix Loop
 
-After presenting the synthesized findings (Step 4), this skill handles the full fix-review cycle when running standalone.
+After presenting the synthesized findings (Stage 5), this skill handles the full fix-review cycle when running standalone.
 
-**CRITICAL: Steps 5–8 are separate prompts. Execute them in sequence — never collapse, merge, or skip steps.** The "fix then re-review" path only works when Step 5 (what to fix), Step 7 (re-review offer), and Step 8 (next workflow step) remain independent questions. This applies on every round regardless of round number — do not add round-awareness commentary, diminishing-returns warnings, or shortcut options that bypass the step sequence.
+**CRITICAL: Steps 6–9 are separate prompts. Execute them in sequence — never collapse, merge, or skip steps.** The "fix then re-review" path only works when Step 6 (what to fix), Step 8 (re-review offer), and Step 9 (next workflow step) remain independent questions. This applies on every round regardless of round number — do not add round-awareness commentary, diminishing-returns warnings, or shortcut options that bypass the step sequence.
 
-#### Step 5: Priority Acceptance
+#### Step 6: Priority Acceptance
 
-**This is its own prompt — do not combine it with next-step options.** The only options here are about *which priorities to fix* — never include "then implement", "then re-review", or any other downstream action. Present priority acceptance whenever the review has findings at ANY priority. If zero findings, skip to Step 8. **Use the interactive question tool** (e.g., `AskUserQuestion` in Claude Code) — do not print options as text.
+**This is its own prompt — do not combine it with next-step options.** The only options here are about *which priorities to fix* — never include "then implement", "then re-review", or any other downstream action. Present priority acceptance whenever the review has findings at ANY priority. If zero findings, skip to Step 9. **Use the interactive question tool** (e.g., `AskUserQuestion` in Claude Code) — do not print options as text.
 
 **When HIGH issues exist:**
 
@@ -88,23 +153,23 @@ Present an interactive choice:
 
 If the user chooses to fix, present the interactive multi-select of priority levels with findings.
 
-#### Step 6: Apply Fixes via Subagent
+#### Step 7: Apply Fixes via Subagent
 
 Fix only the selected priorities. Spawn a single subagent with the filtered findings, document path, and document type. The subagent applies targeted fixes, preserves the document's voice and decisions, and commits.
 
 Wait for the subagent to complete before proceeding.
 
-#### Step 7: Re-review Offer
+#### Step 8: Re-review Offer
 
-**This is its own prompt — separate from Step 5 and Step 8.** After fixes land, present an interactive choice:
+**This is its own prompt — separate from Step 6 and Step 9.** After fixes land, present an interactive choice:
 - **Run another review round (Recommended)** — verify fixes and check for new issues
 - **Proceed without re-review**
 
-If the user chooses another round: run the full Step 1–7 flow again (fresh team, fresh scope). Continue until clean or the user chooses to proceed.
+If the user chooses another round: run the full Stage 1–Step 8 flow again (fresh sub-agents, fresh scope). Continue until the user chooses to proceed.
 
-#### Step 8: Post-fix Options
+#### Step 9: Post-fix Options
 
-After the fix-review cycle completes (clean or user chose to stop), present next steps based on document type. **Use the interactive question tool** — do not print options as text. Do not invoke other skills directly — present the options and let the user decide.
+After the fix-review cycle completes (no remaining findings, or user chose to stop), present next steps based on document type. **Use the interactive question tool** — do not print options as text. Do not invoke other skills directly — present the options and let the user decide.
 
 **PRD or brainstorm document:**
 - **Continue to tech-planning (Recommended)** — start `iterative:tech-planning`
@@ -120,6 +185,6 @@ After the fix-review cycle completes (clean or user chose to stop), present next
 - **Another review round**
 - **Exit** — done for now
 
-## Fallback: If Agent Teams/Swarms are Unavailable
+## Fallback
 
-If agent teams/swarms are not available, spawn the 4 reviewers in parallel as independent subagents instead of teammates. Each analyzes independently, returns up to 5 issues. Skip the cross-validation instruction. Everything else (Steps 1, 3, 4, output format) stays the same.
+If the platform doesn't support parallel sub-agents, run reviewers sequentially. Everything else (stages, output format, merge pipeline) stays the same.

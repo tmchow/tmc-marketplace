@@ -9,7 +9,7 @@ Every skill works on its own. Pick what fits your situation:
 - **Explore designs visually** — `/iterative:design-exploration` generates 5-10 radically different interactive HTML prototypes in parallel, each with tuning controls, star ratings, and structured feedback export. Iterate across rounds until you converge on a direction. See [Design Exploration Strategy](./docs/DESIGN_EXPLORATION_STRATEGY.md).
 - **Brainstorm requirements** — `/iterative:brainstorming` shapes a problem through dialogue, adapting depth to scope (quick bug fix vs. full feature PRD). See [Brainstorming Strategy](./docs/BRAINSTORMING_STRATEGY.md).
 - **Review code** — `/code-review` dynamically selects from 8 reviewer personas (3 always-on, 5 conditional), spawns them as parallel sub-agents with structured JSON output, and deduplicates findings through a merge pipeline. See [Code Review Strategy](./docs/CODE_REVIEW_STRATEGY.md).
-- **Review plans and PRDs** — `/plan-review` runs 4 reviewers (clarity, completeness, specificity, complexity) with cross-validation. See [Plan Review Strategy](./docs/PLAN_REVIEW_STRATEGY.md).
+- **Review plans and PRDs** — `/plan-review` dynamically selects from 6 reviewer personas (1 document-type, 1 always-on, 3 conditional), spawns them as parallel sub-agents with structured JSON output, and deduplicates findings through a merge pipeline. See [Plan Review Strategy](./docs/PLAN_REVIEW_STRATEGY.md).
 - **Research open questions** — `/iterative:research` investigates prior art, constraints, and competitive landscape through parallel research agents.
 - **Plan implementation** — `/iterative:tech-planning` turns requirements into dependency-ordered subtasks with file paths and test scenarios.
 - **Implement with review** — `/iterative:implementing` executes a tech plan with TDD, code review, and PR creation.
@@ -88,7 +88,7 @@ The core skills use an `iterative:` prefix in their name (e.g., `/iterative:brai
 | `iterative:research` | Updated PRD | Research open questions from PRD or user — parallel investigation, findings synthesis |
 | `iterative:design-exploration` | Design Direction Doc | Explore 5-10 radically different design approaches with interactive gallery, ratings, and iterative refinement |
 | `iterative:tech-planning` | Tech Plan | Structure requirements into dependency-ordered subtasks with file paths, test scenarios, architecture decisions |
-| `plan-review` | Review Report | 4 specialized reviewers analyze PRDs and tech plans via agent team with cross-validation |
+| `plan-review` | Review Report | 6 reviewer personas (dynamic selection), structured JSON output, merge pipeline, HIGH/MEDIUM/LOW priority |
 | `iterative:implementing` | Code → PR | Dependency-aware batch execution with TDD, section and final code reviews, then wrapup |
 | `code-review` | Review Report | 8 reviewer personas (dynamic selection), structured JSON output, merge pipeline, P0-P3 severity |
 
@@ -125,7 +125,7 @@ For the full rationale — divergence axes, parallel agent architecture, iframe 
 
 Run `/iterative:brainstorming` to shape a problem through dialogue. The skill assesses scope first — **Quick** (bug fix, config change), **Standard** (small feature, bounded refactor), or **Full** (large feature, new subsystem) — and adapts depth accordingly. Quick gets focused Q&A and an inline sanity check before implementing directly. Standard produces a lightweight brief with review. Full produces a complete **PRD** with prioritized requirements (Core / Must-Have / Nice-to-Have / Out), scope boundaries, and open questions tagged by resolution method.
 
-After the PRD is written, 4 specialized reviewers analyze it via agent team with cross-validation. Open questions get classified: researchable questions go to `/iterative:research`, design questions go to `/iterative:design-exploration`, technical questions defer to tech planning, and questions needing user decisions get flagged.
+After the PRD is written, dynamically selected reviewers analyze it — a senior product leader persona evaluates the PRD alongside a coherence reviewer, with conditional reviewers (skeptic, scope guardian) added based on document content. Open questions get classified: researchable questions go to `/iterative:research`, design questions go to `/iterative:design-exploration`, technical questions defer to tech planning, and questions needing user decisions get flagged.
 
 For the full rationale — scope-first routing, adaptive depth, PRD structure — see [Brainstorming Strategy](./docs/BRAINSTORMING_STRATEGY.md).
 
@@ -139,7 +139,7 @@ For the full rationale — persona selection, JSON output, merge pipeline — se
 
 Run `/iterative:tech-planning` to turn requirements into an implementation plan. It explores the codebase first — existing patterns, conventions, affected modules — and asks implementation-focused questions before writing anything.
 
-The output is a **Tech Plan** with architecture decisions, file paths, and concrete test scenarios. Subtasks are scoped to atomic commits with explicit dependencies. Same review process — all 4 plan reviewers analyze via agent team.
+The output is a **Tech Plan** with architecture decisions, file paths, and concrete test scenarios. Subtasks are scoped to atomic commits with explicit dependencies. Same review process — dynamically selected plan reviewers analyze via parallel sub-agents with structured JSON output.
 
 ### Implementing
 
@@ -192,9 +192,9 @@ Each stage produces an artifact, offers iterative review, and hands off when the
 Reviews are user-driven:
 
 - **Offered, never forced** — Every review is presented as a choice. The user can skip.
-- **Severity-based acceptance** — Findings grouped by severity (P0 / P1 / P2 / P3). User selects which levels to fix — not all-or-nothing.
+- **Priority-based acceptance** — Code review findings grouped by severity (P0–P3), plan review findings grouped by priority (HIGH/MEDIUM/LOW). User selects which levels to fix — not all-or-nothing.
 - **User-controlled loop** — After fixes, user chooses to re-review or continue. No automatic re-review.
-- **Parallel sub-agents** — Code reviewers run as parallel sub-agents returning structured JSON. Plan reviewers run as an agent team for cross-validation.
+- **Parallel sub-agents** — Both code reviewers and plan reviewers run as parallel sub-agents returning structured JSON.
 - **Scaled to scope** — The tier model right-sizes automatically. Skip for trivial config edits.
 
 ## Design Decisions
@@ -207,21 +207,35 @@ Reviews are user-driven:
 | Tech plan describes what, not how | Plans capture architecture, query strategies, and test scenarios. They don't pre-write method bodies — that's brittle and gets followed blindly. The implementer writes the actual code. |
 | Dependency-aware batch execution | Subtasks are grouped by their dependency graph. Each batch runs concurrently, but batches execute sequentially. Not one-at-a-time (too slow), not all-at-once (ignores ordering). |
 | TDD + test gates between batches | Each subtask uses TDD and a test verification gate catches missing tests after each batch. Issues are caught during development, not deferred to review. |
-| Severity-based fix acceptance | Not all review findings warrant fixing. User picks which severity levels to address. Keeps the user in control of review scope. |
+| Priority-based fix acceptance | Not all review findings warrant fixing. User picks which severity/priority levels to address. Keeps the user in control of review scope. |
 | Docs committed at every checkpoint | PRDs, plans, and design direction docs are committed incrementally — not left as uncommitted changes across workflow stages. A branch safety gate before the first commit prevents accidental commits to the default branch. |
 
 ## Agents
 
 ### Review Agents (Plan Review)
 
-4 specialized reviewers analyze documents via [agent team](https://code.claude.com/docs/en/agent-teams):
+6 personas in three tiers, running as parallel sub-agents with structured JSON output:
+
+**Document-type (exactly 1):**
+
+| Agent | Selected when | Focus |
+|-------|--------------|-------|
+| `prd-reviewer` | PRD or brainstorm | Product document quality — goals, requirements, scope decisions |
+| `tech-plan-reviewer` | Tech plan | Implementation readiness — can an implementer code from this? |
+
+**Always-on:**
 
 | Agent | Focus |
 |-------|-------|
-| `clarity-reviewer` | Vague language, ambiguity, structure |
-| `completeness-reviewer` | Missing sections, gaps, dependencies |
-| `specificity-reviewer` | Actionability, concrete details |
-| `complexity-reviewer` | Unjustified complexity, maintenance burden, dead flexibility |
+| `coherence-reviewer` | Internal consistency, contradictions, terminology drift, structural issues |
+
+**Conditional (selected per document):**
+
+| Agent | Focus |
+|-------|-------|
+| `skeptic-reviewer` | Unjustified structural complexity, maintenance burden, premature abstraction |
+| `feasibility-reviewer` | Technical viability — will the approach survive contact with implementation? |
+| `scope-guardian-reviewer` | Priority conflicts, scope boundary violations, goal-requirement alignment |
 
 ### Review Agents (Code Review)
 
@@ -267,7 +281,7 @@ For deeper rationale behind each skill's design:
 | [Design Exploration Strategy](./docs/DESIGN_EXPLORATION_STRATEGY.md) | Divergence axes, the gallery workflow, parallel agent architecture, iframe isolation, the direction doc |
 | [Brainstorming Strategy](./docs/BRAINSTORMING_STRATEGY.md) | Scope-first routing, Quick/Standard/Full paths, adaptive depth, PRD structure |
 | [Code Review Strategy](./docs/CODE_REVIEW_STRATEGY.md) | 8 persona catalog, dynamic selection, JSON output, merge pipeline, P0-P3 severity |
-| [Plan Review Strategy](./docs/PLAN_REVIEW_STRATEGY.md) | 4 specialized reviewers, cross-validation, priority model, agent team design |
+| [Plan Review Strategy](./docs/PLAN_REVIEW_STRATEGY.md) | 6 persona catalog, dynamic selection, JSON output, merge pipeline, HIGH/MEDIUM/LOW priority |
 
 ## Changelog
 

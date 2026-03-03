@@ -55,7 +55,7 @@ Present the categorization to the user. They may recategorize or add questions.
    - Relevant context from the PRD (if exists)
    - Research scope (web search, codebase exploration, documentation review — as appropriate)
    - Instruction to return findings as: what was learned, confidence level, and how it affects the PRD (if applicable)
-2. Run subagents in parallel — questions are independent and do not need cross-validation (unlike review agents, which use agent teams). Independent subagents are the right pattern here.
+2. Run subagents in parallel — questions are independent. Independent subagents are the right pattern here.
 3. Collect findings from all subagents.
 4. If a subagent finds nothing useful: note it as unresolved and carry the question forward.
 

@@ -87,8 +87,8 @@ A plan is ready when an implementer can start working without asking clarifying 
 6. If user chooses implementing: invoke `iterative:implementing` skill (implementing handles task creation internally after reading the plan).
 
 **Recommendation logic for step 4.** Shift the recommended option based on what the review found:
-- Review found Critical or High issues (now fixed) → recommend **another review round** to verify the fixes landed well
-- Review found only Medium/Low issues, or a round came back clean → recommend **start implementing** — further rounds will have diminishing returns
+- Review found HIGH issues (now fixed) → recommend **another review round** to verify the fixes landed well
+- Review found only MEDIUM/LOW issues, or a round came back with no findings → recommend **start implementing** — further rounds will have diminishing returns
 - After 3+ rounds → recommend **start implementing** regardless, and note that additional passes are unlikely to surface significant issues
 
 ## PRD Alignment
