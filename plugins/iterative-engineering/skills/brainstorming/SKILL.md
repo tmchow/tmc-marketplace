@@ -190,7 +190,7 @@ Present this as an interactive choice (e.g., `AskUserQuestion`). The signal to o
 
 3. **Present options.** Interactive choice (e.g., `AskUserQuestion` in Claude Code). AskUserQuestion provides an automatic "Other" option — use that as the exit path. Show up to 4 explicit options, selected from this priority order:
    - **Review the PRD (Recommended)** — 4 specialized reviewers analyze for issues (always show)
-   - **Explore design directions** — generate visual/UX variations (only show when work involves UI/UX)
+   - **Explore design directions** — generate visual/UX variations (show when the product has any user-facing surface — web apps, mobile apps, dashboards, CLIs with rich output, landing pages, etc. Only hide for pure backend/infrastructure/library work with no user-facing surface)
    - **Research open questions** — resolve unknowns through investigation (only show when applicable)
    - **Continue to technical planning** — create a detailed implementation plan (always show)
 

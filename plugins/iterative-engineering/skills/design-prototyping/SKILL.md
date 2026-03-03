@@ -233,6 +233,8 @@ The `controls-ready` event fires once after all controls are applied on iframe l
 - **The control system can only set CSS custom properties.** It cannot toggle CSS classes. All controlled styling must flow through `var()` references.
 - **Behavioral controls need `"event": true` and a JS listener.** If a control drives behavior (sorting, filtering, thresholds, expansion mode), mark it `"event": true` and add a `control-change` event listener. Without the listener, the CSS var is set but nothing reads it.
 
+**CRITICAL: The metadata block MUST use exactly `id="variation-meta"`.** This ID is machine-parsed by the assembly script. Not `variation-metadata`, not `exploration-metadata` — exactly `variation-meta`. If the ID is wrong, the variation will silently fail to appear in the gallery.
+
 ## Pre-Output Checklist
 
 Verify before writing:
