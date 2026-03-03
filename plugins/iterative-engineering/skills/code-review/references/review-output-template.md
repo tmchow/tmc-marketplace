@@ -1,66 +1,77 @@
 # Code Review Output Template
 
-Use this **exact format** when presenting synthesized review findings. Tables make issues scannable; the summary calls out cross-reviewer patterns.
+Use this **exact format** when presenting synthesized review findings. Findings are grouped by severity, not by reviewer.
 
-**IMPORTANT:** Use pipe-delimited markdown tables (`| col | col |`). Do NOT use ASCII box-drawing characters (`┌─┬─┐`, `│`, `└─┴─┘`).
+**IMPORTANT:** Use pipe-delimited markdown tables (`| col | col |`). Do NOT use ASCII box-drawing characters.
 
 ## Example
 
 ```markdown
 ## Code Review Results (Full)
 
-### Correctness
+**Scope:** origin/main..HEAD (14 files, 342 lines)
+**Intent:** Add order export endpoint with CSV and JSON format support
 
-| # | Location | Issue | Severity |
-|---|----------|-------|----------|
-| 1 | `task-service.ts:142` | Off-by-one in pagination — skips last page when total is exact multiple | High |
-| 2 | `claim.ts:87` | Race condition if two agents claim simultaneously without transaction | High |
-| 3 | `list.ts:201` | Filter ignores archived tasks when `--all` flag is set | Medium |
+**Reviewers:** correctness, testing, maintainability, security, api-contract
+- security — new public endpoint accepts user-provided format parameter
+- api-contract — new /api/orders/export route with response schema
 
-### Security
+### P0 — Critical
 
-| # | Location | Vulnerability | Severity |
-|---|----------|---------------|----------|
-| 1 | `auth.ts:34` | User-supplied ID used directly in SQL query — injection risk | Critical |
-| 2 | `config.ts:12` | API key logged at debug level | Medium |
+| # | File | Issue | Reviewer | Confidence |
+|---|------|-------|----------|------------|
+| 1 | `orders_controller.rb:42` | User-supplied ID in account lookup without ownership check | security | 0.92 |
 
-### Performance
+### P1 — High
 
-| # | Location | Issue | Impact |
-|---|----------|-------|--------|
-| 1 | `list.ts:156` | N+1 query — fetches dependencies per task in loop | High at scale |
-| 2 | `export.ts:89` | Loads all events into memory — unbounded for large projects | Medium |
+| # | File | Issue | Reviewer | Confidence |
+|---|------|-------|----------|------------|
+| 2 | `export_service.rb:87` | Loads all orders into memory — unbounded for large accounts | performance | 0.85 |
+| 3 | `export_service.rb:91` | No pagination — response size grows linearly with order count | api-contract, performance | 0.80 |
 
-### Simplicity
+### P2 — Moderate
 
-| # | Location | Suggestion |
-|---|----------|------------|
-| 1 | `utils/format.ts` | Three formatting helpers do the same thing — consolidate | Low |
-| 2 | `task-service.ts:200-240` | Nested conditionals could be early returns | Low |
+| # | File | Issue | Reviewer | Confidence |
+|---|------|-------|----------|------------|
+| 4 | `export_service.rb:45` | Missing error handling for CSV serialization failure | correctness | 0.75 |
 
-### Testing
+### P3 — Low
 
-| # | Location | Gap |
-|---|----------|-----|
-| 1 | `claim.ts` | No test for concurrent claim scenario | High |
-| 2 | `list.ts` | Filter edge cases (empty project, archived tasks) untested | Medium |
+| # | File | Issue | Reviewer | Confidence |
+|---|------|-------|----------|------------|
+| 5 | `export_helper.rb:12` | Format detection could use early return instead of nested conditional | maintainability | 0.70 |
+
+### Pre-existing Issues
+
+| # | File | Issue | Reviewer |
+|---|------|-------|----------|
+| 1 | `orders_controller.rb:12` | Broad rescue masking failed permission check | correctness |
+
+### Coverage
+
+- Suppressed: 2 findings below 0.50 confidence
+- Residual risks: No rate limiting on export endpoint
+- Testing gaps: No test for concurrent export requests
 
 ---
 
-**Summary:** 11 issues found. 1 critical, 3 high, 4 medium, 3 low.
-
-> **Cross-domain insight:** The SQL injection in `auth.ts:34` has no test coverage (flagged by both security and testing reviewers).
+> **Verdict:** Ready with fixes
 >
-> **Fix order:** Critical/high security first → correctness bugs → add missing tests → simplicity cleanup.
+> **Reasoning:** 1 critical auth bypass must be fixed. The memory/pagination issues (P1) should be addressed for production safety.
+>
+> **Fix order:** P0 auth bypass → P1 memory/pagination → P2 error handling if straightforward
 ```
 
 ## Formatting Rules
 
-- **Pipe-delimited markdown tables** (`| col | col |` with `|---|---|` separators) — never ASCII box-drawing characters
+- **Pipe-delimited markdown tables** — never ASCII box-drawing characters
+- **Severity-grouped sections** — `### P0 — Critical`, `### P1 — High`, `### P2 — Moderate`, `### P3 — Low`. Omit empty severity levels.
 - **Always include file:line location** for code review issues
-- **Include severity** (Critical/High/Medium/Low) for correctness and security
-- **Column headers vary by reviewer type** — adapt to what's useful (Issue/Severity, Suggestion, Gap, etc.)
-- **No preamble before tables** — go straight from `###` header to the table
-- **Summary uses blockquotes** for cross-domain insights and fix order
-- **Horizontal rule** (`---`) separates issues from summary
-- **`###` headers** for each reviewer section — never plain text headers
+- **Reviewer column** shows which persona(s) flagged the issue. Multiple reviewers = cross-reviewer agreement.
+- **Confidence column** shows the finding's confidence score
+- **Header includes** scope, intent, and reviewer team with per-conditional justifications
+- **Pre-existing section** — separate table, no confidence column (these are informational)
+- **Coverage section** — suppressed count, residual risks, testing gaps, failed reviewers
+- **Summary uses blockquotes** for verdict, reasoning, and fix order
+- **Horizontal rule** (`---`) separates findings from verdict
+- **`###` headers** for each section — never plain text headers
