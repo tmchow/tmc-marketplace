@@ -2,7 +2,7 @@
 
 ## Overview
 
-The code review system combines 5 built-in domain experts with up to 2 external reviewers from different model families.
+The code review system uses 5 built-in domain experts that run as an agent team.
 
 ## Built-in Reviewers
 
@@ -18,63 +18,9 @@ Five reviewers run natively on the host platform, each focused on a specific dom
 
 Built-in reviewers run as an agent team, enabling cross-validation: reviewers can read each other's findings and challenge them.
 
-## External Reviewers (Experimental)
-
-Five reviewers powered by the same model share the same training data, reasoning patterns, and blind spots. External reviewers address this by invoking a different model family's CLI for an independent review. This feature is experimental; CLI availability and behavior may vary. Codex reviews can take 5+ minutes.
-
-Three external CLIs are supported:
-
-| CLI | Invocation | Safety mode |
-|-----|------------|-------------|
-| Google Gemini | `gemini -s -p "..."` | Sandboxed (reads diff file, no write access) |
-| OpenAI Codex | `codex exec review --base <branch>` | Built-in review preset (read-only, filesystem access) |
-| Anthropic Claude | `claude -p "..." --max-turns 3` | Bounded turns, no session persistence |
-
-### Execution Model
-
-The orchestrator runs external CLIs **directly** via Bash, not via subagents. This ensures CLI commands execute in the main agent context where the user can approve Bash access normally, avoiding permission issues that occur when subagents try to invoke CLIs.
-
-In Full mode, the user selects which external CLIs to include (multi-select when 2+ are available, yes/no for a single CLI). The orchestrator runs the selected CLIs in parallel alongside the built-in reviewer team. The orchestrating skill reconciles findings from both sources during synthesis.
-
-### Self-Identification
-
-The orchestrator determines its own model family and skips the matching CLI:
-
-- Running in Claude Code: Gemini + Codex CLIs run, Claude CLI skipped
-- Running in Codex: Gemini + Claude CLIs run, Codex CLI skipped
-
-CLIs that aren't installed are also skipped (checked via `which`).
-
-### Diff Handling
-
-The diff and prompt are staged as local files rather than inlined in CLI arguments. The orchestrator writes the diff to `.external-review-diff.txt` and the prompt template to `.external-review-prompt.txt` in the repo root. Each CLI reads these files from disk. Two benefits:
-
-1. **Avoids shell `ARG_MAX` limits.** Large diffs can exceed the maximum argument length for shell commands. File-based input has no such constraint.
-2. **Clean permission prompts.** In Claude Code (and similar agent frameworks), Bash calls show the full command text for user approval. Staging to files keeps the approval prompt short and readable: the user sees `$(cat .external-review-prompt.txt)` rather than thousands of lines of diff text.
-
-The review prompt template is embedded in the skill definition (SKILL.md). The plugin directory (`~/.claude/plugins/...`) is outside the project sandbox, and any tool accessing it triggers a permission dialog with no global-approve option. By embedding the template, the orchestrator writes it locally using the Write tool (no permission needed for local paths), then CLI invocations reference the local copy via `$(cat .external-review-prompt.txt)`. Both staged files are deleted during synthesis (Step 4).
-
-The prompt instructs the model to read the diff from `.external-review-diff.txt`. Gemini and Claude receive the prompt via `$(cat ...)` and then read the diff file as instructed. Codex uses its built-in `review` preset with `--base`, which computes and reviews the branch diff internally — it does not use the staged files. Claude's `-p` flag consumes the immediately following token as the prompt, so other flags like `--max-turns` must come after the prompt string, not between `-p` and the prompt.
-
-Extended context (`-U10` = 10 lines before/after each hunk instead of the default 3) compensates for the model not being able to read full files. This adds some tokens but far fewer than letting each CLI make tool calls to read entire files. Markdown files are excluded via `':!*.md'` in the git diff command because they are token-heavy and reviewed separately by plan reviews.
-
-### Safety
-
-Each CLI runs in its most restrictive read-only mode. Gemini and Claude read the staged diff file from disk; Codex computes the diff internally via its `review` preset:
-
-| CLI | Safety flags | Effect |
-|-----|-------------|--------|
-| Gemini | `-s` | Sandboxed (reads diff file from workspace, no write access) |
-| Codex | `codex exec review --base <branch>` | Built-in review preset (read-only, filesystem access) |
-| Claude | `-p "..." --max-turns 3 --no-session-persistence` | Bounded turns; `-p` requires prompt as immediately following arg |
-
-### Graceful Degradation
-
-External CLIs are additive and opt-in. If a CLI isn't installed, the orchestrator notes it and moves on. If all external CLIs are unavailable or the user declines, the review proceeds with the 5 built-in reviewers. The system never fails because of a missing external tool.
-
 ## Diff-Anchored Scope
 
-All reviewers (built-in and external) follow a three-tier scope model:
+All reviewers follow a three-tier scope model:
 
 | Tier | Rule |
 |------|------|
@@ -91,10 +37,10 @@ Pre-existing findings are separated in the final output and excluded from the me
 ## Review Modes
 
 ### Full Mode (default)
-All 5 built-in reviewers + external model CLIs (opt-in). Used for final branch reviews and standalone reviews.
+All 5 built-in reviewers. Used for final branch reviews and standalone reviews.
 
 ### Quick Mode
-2-3 built-in reviewers auto-selected by change type. No external reviewers. Used for incremental section reviews during implementation.
+2-3 built-in reviewers auto-selected by change type. Used for incremental section reviews during implementation.
 
 | Changed files | Reviewers |
 |---------------|-----------|
@@ -109,40 +55,20 @@ All 5 built-in reviewers + external model CLIs (opt-in). Used for final branch r
 
 The skill orchestrator (not the individual reviewers) synthesizes all findings:
 
-1. **Reconciliation.** Merge findings from two sources: the built-in team's collaborative results and any external CLI results. When multiple reviewers flag the same issue, merge them and note agreement. Cross-model agreement (built-in team + external CLI flagging the same issue independently) strengthens confidence.
+1. **Reconciliation.** When multiple reviewers flag the same issue, merge them and note agreement.
 2. **Pre-existing separation.** Findings tagged `[Pre-existing]` are pulled into their own section, excluded from the verdict.
 3. **Structured output.** Strengths section, then per-reviewer findings tables, then pre-existing issues, then verdict.
 4. **Verdict.** Based only on change-related findings: Ready to merge / Ready with fixes / Not ready.
 
 ## Design Principles
 
-**Model diversity over model quantity.** Two models catching the same bug is stronger signal than five instances of the same model agreeing. External reviewers exist for genuine perspective diversity, not throughput.
+**Reviewers report, the skill synthesizes.** Individual reviewers only find and report issues. They never fix code, invoke other skills, or make decisions about what to do with findings. The orchestrating skill owns deduplication, presentation, and next-step decisions.
 
-**Reviewers report, the skill synthesizes.** Individual reviewers (built-in or external) only find and report issues. They never fix code, invoke other skills, or make decisions about what to do with findings. The orchestrating skill owns deduplication, presentation, and next-step decisions.
+**Agent teams for cross-validation.** Built-in reviewers can read each other's findings and challenge them, so they run as team members rather than isolated subagents.
 
-**Inline for opaque wrappers, teams for collaborators.** External CLIs are opaque wrappers that can't cross-validate, so they run inline via the orchestrator. Built-in reviewers can read each other's findings and challenge them, so they belong as team members. Match the execution model to the agent's actual capabilities.
-
-**Graceful degradation everywhere.** No component is required for the system to function. Missing CLI? Skip. Missing agent teams? Fall back to parallel subagents. Missing all external reviewers? The 5 built-in reviewers still provide comprehensive coverage.
+**Graceful degradation.** Missing agent teams? Fall back to parallel subagents. The 5 built-in reviewers still provide comprehensive coverage.
 
 **Diff-anchored, not file-anchored.** Reviewers focus on what changed, flag what's caused by the changes, and separately tag what's pre-existing. This keeps reviews actionable for the PR author while not discarding useful observations.
-
-## Unified Prompt Design
-
-Gemini and Claude use the same unified review prompt template. The template is embedded directly in the skill definition (SKILL.md) rather than a separate file, so the orchestrator can write it locally without accessing plugin directory paths that trigger sandbox permission prompts. Codex uses its built-in `review` preset, which has its own review prompt and computes the diff internally — it does not use the staged prompt or diff files.
-
-Key design decisions:
-
-- **File-based diff input.** The diff is staged to `.external-review-diff.txt` and the prompt instructs the model to read it from disk. This avoids shell `ARG_MAX` limits on large diffs and keeps CLI invocation commands short for clean permission prompts. Codex is the exception — its `review` preset handles diff computation internally.
-- **Focus areas match built-in reviewers.** The 5 focus areas (Correctness, Security, Performance, Simplicity, Testing) are identical to the built-in reviewer domains. Each finding includes a `FOCUS_AREA` label, so the orchestrator can slot external findings directly into the matching reviewer section during reconciliation.
-- **Headless, no interaction.** The prompt explicitly says "Do not ask clarifying questions" because these are headless CLI invocations with no user interaction. If context is ambiguous, the model states its assumption and proceeds.
-- **Intent-first methodology.** Summarize the change's purpose before looking for issues.
-- **Constraint-heavy.** Over half the prompt is about what NOT to do (don't explain code, don't nitpick style, don't say "check" or "verify").
-- **Diff-anchored.** Only comment on changed lines; pre-existing issues go under a separate header.
-- **Structured output.** Numbered findings with severity, focus area, location, issue, and fix.
-- **Deduplication instruction.** State repeated issues once, list other locations.
-- **Markdown excluded.** Markdown files are filtered out of the diff via `':!*.md'` in the git diff command. They are token-heavy and reviewed separately by plan reviews, not code review.
-
-This design reduces the most common LLM code review failure modes: hand-wavy non-actionable feedback, reviewing the entire file instead of the changes, and walls of repeated findings.
 
 ## Standalone Fix Loop
 
