@@ -163,6 +163,52 @@ The variation count scales with the **design space** — how many meaningfully d
 - Round 2+ counts drop because feedback narrows the space — drop families the user rejected, go deeper on ones they liked
 - When in doubt, 6 is a safe default for most explorations. Only go higher when the scope genuinely has more axes of divergence to explore.
 
+### Feedback-driven iteration planning
+
+When planning Round 2+ from user feedback, use these principles to translate ratings, notes, and control adjustments into a concrete plan for the next round. These aren't rigid rules — the agents are smart enough to make good judgment calls given the right framing.
+
+**Reading the feedback signal**
+
+Each rating tier tells you something directional:
+
+- **Loved (4-5★):** The approach resonated. Refine it, don't replace it. User notes on loved variations are specific preferences to carry forward — they've moved past "do I like this?" to "here's what I'd tweak."
+- **Mixed (2-3★):** Something worked, something didn't. The notes are the key — they usually say exactly what to keep and what to fix. Don't drop mixed variations; extract the good part and fold it into a refined or new family.
+- **Skip (0★):** Equally strong signal as Loved — the user actively rejected this direction. Drop the family entirely. But read the notes carefully: skip notes are constraints on the *entire next round*, not just the dropped family. "Too many things are hidden" means all future approaches need visible affordances. "Not a great UX" for a guided flow means don't try guided flows again. Every skip note is a global constraint.
+
+**User notes are design requirements**
+
+When notes say things like "I'd like the model to be selectable" or "needs a way to add reference images" — those aren't suggestions, they're requirements for the next round. Fold them into the variation briefs for agents. A note on a loved variation ("love this but needs a dimensions input") becomes a requirement in every variation of that family's next iteration.
+
+**Control adjustments carry forward**
+
+When the exported feedback shows a user moved a control from its default (e.g., sidebar width 240→300px, density compact→spacious), use those adjusted values as the new defaults in the next round's variation briefs. The user already told you what they prefer — start there.
+
+**The exploration-convergence balance**
+
+Each round should feel like it's narrowing AND discovering. A round that only refines what worked feels like diminishing returns. A round that ignores feedback feels like it wasn't listening.
+
+Keep at least one family slot for a genuinely new approach the user hasn't seen — even in Round 3+. The new approach should be *informed* by what worked (if the user loved a sidebar layout, the new approach might also use a sidebar — but with a fundamentally different interaction model). This prevents the exploration from collapsing too early while still feeling responsive to feedback.
+
+**Direction for Next Round**
+
+When the user fills in the "Direction for Next Round" section of the export, that's the highest-signal input — it overrides tier-based inference. If the direction says "focus on A1 and make it production-ready," that's a refinement round, not an exploration round. If it says "I liked A1 but want to see completely different aesthetics," that's a visual-axis pivot. Plan accordingly.
+
+When the direction is empty (`[No direction provided]`), fall back to the tier-based planning above.
+
+**Worked example**
+
+Suppose Round 1 explored an image generation tool with three families:
+
+- **A "Sidebar Studio"** — sidebar with controls, canvas preview. A1 got 5★ ("love the layout, needs a dimensions input"), A2 got 4★ ("clean but want model selection").
+- **B "Split Workspace"** — two-panel with prompt on left, preview on right. B1 got 3★ ("like the prompt area, too cramped"), B2 got 2★ ("good idea for history panel but execution is cluttered").
+- **C "Guided Flow"** — step-by-step wizard. C1 got 0★ ("not a great UX for creative work"), C2 got 0★ ("too rigid").
+
+Round 2 plan:
+- **Family A (refine):** 2-3 variations. Carry forward the sidebar layout. Every variation must include dimensions input (A1 note) and model selection (A2 note). Explore variations within the sidebar concept — maybe one with a collapsible settings panel, one with inline controls.
+- **Family B→A hybrid (extract and merge):** 1-2 variations. B1's prompt area was liked — take that element and apply it to A's sidebar layout. The "history panel" idea from B2 could become a sidebar tab.
+- **Family D (new):** 2 variations. A genuinely new approach. Informed by what worked: uses visible affordances (C's skip notes said guided/hidden UX was rejected), incorporates a prompt area (B1's liked element). Maybe "What if it worked like a command palette with live preview?" — different interaction model, but respects the constraints.
+- **Drop C entirely.** The skip notes ("not a great UX for creative work," "too rigid") become global constraints: no wizard-style flows, no rigid step sequences.
+
 ### Approach-based divergence planning
 
 Before deciding families, identify the **specific design question** the exploration is answering — then brainstorm different answers to it.
