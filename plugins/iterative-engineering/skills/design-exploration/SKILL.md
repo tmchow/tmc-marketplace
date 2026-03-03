@@ -80,6 +80,12 @@ Ask 0-2 scoping questions based on how much ambiguity exists. When a PRD or deta
 
 When input is lighter (a sentence or brief description), component prompts tend to describe the full problem; larger scopes tend to leave more genuinely open. The right questions inform the exploration — the wrong ones constrain it. The test: does knowing the answer change *which approaches you'd explore*, or does it just eliminate options the user should see? If it eliminates options, don't ask — let the exploration show them.
 
+### Scope surfacing
+
+When input covers **multiple distinct UI surfaces** (e.g., a PRD describing a dashboard, an upload flow, a settings page, and an image grid), identify the surfaces and ask the user what to explore. Present options including exploring everything (full scope) as a first-class choice, plus focused options for individual surfaces or natural groupings. Frame it as "I see these surfaces — want to explore all of them, or focus on a subset?" — not "pick exactly one." Keep it to a single question.
+
+When input is already narrow (a single component, one screen, one flow), skip this — there's nothing to scope.
+
 ### What you need to know before proceeding (infer from context when possible)
 
 - **Divergence axis** — interaction, visual, or both? (see below — usually obvious from context)
