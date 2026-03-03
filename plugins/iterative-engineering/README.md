@@ -90,7 +90,7 @@ The core skills use an `iterative:` prefix in their name (e.g., `/iterative:brai
 | `iterative:tech-planning` | Tech Plan | Structure requirements into dependency-ordered subtasks with file paths, test scenarios, architecture decisions |
 | `plan-review` | Review Report | 4 specialized reviewers analyze PRDs and tech plans via agent team with cross-validation |
 | `iterative:implementing` | Code → PR | Dependency-aware batch execution with TDD, incremental and final code reviews, then wrapup |
-| `code-review` | Review Report | 5 built-in + external model-diverse reviewers, severity ratings, full or quick mode, diff-anchored scoping |
+| `code-review` | Review Report | 5 specialized reviewers, severity ratings, full or quick mode, diff-anchored scoping |
 
 ### Supporting
 
@@ -133,9 +133,7 @@ For the full rationale — scope-first routing, adaptive depth, PRD structure �
 
 Run `/code-review` on any branch to get findings from 5 specialized reviewers (correctness, security, performance, simplicity, testing) via agent team. Reviewers use diff-anchored scoping — primary focus on changed lines, with pre-existing issues tagged separately. Findings are grouped by severity (Critical / High / Medium / Low); you pick which levels to fix.
 
-In Full mode, external model CLIs (Gemini, Codex, Claude) can optionally provide independent perspectives. The orchestrator self-identifies its model family and skips the matching CLI. CLIs that aren't installed are skipped gracefully.
-
-For the full rationale — reviewer architecture, diff anchoring, external model integration — see [Code Review Strategy](./docs/CODE_REVIEW_STRATEGY.md).
+For the full rationale — reviewer architecture, diff anchoring, severity model — see [Code Review Strategy](./docs/CODE_REVIEW_STRATEGY.md).
 
 ### Tech Planning
 
@@ -240,18 +238,6 @@ Reviews are user-driven:
 
 Built-in reviewers use diff-anchored scoping — primary focus on changed lines, with pre-existing issues tagged separately for independent triage. They run as teammates who can cross-validate findings. When agent teams are unavailable, reviews fall back to parallel subagent execution.
 
-### External Reviewers (Code Review, Experimental)
-
-In Full mode, the orchestrator can run external model CLIs directly (opt-in) for independent, model-diverse perspectives. This feature is experimental; CLI availability and behavior may vary. Codex reviews can take 5+ minutes.
-
-| CLI | Invocation | Safety mode |
-|-----|------------|-------------|
-| Google Gemini | `gemini -s -p "..."` | Sandboxed (diff inlined, no tool access needed) |
-| OpenAI Codex | `codex review` | Review-dedicated subcommand (inherently read-only) |
-| Anthropic Claude | `claude -p "..." --max-turns 3` | Bounded turns, no session persistence |
-
-The orchestrator self-identifies its model family and skips the matching CLI (e.g., `claude` is skipped in Claude Code, `codex` is skipped in Codex). CLIs that aren't installed are skipped gracefully. Full mode only — never run in quick mode. See [Code Review Strategy](./docs/CODE_REVIEW_STRATEGY.md) for design details.
-
 ### Workflow Agents
 
 | Agent | Purpose |
@@ -271,8 +257,8 @@ For deeper rationale behind each skill's design:
 |----------|--------|
 | [Design Exploration Strategy](./docs/DESIGN_EXPLORATION_STRATEGY.md) | Divergence axes, the gallery workflow, parallel agent architecture, iframe isolation, the direction doc |
 | [Brainstorming Strategy](./docs/BRAINSTORMING_STRATEGY.md) | Scope-first routing, Quick/Standard/Full paths, adaptive depth, PRD structure |
-| [Code Review Strategy](./docs/CODE_REVIEW_STRATEGY.md) | Built-in + external reviewers, diff-anchored scoping, severity model, agent team design |
-| [Plan Review Strategy](./docs/PLAN_REVIEW_STRATEGY.md) | 4 specialized reviewers, cross-validation, external model integration |
+| [Code Review Strategy](./docs/CODE_REVIEW_STRATEGY.md) | 5 specialized reviewers, diff-anchored scoping, severity model, agent team design |
+| [Plan Review Strategy](./docs/PLAN_REVIEW_STRATEGY.md) | 4 specialized reviewers, cross-validation, priority model, agent team design |
 
 ## Changelog
 
