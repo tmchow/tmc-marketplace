@@ -12,7 +12,7 @@ Every skill works on its own. Pick what fits your situation:
 - **Review plans and PRDs** — `/plan-review` runs 4 reviewers (clarity, completeness, specificity, complexity) with cross-validation. See [Plan Review Strategy](./docs/PLAN_REVIEW_STRATEGY.md).
 - **Research open questions** — `/iterative:research` investigates prior art, constraints, and competitive landscape through parallel research agents.
 - **Plan implementation** — `/iterative:tech-planning` turns requirements into dependency-ordered subtasks with file paths and test scenarios.
-- **Implement with review** — `/iterative:implementing` executes a tech plan with TDD, incremental code review, and PR creation.
+- **Implement with review** — `/iterative:implementing` executes a tech plan with TDD, code review, and PR creation.
 - **Fix review feedback** — `/fix-code-review-feedback` resolves PR review comments systematically, from local agent feedback or GitHub PR threads.
 
 These skills also compose into a full pipeline (brainstorm → plan → implement) — see [The End-to-End Workflow](#the-end-to-end-workflow) — but that's one way to use them, not the only way.
@@ -89,7 +89,7 @@ The core skills use an `iterative:` prefix in their name (e.g., `/iterative:brai
 | `iterative:design-exploration` | Design Direction Doc | Explore 5-10 radically different design approaches with interactive gallery, ratings, and iterative refinement |
 | `iterative:tech-planning` | Tech Plan | Structure requirements into dependency-ordered subtasks with file paths, test scenarios, architecture decisions |
 | `plan-review` | Review Report | 4 specialized reviewers analyze PRDs and tech plans via agent team with cross-validation |
-| `iterative:implementing` | Code → PR | Dependency-aware batch execution with TDD, incremental and final code reviews, then wrapup |
+| `iterative:implementing` | Code → PR | Dependency-aware batch execution with TDD, section and final code reviews, then wrapup |
 | `code-review` | Review Report | 8 reviewer personas (dynamic selection), structured JSON output, merge pipeline, P0-P3 severity |
 
 ### Supporting
@@ -145,7 +145,7 @@ The output is a **Tech Plan** with architecture decisions, file paths, and concr
 
 Run `/iterative:implementing` to execute a tech plan with dependency-aware batching. Subtasks grouped by their dependency graph run concurrently via worker subagents; batches execute sequentially to respect ordering. Each worker implements with TDD and commits.
 
-Code review happens throughout — incremental reviews for large sections, section-level reviews, and a final review of all branch changes. Wrapup verifies tests pass and creates the PR.
+Code review happens at section boundaries and at the end — section-level reviews for multi-section plans, and a final review of all branch changes. TDD and test verification gates catch issues between batches. Wrapup verifies tests pass and creates the PR.
 
 ## The End-to-End Workflow
 
@@ -163,8 +163,7 @@ tech-planning
      ↕ plan-review (1+ rounds)
      │
 implementing
-     ├─ execute batch ◄──────────┐
-     │   incremental code-review? ┘ (many subtasks)
+     ├─ execute batches (TDD + test gate)
      │
      ├─ code-review (per plan section)
      │   fix selected severities
@@ -196,7 +195,7 @@ Reviews are user-driven:
 - **Severity-based acceptance** — Findings grouped by severity (P0 / P1 / P2 / P3). User selects which levels to fix — not all-or-nothing.
 - **User-controlled loop** — After fixes, user chooses to re-review or continue. No automatic re-review.
 - **Parallel sub-agents** — Code reviewers run as parallel sub-agents returning structured JSON. Plan reviewers run as an agent team for cross-validation.
-- **Scaled to scope** — Full review for substantial work, quick review for moderate changes, skip for trivial config edits.
+- **Scaled to scope** — The tier model right-sizes automatically. Skip for trivial config edits.
 
 ## Design Decisions
 
@@ -207,7 +206,7 @@ Reviews are user-driven:
 | PRD is a living document | Tech planning and implementation update the PRD when they hit new constraints. Changes are noted with rationale. |
 | Tech plan describes what, not how | Plans capture architecture, query strategies, and test scenarios. They don't pre-write method bodies — that's brittle and gets followed blindly. The implementer writes the actual code. |
 | Dependency-aware batch execution | Subtasks are grouped by their dependency graph. Each batch runs concurrently, but batches execute sequentially. Not one-at-a-time (too slow), not all-at-once (ignores ordering). |
-| Incremental reviews for large sections | Plan sections with 6+ subtasks get code review offers between batches. Catches issues before later batches build on flawed code. |
+| TDD + test gates between batches | Each subtask uses TDD and a test verification gate catches missing tests after each batch. Issues are caught during development, not deferred to review. |
 | Severity-based fix acceptance | Not all review findings warrant fixing. User picks which severity levels to address. Keeps the user in control of review scope. |
 | Docs committed at every checkpoint | PRDs, plans, and design direction docs are committed incrementally — not left as uncommitted changes across workflow stages. A branch safety gate before the first commit prevents accidental commits to the default branch. |
 

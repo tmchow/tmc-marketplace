@@ -78,8 +78,6 @@ Pre-existing findings are separated in the output and excluded from the verdict.
 
 The always-on/conditional tier model naturally right-sizes reviews. A small config diff triggers 0 conditionals = 3 reviewers. A large feature diff touching auth and migrations triggers security + data-migrations = 5 reviewers. No separate "mode" is needed.
 
-Callers like `iterative:implementing` can pass an explicit reviewer list for lightweight checks (e.g., `correctness` only for incremental batch reviews). The skill spawns only those reviewers, skipping intent discovery and conditional selection.
-
 ## Output Format
 
 Findings are grouped by severity (P0, P1, P2, P3) rather than by reviewer. Each finding shows file, issue, reviewer(s), and confidence. Cross-reviewer agreement is shown inline. A coverage section reports suppressed findings, residual risks, and testing gaps.

@@ -51,8 +51,6 @@ All reviewers use P0–P3:
 
 By default, every review spawns all 3 always-on reviewers plus any applicable conditionals — the tier model naturally right-sizes. A small config change triggers 0 conditionals = 3 reviewers. A large auth feature triggers security + maybe reliability = 5 reviewers. No separate "mode" is needed.
 
-**Caller override.** When a caller (e.g., `iterative:implementing` for incremental batch reviews) wants a lighter check, it can pass an explicit reviewer list. The skill spawns only those reviewers, skipping Stage 2 (intent discovery) and Stage 3 (selection). Everything else (stages 1, 4-6, output format, merge pipeline) stays the same.
-
 ## How to Run
 
 ### Stage 1: Determine scope

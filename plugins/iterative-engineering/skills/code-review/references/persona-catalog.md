@@ -29,4 +29,3 @@ Spawned when the orchestrator identifies relevant patterns in the diff. The orch
 1. **Always spawn all 3 always-on personas.**
 2. **For each conditional persona**, the orchestrator reads the diff and decides whether the persona's domain is relevant. This is a judgment call, not a keyword match.
 3. **Announce the team** before spawning with a one-line justification per conditional reviewer selected.
-4. **Caller override.** When the caller passes an explicit reviewer list (e.g., `iterative:implementing` requesting `correctness` only for an incremental batch review), spawn only those reviewers. Skip conditional selection.

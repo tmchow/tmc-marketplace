@@ -20,7 +20,7 @@ Read the plan critically, create tasks, and implement with TDD, code review, and
 2. **Clarify before building** — Ask questions now, not after building the wrong thing
 3. **Test as you go** — Run tests after each change, not at the end
 4. **Commit as you go** — One commit per completed subtask, never batch commits at the end
-5. **Review at the right scope** — Incremental reviews for large plan sections, final review after each section, user chooses which severities to fix
+5. **Review at the right scope** — Section review after each plan section, final review of all branch changes, user chooses which severities to fix
 6. **Stop when blocked** — Ask for help rather than guessing
 
 ## Workflow
@@ -51,11 +51,10 @@ Read the plan critically, create tasks, and implement with TDD, code review, and
 4. Worker reads subtask from plan, loads referenced patterns, implements with TDD (tests first), commits, and updates task status (see task-worker agent for details).
 5. **Wait for batch completion.** All subagents in the batch must finish before the next batch starts.
 6. **Test verification gate.** After each batch completes, verify that feature subtasks produced test files. For each completed feature subtask, check: does the test file listed in the plan's `**Files:**` field exist, and does it contain tests matching the plan's `**Test scenarios:**`? If a feature subtask committed without tests, flag it immediately — do not continue to the next batch until resolved.
-7. **Incremental review (large sections only).** If the plan section has more than 5 subtasks, automatically run a quick code review after each batch — this catches issues before subsequent batches build on flawed code. Scope the review to `git diff <section-baseline-sha>..HEAD`. If issues are found, present them with severity acceptance before continuing. If clean, continue to the next batch silently.
-8. **Repeat** steps 3-7 for remaining batches.
-9. Update plan document progress (mark completed items).
-10. Mark section complete in task system.
-11. **Section code review.** Run after all subtasks in the plan section are complete, regardless of whether incremental reviews occurred (see When to Review table for trivial exceptions). **Skip if this is the only section in the plan** — Phase 3's final review will cover the same code plus simplification changes, so a section-level review would be redundant. For multi-section plans: scope to `git diff <section-baseline-sha>..HEAD`. Pass the baseline SHA and plan context to the `code-review` skill. **Wait for the review to complete and fixes to land before moving on.** Do not run anything else in parallel with code review — it needs to see the final code.
+7. **Repeat** steps 3-6 for remaining batches.
+8. Update plan document progress (mark completed items).
+9. Mark section complete in task system.
+10. **Section code review.** Run after all subtasks in the plan section are complete (see When to Review table for trivial exceptions). **Skip if this is the only section in the plan** — Phase 3's final review will cover the same code plus simplification changes, so a section-level review would be redundant. For multi-section plans: scope to `git diff <section-baseline-sha>..HEAD`. Pass the baseline SHA and plan context to the `code-review` skill. **Wait for the review to complete and fixes to land before moving on.** Do not run anything else in parallel with code review — it needs to see the final code.
 
 ### Phase 3: Finish
 
@@ -64,7 +63,7 @@ Read the plan critically, create tasks, and implement with TDD, code review, and
 1. Verify: all tasks complete, all section-level code reviews passed.
 2. **Detect base branch.** `git rev-parse --verify origin/main >/dev/null 2>&1 && echo main || echo master`. Use this for all branch-level scoping in Phase 3.
 3. **Simplification pass.** If `/simplify` is available, invoke it to review and clean up changed code. Otherwise, do a manual review of changed files (`git diff --name-only $(git merge-base HEAD <base>)..HEAD`) and apply behavior-preserving simplifications: flatten nesting, remove dead code, simplify expressions, collapse single-use variables. This is a single bounded pass — not a refactor. **Wait for simplification to complete before proceeding** — the final review must see simplified code.
-4. **Final review offer.** Present an interactive choice to the user (e.g., `AskUserQuestion` in Claude Code): A) Full code review of complete work (recommended), B) Quick review, C) Skip to finish.
+4. **Final review offer.** Present an interactive choice to the user (e.g., `AskUserQuestion` in Claude Code): A) Full code review of complete work (recommended), B) Skip to finish.
 5. If review: invoke `code-review` skill with scope `git diff $(git merge-base HEAD <base>)..HEAD` (all branch changes including simplification).
 6. **Severity acceptance (separate prompt).** If the review found issues at any severity, present severity acceptance (see Severity Acceptance section). This is its own prompt — do not combine it with next-step options, and do not skip it even when all issues are Medium/Low. "Clean" means zero findings at any severity. If no findings, skip to step 7.
 7. **Next steps (separate prompt, after fixes land or user skipped fixes).** Present an interactive choice to the user (e.g., `AskUserQuestion` in Claude Code): A) Another review round, B) Wrap up and create PR, C) I'll handle PR/merge myself (exit). Do not recommend wrap-up if fixes were just applied — recommend **another round** to verify. Recommend **wrap up** only when zero findings or user chose to skip all fixes.
@@ -129,11 +128,8 @@ Show the proposed task structure to the user for approval before creating.
 
 | Trigger | Review Level |
 |---------|-------------|
-| **Section review** (after all subtasks in a plan section complete) | Full or Quick — based on scope of changes. **Skip if single-section plan** — Phase 3 final review covers it |
-| **Incremental batch review** (sections with 6+ subtasks) | Quick review — lightweight check between batches |
+| **Section review** (after all subtasks in a plan section complete) | Full review via `code-review` skill. **Skip if single-section plan** — Phase 3 final review covers it |
 | **Trivial section** (config, single-line, renaming only) | Skip review — note in progress report |
-
-Assess scope to choose between full and quick: substantial feature work (multiple files, new logic) → full review via `code-review` skill. Moderate changes (few files, straightforward) → quick mode.
 
 ### Severity Acceptance
 
@@ -218,7 +214,6 @@ If reality diverges from the plan during implementation:
 
 After simplification pass completes (Phase 3 step 4), present options:
 - Full code review of complete work (recommended)
-- Quick review
 - Skip to finish
 
 After review (or skip), present options:
