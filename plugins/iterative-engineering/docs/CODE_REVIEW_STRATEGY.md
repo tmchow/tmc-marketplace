@@ -2,87 +2,102 @@
 
 ## Overview
 
-The code review system uses 5 built-in domain experts that run as an agent team.
+The code review system uses 8 reviewer personas organized in two tiers (3 always-on, 5 conditional). Reviewers run as parallel sub-agents returning structured JSON. A merge pipeline deduplicates, confidence-gates, and severity-normalizes findings before presenting them.
 
-## Built-in Reviewers
+## Reviewer Personas
 
-Five reviewers run natively on the host platform, each focused on a specific domain:
+### Always-on (every review)
 
-| Reviewer | Domain | Key Question |
-|----------|--------|--------------|
-| Correctness | Logic, edge cases, bugs, error handling | Does this work correctly? |
-| Security | Vulnerabilities, auth, input validation | Is this safe? |
-| Performance | Complexity, queries, memory, caching | Is this fast enough? |
-| Simplicity | Unjustified complexity, over-engineering, abstraction | Is the complexity justified? |
-| Testing | Coverage, quality, edge cases, plan scenarios | Is this well-tested? |
+| Persona | Focus |
+|---------|-------|
+| `correctness` | Logic errors, edge cases, state bugs, error propagation, intent compliance |
+| `testing` | Coverage gaps, weak assertions, brittle tests, missing edge case coverage |
+| `maintainability` | Coupling, complexity, naming, dead code, premature abstraction |
 
-Built-in reviewers run as an agent team, enabling cross-validation: reviewers can read each other's findings and challenge them.
+### Conditional (selected per diff)
+
+| Persona | Select when diff touches... |
+|---------|---------------------------|
+| `security` | Auth middleware, public endpoints, user input handling, permissions |
+| `performance` | Database queries, data transforms, caching, async code |
+| `api-contract` | Route definitions, serializers, type signatures, versioning |
+| `data-migrations` | Migration files, schema changes, backfill scripts |
+| `reliability` | Error handling, retries, timeouts, background jobs, async handlers |
+
+### Dynamic selection
+
+The orchestrator reads the full diff and reasons about which conditional personas are warranted. This is agent judgment — not keyword matching (brittle) or a scoring formula (fragile). The orchestrator announces the selected team with a one-line justification per conditional reviewer, making selection auditable and debuggable.
+
+## Persona Definition Structure
+
+Each persona follows a 4-section structure designed to activate expert reasoning rather than checklist execution:
+
+1. **Identity statement** — 2-sentence expert framing. "You ARE this expert" produces different results than "verify this checklist."
+2. **What you're hunting for** — 3-5 concrete failure modes recognizable on sight. Specific enough to pattern-match against code, broad enough to avoid becoming a narrow checklist.
+3. **Confidence calibration** — Per-persona guidance on what raises confidence from 0.50 to 0.90. This varies by domain: a security finding at 0.60 is actionable (cost of miss is high); a performance finding at 0.60 is noise (cost of miss is low, easy to measure later).
+4. **What you don't flag** — Front-loaded suppress conditions. The biggest quality problem in AI code review is noise. Leading with what NOT to flag trains the persona to self-filter before generating.
+
+## Intent Discovery
+
+Before selecting reviewers, the orchestrator understands what the change is trying to accomplish. Intent shapes *how hard each reviewer looks*, not which reviewers are selected. A 2-3 line summary is derived from commit messages and conversation context, then passed to every reviewer.
+
+## Sub-agent Execution
+
+Reviewers run as parallel sub-agents (not Agent Teams). Each receives a structured prompt assembled from:
+- Their persona definition file
+- Shared diff-scope rules
+- The JSON output contract
+- Review context (intent, files, diff)
+
+Sub-agents are read-only: they return structured JSON and do not edit files, run commands, or propose refactors.
+
+## JSON Output and Merge Pipeline
+
+Every reviewer returns JSON matching a shared schema with typed fields: title, severity (P0-P3), file, line, why_it_matters, confidence, evidence, pre_existing, and optional suggested_fix.
+
+The merge pipeline:
+1. **Validates** output against the schema, dropping malformed findings
+2. **Confidence-gates** at 0.50 (suppresses speculative findings)
+3. **Deduplicates** via fingerprint: `normalize(file) + line_bucket(line, ±3) + normalize(title)`. Merges keep highest severity, strongest evidence, and note cross-reviewer agreement.
+4. **Separates pre-existing** findings for independent triage
+5. **Sorts** by severity → confidence → file → line
 
 ## Diff-Anchored Scope
 
-All reviewers follow a three-tier scope model:
+All reviewers follow a three-tier scope model defined in a shared reference file:
 
 | Tier | Rule |
 |------|------|
 | **Primary** | Issues in the changed lines themselves |
 | **Secondary** | Issues in unchanged code directly caused or exposed by the changes |
-| **Pre-existing** | Significant issues in unchanged code unrelated to the changes, tagged `[Pre-existing]` |
+| **Pre-existing** | Significant issues in unchanged code unrelated to the changes, marked `pre_existing: true` |
 
-This prevents two failure modes:
-1. **Noise**: Flagging pre-existing issues at the same priority as change-related findings, overwhelming the author
-2. **Suppression**: Ignoring a real vulnerability just because it wasn't in the diff
-
-Pre-existing findings are separated in the final output and excluded from the merge verdict. They can be triaged independently (e.g., filed as a separate issue).
+Pre-existing findings are separated in the output and excluded from the verdict.
 
 ## Review Modes
 
 ### Full Mode (default)
-All 5 built-in reviewers. Used for final branch reviews and standalone reviews.
+All 3 always-on reviewers plus applicable conditional reviewers. Used for final branch reviews and standalone reviews.
 
 ### Quick Mode
-2-3 built-in reviewers auto-selected by change type. Used for incremental section reviews during implementation.
+2-3 reviewers from the always-on tier, auto-selected by change type. Used for incremental section reviews during implementation.
 
-| Changed files | Reviewers |
-|---------------|-----------|
-| Auth/security code | Security + Correctness |
-| Database/queries | Performance + Correctness |
-| New feature code | Correctness + Testing |
-| Refactoring | Correctness + Simplicity |
-| Tests only | Correctness + Testing |
-| Config/CI only | Correctness (minimal) |
+## Output Format
 
-## Synthesis
-
-The skill orchestrator (not the individual reviewers) synthesizes all findings:
-
-1. **Reconciliation.** When multiple reviewers flag the same issue, merge them and note agreement.
-2. **Pre-existing separation.** Findings tagged `[Pre-existing]` are pulled into their own section, excluded from the verdict.
-3. **Structured output.** Strengths section, then per-reviewer findings tables, then pre-existing issues, then verdict.
-4. **Verdict.** Based only on change-related findings: Ready to merge / Ready with fixes / Not ready.
-
-## Design Principles
-
-**Reviewers report, the skill synthesizes.** Individual reviewers only find and report issues. They never fix code, invoke other skills, or make decisions about what to do with findings. The orchestrating skill owns deduplication, presentation, and next-step decisions.
-
-**Agent teams for cross-validation.** Built-in reviewers can read each other's findings and challenge them, so they run as team members rather than isolated subagents.
-
-**Graceful degradation.** Missing agent teams? Fall back to parallel subagents. The 5 built-in reviewers still provide comprehensive coverage.
-
-**Diff-anchored, not file-anchored.** Reviewers focus on what changed, flag what's caused by the changes, and separately tag what's pre-existing. This keeps reviews actionable for the PR author while not discarding useful observations.
+Findings are grouped by severity (P0, P1, P2, P3) rather than by reviewer. Each finding shows file, issue, reviewer(s), and confidence. Cross-reviewer agreement is shown inline. A coverage section reports suppressed findings, residual risks, and testing gaps.
 
 ## Standalone Fix Loop
 
-When code-review runs standalone (not invoked from `iterative:implementing`), it owns the full fix-review cycle after presenting findings. When invoked from implementing, it returns findings directly; implementing has its own severity acceptance, subagent fix, and re-review loop.
+When running standalone (not from `iterative:implementing`), the skill owns the full fix-review cycle: severity acceptance → subagent fixes → re-review offer → post-fix options. When invoked from implementing, findings return directly; implementing has its own severity acceptance flow.
 
-### Why Two Modes
+## Design Principles
 
-Implementing orchestrates a multi-phase workflow (task execution, simplification, review, wrapup) and needs to control fix decisions within that broader context. Standalone code-review has no outer orchestrator, so it must handle the cycle itself. Both modes use the same pattern (severity acceptance, subagent fix, re-review) but ownership differs.
+**Reviewers report, the orchestrator synthesizes.** Individual reviewers find and report issues as structured JSON. They never fix code, invoke other skills, or make decisions about findings. The orchestrator owns deduplication, presentation, and next-step decisions.
 
-### Standalone Flow
+**Dynamic selection over fixed roster.** Not every diff needs every reviewer. The orchestrator selects the right reviewers for each diff, reducing noise from irrelevant domains.
 
-After synthesizing findings (Step 4), the standalone flow adds:
+**Structured output over prose.** JSON with typed fields enables deterministic dedup, confidence gating, and severity normalization. Prose output requires ad-hoc reconciliation.
 
-1. **Severity acceptance (Step 5).** Same pattern as implementing: Critical/High present, recommend fixing them; Medium/Low only, recommend proceeding. Interactive prompt, never combined with next-step options.
-2. **Subagent fix (Step 6).** A single subagent receives the filtered findings, affected files, and instructions to fix, test, and commit. Runs outside the main thread to preserve context for re-review. One agent handles all findings because fixes can interact across files.
-3. **Re-review (Step 7).** After fixes land, offer another round. Each round runs the full review flow (fresh team, fresh scope). Continues until clean or the user stops.
-4. **Post-fix options (Step 8).** PR creation (if on a feature branch), continue, or exit. Handled inline; no other skills invoked.
+**Per-persona confidence calibration.** A uniform "80% confidence threshold" ignores that confidence means different things per domain. Each persona calibrates its own threshold.
+
+**Diff-anchored, not file-anchored.** Reviewers focus on what changed, flag what's caused by the changes, and separately tag what's pre-existing. This keeps reviews actionable.
