@@ -8,7 +8,7 @@ Every skill works on its own. Pick what fits your situation:
 
 - **Explore designs visually** — `/iterative:design-exploration` generates 5-10 radically different interactive HTML prototypes in parallel, each with tuning controls, star ratings, and structured feedback export. Iterate across rounds until you converge on a direction. See [Design Exploration Strategy](./docs/DESIGN_EXPLORATION_STRATEGY.md).
 - **Brainstorm requirements** — `/iterative:brainstorming` shapes a problem through dialogue, adapting depth to scope (quick bug fix vs. full feature PRD). See [Brainstorming Strategy](./docs/BRAINSTORMING_STRATEGY.md).
-- **Review code** — `/code-review` runs 5 specialized reviewers (correctness, security, performance, simplicity, testing) with severity-based triage. See [Code Review Strategy](./docs/CODE_REVIEW_STRATEGY.md).
+- **Review code** — `/code-review` dynamically selects from 8 reviewer personas (3 always-on, 5 conditional), spawns them as parallel sub-agents with structured JSON output, and deduplicates findings through a merge pipeline. See [Code Review Strategy](./docs/CODE_REVIEW_STRATEGY.md).
 - **Review plans and PRDs** — `/plan-review` runs 4 reviewers (clarity, completeness, specificity, complexity) with cross-validation. See [Plan Review Strategy](./docs/PLAN_REVIEW_STRATEGY.md).
 - **Research open questions** — `/iterative:research` investigates prior art, constraints, and competitive landscape through parallel research agents.
 - **Plan implementation** — `/iterative:tech-planning` turns requirements into dependency-ordered subtasks with file paths and test scenarios.
@@ -90,7 +90,7 @@ The core skills use an `iterative:` prefix in their name (e.g., `/iterative:brai
 | `iterative:tech-planning` | Tech Plan | Structure requirements into dependency-ordered subtasks with file paths, test scenarios, architecture decisions |
 | `plan-review` | Review Report | 4 specialized reviewers analyze PRDs and tech plans via agent team with cross-validation |
 | `iterative:implementing` | Code → PR | Dependency-aware batch execution with TDD, incremental and final code reviews, then wrapup |
-| `code-review` | Review Report | 5 specialized reviewers, severity ratings, full or quick mode, diff-anchored scoping |
+| `code-review` | Review Report | 8 reviewer personas (dynamic selection), structured JSON output, merge pipeline, P0-P3 severity |
 
 ### Supporting
 
@@ -131,9 +131,9 @@ For the full rationale — scope-first routing, adaptive depth, PRD structure �
 
 ### Code Review
 
-Run `/code-review` on any branch to get findings from 5 specialized reviewers (correctness, security, performance, simplicity, testing) via agent team. Reviewers use diff-anchored scoping — primary focus on changed lines, with pre-existing issues tagged separately. Findings are grouped by severity (Critical / High / Medium / Low); you pick which levels to fix.
+Run `/code-review` on any branch to get findings from dynamically selected reviewer personas. The orchestrator reads the diff, selects from 8 personas (3 always-on: correctness, testing, maintainability; 5 conditional: security, performance, api-contract, data-migrations, reliability), and spawns them as parallel sub-agents returning structured JSON. A merge pipeline deduplicates, confidence-gates, and severity-normalizes findings. Results are grouped by severity (P0/P1/P2/P3); you pick which levels to fix.
 
-For the full rationale — reviewer architecture, diff anchoring, severity model — see [Code Review Strategy](./docs/CODE_REVIEW_STRATEGY.md).
+For the full rationale — persona selection, JSON output, merge pipeline — see [Code Review Strategy](./docs/CODE_REVIEW_STRATEGY.md).
 
 ### Tech Planning
 
@@ -193,9 +193,9 @@ Each stage produces an artifact, offers iterative review, and hands off when the
 Reviews are user-driven:
 
 - **Offered, never forced** — Every review is presented as a choice. The user can skip.
-- **Severity-based acceptance** — Findings grouped by severity (Critical / High / Medium / Low). User selects which levels to fix — not all-or-nothing.
+- **Severity-based acceptance** — Findings grouped by severity (P0 / P1 / P2 / P3). User selects which levels to fix — not all-or-nothing.
 - **User-controlled loop** — After fixes, user chooses to re-review or continue. No automatic re-review.
-- **Agent teams with fallback** — Reviewers run as an agent team so they can cross-validate findings (the complexity/debt reviewer can push back on completeness suggestions). When agent teams aren't available, reviews automatically fall back to parallel subagents.
+- **Parallel sub-agents** — Code reviewers run as parallel sub-agents returning structured JSON. Plan reviewers run as an agent team for cross-validation.
 - **Scaled to scope** — Full review for substantial work, quick review for moderate changes, skip for trivial config edits.
 
 ## Design Decisions
@@ -226,17 +226,27 @@ Reviews are user-driven:
 
 ### Review Agents (Code Review)
 
-5 built-in reviewers analyze code via agent team:
+8 personas in two tiers, running as parallel sub-agents with structured JSON output:
+
+**Always-on:**
 
 | Agent | Focus |
 |-------|-------|
-| `correctness-reviewer` | Logic errors, edge cases, bugs, silent failures, plan compliance |
-| `security-reviewer` | Vulnerabilities, auth, input validation, project conventions |
-| `performance-reviewer` | Algorithmic complexity, queries, memory, caching |
-| `simplicity-reviewer` | Unjustified complexity, over-engineering, unnecessary abstraction |
-| `testing-reviewer` | Coverage, test quality, edge cases, plan test scenarios |
+| `correctness-reviewer` | Logic errors, edge cases, state bugs, error propagation |
+| `testing-reviewer` | Coverage gaps, weak assertions, brittle tests |
+| `maintainability-reviewer` | Coupling, complexity, naming, dead code, abstraction debt |
 
-Built-in reviewers use diff-anchored scoping — primary focus on changed lines, with pre-existing issues tagged separately for independent triage. They run as teammates who can cross-validate findings. When agent teams are unavailable, reviews fall back to parallel subagent execution.
+**Conditional (selected per diff):**
+
+| Agent | Focus |
+|-------|-------|
+| `security-reviewer` | Injection, auth/authz bypasses, secrets, SSRF/path traversal |
+| `performance-reviewer` | N+1 queries, unbounded memory, missing pagination, blocking I/O |
+| `api-contract-reviewer` | Breaking changes, missing versioning, inconsistent error shapes |
+| `data-migrations-reviewer` | Irreversible migrations, missing backfills, deploy-window breaks |
+| `reliability-reviewer` | Missing error handling, retry storms, missing timeouts, error swallowing |
+
+Reviewers use diff-anchored scoping — primary focus on changed lines, with pre-existing issues tagged separately. Findings are deduplicated via fingerprint matching, confidence-gated, and severity-normalized before presentation.
 
 ### Workflow Agents
 
@@ -257,7 +267,7 @@ For deeper rationale behind each skill's design:
 |----------|--------|
 | [Design Exploration Strategy](./docs/DESIGN_EXPLORATION_STRATEGY.md) | Divergence axes, the gallery workflow, parallel agent architecture, iframe isolation, the direction doc |
 | [Brainstorming Strategy](./docs/BRAINSTORMING_STRATEGY.md) | Scope-first routing, Quick/Standard/Full paths, adaptive depth, PRD structure |
-| [Code Review Strategy](./docs/CODE_REVIEW_STRATEGY.md) | 5 specialized reviewers, diff-anchored scoping, severity model, agent team design |
+| [Code Review Strategy](./docs/CODE_REVIEW_STRATEGY.md) | 8 persona catalog, dynamic selection, JSON output, merge pipeline, P0-P3 severity |
 | [Plan Review Strategy](./docs/PLAN_REVIEW_STRATEGY.md) | 4 specialized reviewers, cross-validation, priority model, agent team design |
 
 ## Changelog
