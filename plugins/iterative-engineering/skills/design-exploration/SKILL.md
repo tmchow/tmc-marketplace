@@ -490,6 +490,7 @@ TaskOutput(task_id=<agent_2_id>, block=true, timeout=300000)
 The agent has the `design-prototyping` skill preloaded, which contains the complete file format, control schema, styling rules, and pre-output checklist. The orchestrator prompt only needs variation-specific content. Keep it lean.
 
 > Write `{exploration_dir}/_var-{ID}.html`. Follow the design-prototyping loaded in your context.
+> CRITICAL: The metadata block MUST use exactly `id="variation-meta"` — this ID is machine-parsed by the assembly script.
 
 Then include ONLY:
 
