@@ -74,13 +74,11 @@ All reviewers follow a three-tier scope model defined in a shared reference file
 
 Pre-existing findings are separated in the output and excluded from the verdict.
 
-## Review Modes
+## Review Scope
 
-### Full Mode (default)
-All 3 always-on reviewers plus applicable conditional reviewers. Used for final branch reviews and standalone reviews.
+The always-on/conditional tier model naturally right-sizes reviews. A small config diff triggers 0 conditionals = 3 reviewers. A large feature diff touching auth and migrations triggers security + data-migrations = 5 reviewers. No separate "mode" is needed.
 
-### Quick Mode
-2-3 reviewers from the always-on tier, auto-selected by change type. Used for incremental section reviews during implementation.
+Callers like `iterative:implementing` can pass an explicit reviewer list for lightweight checks (e.g., `correctness` only for incremental batch reviews). The skill spawns only those reviewers, skipping intent discovery and conditional selection.
 
 ## Output Format
 

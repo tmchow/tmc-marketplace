@@ -47,23 +47,11 @@ All reviewers use P0–P3:
 | `data-migrations-reviewer` | Migrations, schema changes, backfills |
 | `reliability-reviewer` | Error handling, retries, timeouts, background jobs |
 
-## Review Modes
+## Review Scope
 
-### Full Mode (default)
-Spawns all 3 always-on reviewers plus any applicable conditional reviewers.
+By default, every review spawns all 3 always-on reviewers plus any applicable conditionals — the tier model naturally right-sizes. A small config change triggers 0 conditionals = 3 reviewers. A large auth feature triggers security + maybe reliability = 5 reviewers. No separate "mode" is needed.
 
-### Quick Mode
-Spawns 2-3 from the always-on tier. Auto-detect from changed files when the caller doesn't specify a type:
-
-| Changed files | Reviewers |
-|---------------|-----------|
-| Auth/security code | correctness + security |
-| Database/queries/migrations | correctness + performance |
-| New feature code | correctness + testing |
-| Refactoring (same tests, restructured code) | correctness + maintainability |
-| Test files only | correctness + testing |
-| Config/CI only | correctness (single reviewer — minimal review) |
-| Mixed or unclear | Default to full mode |
+**Caller override.** When a caller (e.g., `iterative:implementing` for incremental batch reviews) wants a lighter check, it can pass an explicit reviewer list. The skill spawns only those reviewers, skipping Stage 2 (intent discovery) and Stage 3 (selection). Everything else (stages 1, 4-6, output format, merge pipeline) stays the same.
 
 ## How to Run
 
