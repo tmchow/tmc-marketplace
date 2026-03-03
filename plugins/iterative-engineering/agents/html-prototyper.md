@@ -3,7 +3,7 @@ name: html-prototyper
 description: Internal implementation detail of the design-exploration skill. Do not invoke directly — requires a structured variation spec that only the design-exploration orchestrator provides. Writes one self-contained HTML file per variation with embedded metadata.
 tools: Write
 model: sonnet
-permissionMode: acceptEdits
+permissionMode: bypassPermissions
 background: true
 maxTurns: 1
 skills:
