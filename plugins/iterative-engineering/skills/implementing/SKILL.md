@@ -135,28 +135,37 @@ Show the proposed task structure to the user for approval before creating.
 
 ### Severity Acceptance
 
-**This is its own prompt — do not combine it with next-step options.** Present severity acceptance whenever the review has findings at ANY severity, including Medium/Low-only reviews. Do not interpret "no Critical/High" as "clean" — clean means zero findings. **Use the platform's interactive question tool** — `AskUserQuestion` (Claude Code) or `request_user_input` (Codex) — for all severity acceptance prompts. Do not print options as text.
+**This is its own prompt — do not combine it with next-step options.** Present severity acceptance whenever the review has findings at ANY severity, including Medium/Low-only reviews. Do not interpret "no Critical/High" as "clean" — clean means zero findings. **Use the platform's interactive question tool** — `AskUserQuestion` (Claude Code) or `request_user_input` (Codex) — for all severity acceptance prompts. Do not print options as text. Both platforms provide an automatic "Other" free-form option — do not add one manually.
 
-**When Critical or High issues exist:**
+Present a **single prompt** listing all severity levels with findings. No intermediate "choose which..." step.
 
-Present an interactive choice:
-- **Fix Critical + High (Recommended)** — N Critical, N High
-- **Choose which severity levels to fix** — select from all levels
+**Claude Code** — use `AskUserQuestion` with `multiSelect: true`:
+
+When Critical or High issues exist, pre-check the Critical+High option:
+- ☑ **Critical + High (Recommended)** — N Critical, N High
+- ☐ **Medium** — N issues
+- ☐ **Low** — N issues
+
+When only Medium/Low issues exist, nothing pre-checked:
+- ☐ **Medium** — N issues
+- ☐ **Low** — N issues
+
+Only include severity levels that have findings.
+
+**Codex** — use `request_user_input` (single-select, build combined options):
+
+When Critical or High issues exist:
+- **Fix Critical + High (Recommended)** — N issues
+- **Fix Critical + High + Medium** — N issues
+- **Fix all** — N issues
 - **Skip fixes**
 
-If the user accepts the recommendation, fix Critical + High. If they choose, present an interactive multi-select of severity levels that have findings:
-- Critical (N issues)
-- High (N issues)
-- Medium (N issues)
-- Low (N issues)
+When only Medium/Low issues exist:
+- **Fix Medium only** — N issues
+- **Fix Medium + Low** — N issues
+- **Skip fixes**
 
-**When only Medium/Low issues exist (no Critical/High):**
-
-Present an interactive choice:
-- **Choose which severity levels to fix** — select from Medium, Low
-- **Proceed without fixes (Recommended)**
-
-If the user chooses to fix, present the interactive multi-select of severity levels with findings.
+Only include options where findings exist at those levels. Omit options that would duplicate another (e.g., if no Low, omit "Fix all" since it equals the line above).
 
 ### Applying Fixes
 

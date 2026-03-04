@@ -169,26 +169,37 @@ After presenting findings and verdict (Stage 6), handle the full fix-review cycl
 
 #### Step 5: Severity Acceptance
 
-**This is its own prompt — do not combine it with next-step options.** Present severity acceptance whenever the review has findings at ANY severity. Do not interpret "no P0/P1" as "clean" — clean means zero findings. If zero findings, skip to Step 8. **Use the platform's interactive question tool** — `AskUserQuestion` (Claude Code) or `request_user_input` (Codex) — for all severity acceptance prompts.
+**This is its own prompt — do not combine it with next-step options.** Present severity acceptance whenever the review has findings at ANY severity. Do not interpret "no P0/P1" as "clean" — clean means zero findings. If zero findings, skip to Step 8. **Use the platform's interactive question tool** — `AskUserQuestion` (Claude Code) or `request_user_input` (Codex) — for all severity acceptance prompts. Both platforms provide an automatic "Other" free-form option — do not add one manually.
 
-**When P0 or P1 issues exist:**
+Present a **single prompt** listing all severity levels with findings. No intermediate "choose which..." step.
 
-Present an interactive choice:
-- **Fix P0 + P1 (Recommended)** — N P0, N P1
-- **Choose which severity levels to fix** — select from all levels
+**Claude Code** — use `AskUserQuestion` with `multiSelect: true`:
+
+When P0 or P1 issues exist, pre-check the P0+P1 option:
+- ☑ **P0 + P1 (Recommended)** — N Critical, N High
+- ☐ **P2** — Moderate (N issues)
+- ☐ **P3** — Low (N issues)
+
+When only P2/P3 issues exist, nothing pre-checked:
+- ☐ **P2** — Moderate (N issues)
+- ☐ **P3** — Low (N issues)
+
+Only include severity levels that have findings.
+
+**Codex** — use `request_user_input` (single-select, build combined options):
+
+When P0 or P1 issues exist:
+- **Fix P0 + P1 (Recommended)** — N issues
+- **Fix P0 + P1 + P2** — N issues
+- **Fix all** — N issues
 - **Skip fixes**
 
-If the user accepts the recommendation, fix P0 + P1. If they choose, present an interactive multi-select of severity levels with findings:
-- P0 (N issues)
-- P1 (N issues)
-- P2 (N issues)
-- P3 (N issues)
+When only P2/P3 issues exist:
+- **Fix P2 only** — N issues
+- **Fix P2 + P3** — N issues
+- **Skip fixes**
 
-**When only P2/P3 issues exist:**
-
-Present an interactive choice:
-- **Choose which severity levels to fix** — select from P2, P3
-- **Proceed without fixes (Recommended)**
+Only include options where findings exist at those levels. Omit options that would duplicate another (e.g., if no P3, omit "Fix all" since it equals the line above).
 
 #### Step 6: Apply Fixes via Subagent
 
