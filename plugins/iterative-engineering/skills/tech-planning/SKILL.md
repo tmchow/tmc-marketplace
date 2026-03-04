@@ -79,16 +79,16 @@ A plan is ready when an implementer can start working without asking clarifying 
 
 ### Phase 4: Review and Handoff
 
-1. Present an interactive choice to the user (e.g., `AskUserQuestion` in Claude Code): A) Review the plan (recommended), B) Start implementing, C) I'll take it from here (exit).
+1. Present an interactive choice to the user — `AskUserQuestion` (Claude Code) or `request_user_input` (Codex): A) Review the plan (recommended), B) Start implementing, C) I'll take it from here (exit).
 2. If review: invoke `plan-review` skill. Plan-review returns findings — tech-planning owns the fix loop.
 3. Fix issues identified by plan-review. **Commit the updated plan.**
-4. Present an interactive choice (e.g., `AskUserQuestion`) — see recommendation logic below: A) Another review round, B) Start implementing, C) I'll take it from here (exit).
+4. Present an interactive choice — see recommendation logic below: A) Another review round, B) Start implementing, C) I'll take it from here (exit).
 5. Repeat steps 2-4 if user chooses another round.
 6. If user chooses implementing: invoke `iterative:implementing` skill (implementing handles task creation internally after reading the plan).
 
 **Recommendation logic for step 4.** Shift the recommended option based on what the review found:
-- Review found Critical or High issues (now fixed) → recommend **another review round** to verify the fixes landed well
-- Review found only Medium/Low issues, or a round came back clean → recommend **start implementing** — further rounds will have diminishing returns
+- Review found HIGH issues (now fixed) → recommend **another review round** to verify the fixes landed well
+- Review found only MEDIUM/LOW issues, or a round came back with no findings → recommend **start implementing** — further rounds will have diminishing returns
 - After 3+ rounds → recommend **start implementing** regardless, and note that additional passes are unlikely to surface significant issues
 
 ## PRD Alignment
@@ -120,7 +120,7 @@ The tech plan's `**PRD:**` header links to the PRD document. If the PRD is updat
 
 ## Transition Points
 
-**Always present options to the user at transition points using the interactive question tool** (e.g., `AskUserQuestion` in Claude Code) — never just print options as text or end the turn without presenting a choice.
+**Always present options to the user at transition points using the platform's interactive question tool** — `AskUserQuestion` (Claude Code) or `request_user_input` (Codex). Never print options as text or end the turn without presenting a choice.
 
 After technical plan is written, and after each review round, present options:
 - Review the plan — specialized agents analyze for issues (recommended on first pass)

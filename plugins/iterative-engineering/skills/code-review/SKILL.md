@@ -169,7 +169,7 @@ After presenting findings and verdict (Stage 6), handle the full fix-review cycl
 
 #### Step 5: Severity Acceptance
 
-**This is its own prompt — do not combine it with next-step options.** Present severity acceptance whenever the review has findings at ANY severity. Do not interpret "no P0/P1" as "clean" — clean means zero findings. If zero findings, skip to Step 8. **Use the interactive question tool** for all severity acceptance prompts.
+**This is its own prompt — do not combine it with next-step options.** Present severity acceptance whenever the review has findings at ANY severity. Do not interpret "no P0/P1" as "clean" — clean means zero findings. If zero findings, skip to Step 8. **Use the platform's interactive question tool** — `AskUserQuestion` (Claude Code) or `request_user_input` (Codex) — for all severity acceptance prompts.
 
 **When P0 or P1 issues exist:**
 
@@ -206,7 +206,7 @@ If another round: run the full Stage 1–Step 7 flow again (fresh sub-agents, fr
 
 #### Step 8: Post-fix Options
 
-After the fix-review cycle completes (clean verdict or user chose to stop), present next steps via the interactive question tool.
+After the fix-review cycle completes (clean verdict or user chose to stop), present next steps via the platform's interactive question tool.
 
 **On a feature branch:**
 - **Create a PR (Recommended)** — push and open a pull request

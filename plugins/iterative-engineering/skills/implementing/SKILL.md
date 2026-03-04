@@ -37,7 +37,7 @@ Read the plan critically, create tasks, and implement with TDD, code review, and
 2. **Review critically.** If anything is unclear or ambiguous, ask now. Do not skip this — better to clarify now than build the wrong thing.
 3. **Workspace isolation.** See Workspace Setup section.
 4. **Create tasks from the plan.** See Task Creation section.
-5. **Execution preference.** Present an interactive choice to the user (e.g., `AskUserQuestion` in Claude Code): A) Execute all tasks, report when done (default), B) Pause after each plan section for feedback, C) Pause after each subtask for feedback.
+5. **Execution preference.** Present an interactive choice to the user — `AskUserQuestion` (Claude Code) or `request_user_input` (Codex): A) Execute all tasks, report when done (default), B) Pause after each plan section for feedback, C) Pause after each subtask for feedback.
 
 ### Phase 2: Execute (repeat per plan section)
 
@@ -63,10 +63,10 @@ Read the plan critically, create tasks, and implement with TDD, code review, and
 1. Verify: all tasks complete, all section-level code reviews passed.
 2. **Detect base branch.** `git rev-parse --verify origin/main >/dev/null 2>&1 && echo main || echo master`. Use this for all branch-level scoping in Phase 3.
 3. **Simplification pass.** If `/simplify` is available, invoke it to review and clean up changed code. Otherwise, do a manual review of changed files (`git diff --name-only $(git merge-base HEAD <base>)..HEAD`) and apply behavior-preserving simplifications: flatten nesting, remove dead code, simplify expressions, collapse single-use variables. This is a single bounded pass — not a refactor. **Wait for simplification to complete before proceeding** — the final review must see simplified code.
-4. **Final review offer.** Present an interactive choice to the user (e.g., `AskUserQuestion` in Claude Code): A) Full code review of complete work (recommended), B) Skip to finish.
+4. **Final review offer.** Present an interactive choice to the user: A) Full code review of complete work (recommended), B) Skip to finish.
 5. If review: invoke `code-review` skill with scope `git diff $(git merge-base HEAD <base>)..HEAD` (all branch changes including simplification).
 6. **Severity acceptance (separate prompt).** If the review found issues at any severity, present severity acceptance (see Severity Acceptance section). This is its own prompt — do not combine it with next-step options, and do not skip it even when all issues are Medium/Low. "Clean" means zero findings at any severity. If no findings, skip to step 7.
-7. **Next steps (separate prompt, after fixes land or user skipped fixes).** Present an interactive choice to the user (e.g., `AskUserQuestion` in Claude Code): A) Another review round, B) Wrap up and create PR, C) I'll handle PR/merge myself (exit). Do not recommend wrap-up if fixes were just applied — recommend **another round** to verify. Recommend **wrap up** only when zero findings or user chose to skip all fixes.
+7. **Next steps (separate prompt, after fixes land or user skipped fixes).** Present an interactive choice to the user: A) Another review round, B) Wrap up and create PR, C) I'll handle PR/merge myself (exit). Do not recommend wrap-up if fixes were just applied — recommend **another round** to verify. Recommend **wrap up** only when zero findings or user chose to skip all fixes.
 8. Repeat steps 5-7 if user chooses another round.
 
 ## Workspace Setup
@@ -93,6 +93,8 @@ Task creation happens inside Phase 1, after the plan is read and clarified. This
 ### Task Tracking
 
 Use built-in task tracking for all plans. Tasks are lightweight and session-scoped.
+
+**Platform mapping:** Claude Code provides task objects (`TaskCreate`, `TaskUpdate`, `TaskList`, `TaskGet`) — use these directly. Codex composes equivalent tracking from `update_plan` (plan steps as task state) + `spawn_agent`/`wait`/`close_agent` (delegation). The workflow is the same: create tasks from the plan, track status, and mark complete — only the tool names differ.
 
 ### Parsing the Plan
 
@@ -133,7 +135,7 @@ Show the proposed task structure to the user for approval before creating.
 
 ### Severity Acceptance
 
-**This is its own prompt — do not combine it with next-step options.** Present severity acceptance whenever the review has findings at ANY severity, including Medium/Low-only reviews. Do not interpret "no Critical/High" as "clean" — clean means zero findings. **Use the interactive question tool** (e.g., `AskUserQuestion` in Claude Code) for all severity acceptance prompts — do not print options as text.
+**This is its own prompt — do not combine it with next-step options.** Present severity acceptance whenever the review has findings at ANY severity, including Medium/Low-only reviews. Do not interpret "no Critical/High" as "clean" — clean means zero findings. **Use the platform's interactive question tool** — `AskUserQuestion` (Claude Code) or `request_user_input` (Codex) — for all severity acceptance prompts. Do not print options as text.
 
 **When Critical or High issues exist:**
 
@@ -176,7 +178,7 @@ By the time implementing hands off to `implementation-wrapup`, all code reviews 
 If reality diverges from the plan during implementation:
 
 - **Minor adjustments** (different file path, small API change): update the plan document in place and continue. Note the change in the progress report.
-- **Significant divergence** (missing requirement, wrong approach): stop and report the divergence. Present an interactive choice (e.g., `AskUserQuestion`): A) Update the plan and continue, B) Continue as-is, C) Stop execution. If the divergence contradicts the PRD (not just the tech plan), update the PRD as well — it's the requirements source of truth for downstream validation.
+- **Significant divergence** (missing requirement, wrong approach): stop and report the divergence. Present an interactive choice: A) Update the plan and continue, B) Continue as-is, C) Stop execution. If the divergence contradicts the PRD (not just the tech plan), update the PRD as well — it's the requirements source of truth for downstream validation.
 - **Blocked by external dependency**: mark the subtask as blocked, skip to next unblocked subtask, and report.
 
 ## When Things Go Wrong
@@ -190,7 +192,7 @@ If reality diverges from the plan during implementation:
 
 **If a subtask fails:**
 1. Report the failure clearly — what was attempted and what went wrong
-2. Present an interactive choice (e.g., `AskUserQuestion`): A) Retry with a different approach, B) Skip and continue to next subtask, C) Stop execution
+2. Present an interactive choice: A) Retry with a different approach, B) Skip and continue to next subtask, C) Stop execution
 
 ## Anti-Patterns to Avoid
 
@@ -210,7 +212,7 @@ If reality diverges from the plan during implementation:
 
 ## Transition Points
 
-**Always present options to the user at transition points using the interactive question tool** (e.g., `AskUserQuestion` in Claude Code) — never just print options as text or end the turn without presenting a choice.
+**Always present options to the user at transition points using the platform's interactive question tool** — `AskUserQuestion` (Claude Code) or `request_user_input` (Codex). Never print options as text or end the turn without presenting a choice.
 
 After simplification pass completes (Phase 3 step 4), present options:
 - Full code review of complete work (recommended)

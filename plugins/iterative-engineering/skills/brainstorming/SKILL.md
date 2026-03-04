@@ -52,7 +52,7 @@ Before asking any questions, assess the scope of work from the initial message a
 | **Full** | Large feature, cross-cutting change, new subsystem | Many files, architectural choices, multiple stakeholders or flows |
 
 3. **If scope is ambiguous:** Ask one targeted question to disambiguate, then assess.
-4. **Present scope recommendation.** Lead with a brief rationale, then present the three options using an interactive choice (e.g., `AskUserQuestion` in Claude Code), marking the assessed scope as `(Recommended)`:
+4. **Present scope recommendation.** Lead with a brief rationale, then present the three options using the platform's interactive question tool — `AskUserQuestion` (Claude Code) or `request_user_input` (Codex) — marking the assessed scope as `(Recommended)`:
    - **Quick** — focused clarification, confirm understanding, then implement
    - **Standard** — collaborative Q&A, summarize deliverables, option for tech plan
    - **Full** — deep exploration, complete PRD, review and handoff
@@ -121,7 +121,7 @@ Present this inline in the conversation. Do not create a document or commit anyt
 
 ### Exit Options
 
-Present an interactive choice (e.g., `AskUserQuestion` in Claude Code):
+Present an interactive choice:
 - **Implement directly (Recommended)** — scope is clear, go build it
 - **Create a tech plan** — want a structured implementation plan before building
 
@@ -156,7 +156,7 @@ For large features, cross-cutting changes, and new subsystems. Full ceremony —
 - **Explore design directions** — invoke `iterative:design-exploration` to produce directions the user can see and react to. Use Map the Space answers as constraints and goals to guide the exploration.
 - **Discuss approaches first** — present text-based broad directions as above, then optionally explore later. Better when the user already has a direction in mind or wants to narrow conceptually first.
 
-Present this as an interactive choice (e.g., `AskUserQuestion`). The signal to offer this is any task where the user needs to *see or experience* options to meaningfully choose — visual concepts, interaction patterns, flows, or a combination. This choice comes after Map the Space, so the exploration is grounded in the initial scoping, not untethered. If the user picks exploration, the chosen direction feeds into Deep Exploration for remaining requirements and scope decisions. If they pick text-based directions, proceed as normal — design-exploration remains available later in Review and Handoff.
+Present this as an interactive choice. The signal to offer this is any task where the user needs to *see or experience* options to meaningfully choose — visual concepts, interaction patterns, flows, or a combination. This choice comes after Map the Space, so the exploration is grounded in the initial scoping, not untethered. If the user picks exploration, the chosen direction feeds into Deep Exploration for remaining requirements and scope decisions. If they pick text-based directions, proceed as normal — design-exploration remains available later in Review and Handoff.
 
 ### Deep Exploration
 
@@ -188,8 +188,8 @@ Present this as an interactive choice (e.g., `AskUserQuestion`). The signal to o
 
 2. **Surface user decisions.** If any questions were classified as "user decision needed," present them before the main options — the brainstorming context is fresh. For each: if natural options exist, present as multiple choice; if truly open-ended, ask free-form. Include a "Decide later" option. Answered questions: update the PRD. Deferred: leave in Open Questions. One question at a time.
 
-3. **Present options.** Interactive choice (e.g., `AskUserQuestion` in Claude Code). AskUserQuestion provides an automatic "Other" option — use that as the exit path. Show up to 4 explicit options, selected from this priority order:
-   - **Review the PRD (Recommended)** — 4 specialized reviewers analyze for issues (always show)
+3. **Present options.** Interactive choice. Both `AskUserQuestion` (Claude Code) and `request_user_input` (Codex) provide an automatic "Other" option — use that as the exit path. Show up to 4 explicit options, selected from this priority order:
+   - **Review the PRD (Recommended)** — dynamically selected reviewers analyze for issues (always show)
    - **Explore design directions** — generate visual/UX variations (show when the product has any user-facing surface — web apps, mobile apps, dashboards, CLIs with rich output, landing pages, etc. Only hide for pure backend/infrastructure/library work with no user-facing surface)
    - **Research open questions** — resolve unknowns through investigation (only show when applicable)
    - **Continue to technical planning** — create a detailed implementation plan (always show)
@@ -287,7 +287,7 @@ The PRD should give enough context for someone to create a detailed technical pl
 
 ## Transition Points
 
-**Always present options to the user at transition points using the interactive question tool** (e.g., `AskUserQuestion` in Claude Code) — never just print options as text or end the turn without presenting a choice.
+**Always present options to the user at transition points using the platform's interactive question tool** — `AskUserQuestion` (Claude Code) or `request_user_input` (Codex). Never print options as text or end the turn without presenting a choice.
 
 - **Quick:** Confirmation gate only — no transition menu. Skill exits after user confirms understanding.
 - **Standard:** Implement directly (recommended) | Create a tech plan | Other (exit)

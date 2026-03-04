@@ -467,7 +467,8 @@ For each planned variation, spawn an `html-prototyper` agent in the background w
 **Critical — permissions:** The agent frontmatter declares `permissionMode: acceptEdits`, but this does NOT propagate automatically on all platforms. You MUST explicitly grant write/file permissions when spawning. Platform examples:
 
 - **Claude Code:** Use the Agent tool with `subagent_type: "iterative-engineering:html-prototyper"`, `mode: "bypassPermissions"`, and `run_in_background: true`.
-- **Other platforms:** Use whatever mechanism your platform provides to spawn a background agent with file-write permissions. The agent only needs the `Write` tool.
+- **Codex:** Use `spawn_agent` with write permissions enabled. The agent only needs the `Write` tool.
+- **Other platforms:** Use whatever mechanism your platform provides to spawn a background agent with file-write permissions.
 
 **Waiting for agents — MANDATORY PATTERN:**
 
@@ -481,7 +482,9 @@ TaskOutput(task_id=<agent_2_id>, block=true, timeout=300000)
 ... one per agent, all in parallel
 ```
 
-**Other platforms:** Use whatever your platform provides to block until a background agent completes (e.g., awaiting a task handle, polling an agent status API). The key requirement is: do NOT proceed to assembly until every agent has finished writing its file.
+**Codex:** Use `wait` to block until each spawned agent completes, then `close_agent` to release it. Call `wait` for each agent before proceeding to assembly.
+
+**Other platforms:** Use whatever your platform provides to block until a background agent completes. The key requirement is: do NOT proceed to assembly until every agent has finished writing its file.
 
 **NEVER use `sleep N && ls` to check if files exist.** This is the single most common orchestrator mistake. It wastes tokens, adds latency, triggers permission prompts, and can proceed before agents finish writing.
 
@@ -703,4 +706,4 @@ if the user changed controls from defaults. Include any notes the user added.]
 - **Orchestrator reading variation files to fix partial output** — If an agent wrote a partial or invalid HTML file, do NOT read it to "understand what's needed." This reads variation content into the orchestrator's context. Instead, delete the file and re-spawn the agent.
 - **Wrong round number** — Check existing files in the directory before naming.
 - **Unnecessary filesystem checks** — Don't verify plugin file paths (`ls`, `find`) before running commands. Run commands directly.
-- **Sleep-polling for agent completion (THE #2 mistake)** — Never use `sleep N && ls` to check if agents finished. Use your platform's blocking mechanism to wait for each agent (e.g., Claude Code: `TaskOutput(task_id=<id>, block=true, timeout=300000)` for each agent in a single message). This is mandatory, not a suggestion. `sleep && ls` wastes minutes of wall time, burns tokens on repeated bash calls, and can proceed to assembly before an agent finishes writing.
+- **Sleep-polling for agent completion (THE #2 mistake)** — Never use `sleep N && ls` to check if agents finished. Use your platform's blocking mechanism to wait for each agent (Claude Code: `TaskOutput(task_id=<id>, block=true, timeout=300000)` for each agent in a single message; Codex: `wait` + `close_agent` for each spawned agent). This is mandatory, not a suggestion. `sleep && ls` wastes minutes of wall time, burns tokens on repeated bash calls, and can proceed to assembly before an agent finishes writing.

@@ -1,0 +1,80 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Plan Review Findings",
+  "description": "Structured output schema for plan review sub-agents",
+  "type": "object",
+  "required": ["reviewer", "findings", "residual_concerns"],
+  "properties": {
+    "reviewer": {
+      "type": "string",
+      "description": "Persona name that produced this output (e.g., 'prd-reviewer', 'coherence-reviewer', 'skeptic-reviewer')"
+    },
+    "findings": {
+      "type": "array",
+      "description": "List of plan review findings. Empty array if no issues found.",
+      "items": {
+        "type": "object",
+        "required": ["title", "priority", "section", "line", "why_it_matters", "confidence", "evidence"],
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Short, specific issue title. 10 words or fewer.",
+            "maxLength": 100
+          },
+          "priority": {
+            "type": "string",
+            "enum": ["HIGH", "MEDIUM", "LOW"],
+            "description": "Issue priority level"
+          },
+          "section": {
+            "type": "string",
+            "description": "Document section where the issue lives (e.g., 'Requirements', 'Architecture', 'Scope')"
+          },
+          "line": {
+            "type": "integer",
+            "description": "Primary line number of the issue",
+            "minimum": 1
+          },
+          "why_it_matters": {
+            "type": "string",
+            "description": "Impact — not 'what is wrong' but 'what goes wrong if not addressed'"
+          },
+          "suggestion": {
+            "type": ["string", "null"],
+            "description": "Concrete rewording or structural fix. Omit or null if no good suggestion is obvious — a bad suggestion is worse than none."
+          },
+          "confidence": {
+            "type": "number",
+            "description": "Reviewer confidence in this finding, calibrated per persona",
+            "minimum": 0.0,
+            "maximum": 1.0
+          },
+          "evidence": {
+            "type": "array",
+            "description": "Document-grounded evidence: quoted text, section references, or pattern descriptions. At least 1 item.",
+            "items": { "type": "string" },
+            "minItems": 1
+          }
+        }
+      }
+    },
+    "residual_concerns": {
+      "type": "array",
+      "description": "Concerns the reviewer noticed but could not confirm as findings (below confidence threshold or too speculative)",
+      "items": { "type": "string" }
+    }
+  },
+
+  "_meta": {
+    "confidence_thresholds": {
+      "suppress": "Below 0.50 — do not report. Finding is speculative.",
+      "flag": "0.50–0.69 — include but low confidence. Per-persona calibration applies.",
+      "report": "0.70+ — report with full confidence."
+    },
+    "priority_definitions": {
+      "HIGH": "Blocks execution; cannot start the next step without resolving. Someone will be blocked or confused.",
+      "MEDIUM": "Creates risk; work can start but likely leads to rework or confusion. Should fix.",
+      "LOW": "Improvement opportunity; plan works but could be clearer or tighter. Author's discretion."
+    }
+  }
+}
