@@ -131,18 +131,37 @@ If zero findings, the review is done — no further prompts needed.
 
 #### Step 6: Fix Offer
 
-Present an interactive choice. **Use the platform's interactive question tool** — `AskUserQuestion` (Claude Code) or `request_user_input` (Codex).
+**Use the platform's interactive question tool** — `AskUserQuestion` (Claude Code) or `request_user_input` (Codex). Both platforms provide an automatic "Other" free-form option — do not add one manually.
 
-**When HIGH issues exist:**
+Present a **single prompt** listing all priority levels with findings. No intermediate "choose which..." step.
 
-- **Fix HIGH issues (Recommended)** — N issues that block execution
-- **Choose which priority levels to fix** — select from all levels
+**Claude Code** — use `AskUserQuestion` with `multiSelect: true`:
+
+When HIGH issues exist, pre-check the HIGH option:
+- ☑ **HIGH (Recommended)** — N issues that block execution
+- ☐ **MEDIUM** — N issues
+- ☐ **LOW** — N issues
+
+When only MEDIUM/LOW issues exist, nothing pre-checked:
+- ☐ **MEDIUM** — N issues
+- ☐ **LOW** — N issues
+
+Only include priority levels that have findings.
+
+**Codex** — use `request_user_input` (single-select, build combined options):
+
+When HIGH issues exist:
+- **Fix HIGH (Recommended)** — N issues
+- **Fix HIGH + MEDIUM** — N issues
+- **Fix all** — N issues
 - **Skip fixes**
 
-**When only MEDIUM/LOW issues exist:**
+When only MEDIUM/LOW issues exist:
+- **Fix MEDIUM only** — N issues
+- **Fix MEDIUM + LOW** — N issues
+- **Skip fixes**
 
-- **Choose which priority levels to fix** — select from MEDIUM, LOW
-- **Skip fixes (Recommended)**
+Only include options where findings exist at those levels. Omit options that would duplicate another (e.g., if no LOW, omit "Fix all" since it equals the line above).
 
 #### Step 7: Apply Fixes
 
