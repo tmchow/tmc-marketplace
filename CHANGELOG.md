@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.14.0] - 2026-03-04
+
+### Changed
+
+- **Simplified severity acceptance UX** — streamlined the severity acceptance interaction in review fix loops for a cleaner workflow. ([#83](https://github.com/tmchow/tmc-marketplace/pull/83))
+
+### Fixed
+
+- **Placeholder findings excluded from severity acceptance** — section reviews no longer surface placeholder findings in the severity acceptance prompt. ([#82](https://github.com/tmchow/tmc-marketplace/pull/82))
+
+---
+
 ## [1.13.0] - 2026-03-03
 
 ### Changed
@@ -365,6 +377,7 @@ Initial release — 11 skills, 13 agents. ([#10](https://github.com/tmchow/tmc-m
 Core workflow: brainstorming → research → spike → tech planning → implementing, with multi-agent reviews at each stage.
 
 <!-- Version comparison links -->
+[1.14.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.13.0...v1.14.0
 [1.13.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.12.0...v1.13.0
 [1.12.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.11.0...v1.12.0
 [1.11.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.10.0...v1.11.0
