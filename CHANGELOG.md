@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.13.0] - 2026-03-03
+
+### Changed
+
+- **Code review dynamic persona selection** — replaced fixed reviewer ensemble with intelligent persona selection based on diff analysis. Reviews now pick 3–5 reviewers from a larger pool matched to the actual changes. ([#79](https://github.com/tmchow/tmc-marketplace/pull/79))
+- **Plan review dynamic persona selection** — same dynamic persona selection overhaul applied to plan reviews. Reviewers are selected based on plan content rather than using a fixed set. ([#80](https://github.com/tmchow/tmc-marketplace/pull/80))
+
+---
+
 ## [1.12.0] - 2026-03-02
 
 ### Added
@@ -356,6 +365,7 @@ Initial release — 11 skills, 13 agents. ([#10](https://github.com/tmchow/tmc-m
 Core workflow: brainstorming → research → spike → tech planning → implementing, with multi-agent reviews at each stage.
 
 <!-- Version comparison links -->
+[1.13.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.12.0...v1.13.0
 [1.12.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.11.0...v1.12.0
 [1.11.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.10.0...v1.11.0
 [1.10.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.9.2...v1.10.0
