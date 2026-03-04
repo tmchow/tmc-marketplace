@@ -26,7 +26,7 @@ Completes development with verification, optional review, and PR creation.
 When invoked from `iterative:implementing`, skip this phase — all code reviews are already complete.
 
 When invoked standalone:
-1. Present an interactive choice to the user (e.g., `AskUserQuestion` in Claude Code): A) Full code review (recommended), B) Skip review.
+1. Present an interactive choice to the user — `AskUserQuestion` (Claude Code) or `request_user_input` (Codex): A) Full code review (recommended), B) Skip review.
 2. If review: invoke `code-review` skill (1+ rounds).
 3. Continue when review complete or skipped.
 
@@ -38,7 +38,7 @@ When invoked standalone:
 
 ### Phase 4: Present Options
 
-Present an interactive choice to the user (e.g., `AskUserQuestion` in Claude Code):
+Present an interactive choice to the user:
 - A) Push + PR (recommended) — creates new PR, or shows existing if one exists
 - B) Push only
 - C) Keep branch, don't push

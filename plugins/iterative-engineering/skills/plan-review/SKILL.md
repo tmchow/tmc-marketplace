@@ -125,65 +125,39 @@ Do not include time estimates.
 
 ### Standalone Fix Loop
 
-After presenting the synthesized findings (Stage 5), this skill handles the full fix-review cycle when running standalone.
+After presenting the synthesized findings (Stage 5), offer to fix issues when running standalone. Plan fixes are text edits with low cascading risk — keep the loop simple.
 
-**CRITICAL: Steps 6–9 are separate prompts. Execute them in sequence — never collapse, merge, or skip steps.** The "fix then re-review" path only works when Step 6 (what to fix), Step 8 (re-review offer), and Step 9 (next workflow step) remain independent questions. This applies on every round regardless of round number — do not add round-awareness commentary, diminishing-returns warnings, or shortcut options that bypass the step sequence.
+If zero findings, the review is done — no further prompts needed.
 
-#### Step 6: Priority Acceptance
+#### Step 6: Fix Offer
 
-**This is its own prompt — do not combine it with next-step options.** The only options here are about *which priorities to fix* — never include "then implement", "then re-review", or any other downstream action. Present priority acceptance whenever the review has findings at ANY priority. If zero findings, skip to Step 9. **Use the interactive question tool** (e.g., `AskUserQuestion` in Claude Code) — do not print options as text.
+Present an interactive choice. **Use the platform's interactive question tool** — `AskUserQuestion` (Claude Code) or `request_user_input` (Codex).
 
 **When HIGH issues exist:**
 
-Present an interactive choice:
 - **Fix HIGH issues (Recommended)** — N issues that block execution
 - **Choose which priority levels to fix** — select from all levels
 - **Skip fixes**
 
-If the user accepts the recommendation, fix HIGH. If they choose, present an interactive multi-select of priority levels that have findings:
-- HIGH (N issues)
-- MEDIUM (N issues)
-- LOW (N issues)
+**When only MEDIUM/LOW issues exist:**
 
-**When only MEDIUM/LOW issues exist (no HIGH):**
-
-Present an interactive choice:
 - **Choose which priority levels to fix** — select from MEDIUM, LOW
-- **Proceed without fixes (Recommended)**
+- **Skip fixes (Recommended)**
 
-If the user chooses to fix, present the interactive multi-select of priority levels with findings.
-
-#### Step 7: Apply Fixes via Subagent
+#### Step 7: Apply Fixes
 
 Fix only the selected priorities. Spawn a single subagent with the filtered findings, document path, and document type. The subagent applies targeted fixes, preserves the document's voice and decisions, and commits.
 
-Wait for the subagent to complete before proceeding.
+Wait for the subagent to complete.
 
-#### Step 8: Re-review Offer
+#### Step 8: Done
 
-**This is its own prompt — separate from Step 6 and Step 9.** After fixes land, present an interactive choice:
-- **Run another review round (Recommended)** — verify fixes and check for new issues
-- **Proceed without re-review**
+After fixes land (or user skipped), present an interactive choice:
 
-If the user chooses another round: run the full Stage 1–Step 8 flow again (fresh sub-agents, fresh scope). Continue until the user chooses to proceed.
+- **Another review round** — fresh reviewers on the updated document
+- **Done** — review complete
 
-#### Step 9: Post-fix Options
-
-After the fix-review cycle completes (no remaining findings, or user chose to stop), present next steps based on document type. **Use the interactive question tool** — do not print options as text. Do not invoke other skills directly — present the options and let the user decide.
-
-**PRD or brainstorm document:**
-- **Continue to tech-planning (Recommended)** — start `iterative:tech-planning`
-- **Another review round** — run another pass
-- **Exit** — done for now
-
-**Tech plan:**
-- **Continue to implementing (Recommended)** — start `iterative:implementing`
-- **Another review round** — run another pass
-- **Exit** — done for now
-
-**Unknown or other document:**
-- **Another review round**
-- **Exit** — done for now
+If another round: run the full Stage 1–Step 8 flow again. No workflow transition options — the user knows what to do next.
 
 ## Fallback
 

@@ -134,13 +134,7 @@ Plan review operates in two modes depending on how it's called:
 
 **When invoked from `iterative:brainstorming` or `iterative:tech-planning`:** returns findings directly. The calling skill owns the fix loop and workflow transitions.
 
-**When invoked standalone:** owns the full fix-review cycle:
-1. **Priority acceptance** — user selects which priority levels to fix (HIGH recommended when present; skip recommended when only MEDIUM/LOW)
-2. **Subagent fixes** — a single subagent applies targeted fixes, preserving the document's voice
-3. **Re-review offer** — verify fixes and check for new issues
-4. **Post-fix options** — next workflow step based on document type (PRD → tech planning, tech plan → implementing)
-
-Steps are strictly sequential — never collapsed or merged. The fix-review loop continues until the user chooses to proceed. There is no binary "clean" state; exit is always user-driven.
+**When invoked standalone:** runs a lightweight fix loop — offer to fix, apply fixes via subagent, then ask "another round or done?" Plan fixes are text edits with low cascading risk, so the loop is intentionally simpler than code-review's. No workflow transition options — the user knows what to do next.
 
 ## Design Principles
 

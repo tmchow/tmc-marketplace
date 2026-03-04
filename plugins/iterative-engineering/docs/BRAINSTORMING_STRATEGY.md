@@ -90,4 +90,4 @@ This handles the common case: user starts with "fix this bug" (Quick), investiga
 
 **Prescribe output formats.** The original had a blockquote sanity check format for Quick scope. The new skill describes what information to convey (understanding, edge cases, risks) without prescribing the exact markdown structure. The model can format appropriately for the context.
 
-**Force a transition menu on Quick scope.** Quick exits after confirmation. No AskUserQuestion with options, no "what would you like to do next?" Just done. The user asked to fix a bug; the brainstorming confirmed the understanding; now they go fix it.
+**Force a transition menu on Quick scope.** Quick exits after confirmation. No interactive question tool with options, no "what would you like to do next?" Just done. The user asked to fix a bug; the brainstorming confirmed the understanding; now they go fix it.
