@@ -1,15 +1,22 @@
 ---
 name: iterative:design-exploration
 description: >
-  Explore radically different design approaches for any page, component,
-  or feature. Generates an interactive gallery with per-variation design
-  controls, star ratings, and AI-ready export for iterating across multiple
-  rounds. Concludes with a design direction document. Also triggers when the
-  user pastes design exploration feedback (starts with "## Design Exploration
-  Feedback") to iterate on a previous round, or when they paste a design
-  direction (starts with "## Design Direction") to finalize. Triggers:
-  "explore designs for", "generate design variations", "design exploration",
-  "show me different ways to design", "iterate on this design exploration".
+  Explore radically different design approaches for any page, component, or feature.
+  This skill should be used whenever the user wants to compare multiple distinct visual
+  directions side by side — not build one specific thing, but see several fundamentally
+  different takes on the same UI. Common signals: "explore designs for", "show me
+  different ways to design", "I want to see radically different approaches", "what could
+  this look like", "design exploration", "let's see some options before we commit",
+  "different layout approaches", "different visual identities for the same content",
+  wanting to see multiple families or variations of a page/component before choosing a
+  direction. Also triggers when the user pastes design exploration feedback (starts with
+  "## Design Exploration Feedback") to iterate on a previous round, when they paste a
+  design direction (starts with "## Design Direction") to finalize, or when they
+  reference a previous design exploration gallery and want to refine it. Do NOT trigger
+  when the user wants to build one specific design (even if it's a UI component), do a
+  visual refresh of existing code, review or critique an existing design, brainstorm
+  requirements/features without visual output, prototype a single widget, or compare
+  CSS frameworks/tools.
 ---
 
 # Design Exploration
