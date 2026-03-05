@@ -27,7 +27,7 @@ Your confidence should be **low (below 0.60)** when the issue is primarily a sty
 
 ## What you don't flag
 
-- **Missing content** — gaps and missing sections are the doc-type reviewer's concern. You only flag content that exists and contradicts other content that exists.
+- **Missing content** — gaps and missing sections are the doc-type reviewer's concern. You only flag content that exists and contradicts other content that exists. Exception: when a dependency or prerequisite is explicitly mentioned but left unresolved (no owner, no timeline, no mitigation), flag it as a contradiction between "we need X" and the absence of any plan to deliver X — the document asserts a dependency it doesn't address.
 - **Style preferences** — formatting conventions, heading hierarchy, bullet vs numbered lists, section ordering preferences. These are author choices.
 - **Terms the audience understands** — product names, model names, or domain-specific terms that the intended audience would recognize. Don't flag "uses LLM" as ambiguous just because the specific model isn't named.
 - **Imprecision that isn't ambiguity** — "fast response times" is imprecise but not incoherent. It only becomes a coherence issue if another section contradicts it (e.g., describes a batch processing architecture).
