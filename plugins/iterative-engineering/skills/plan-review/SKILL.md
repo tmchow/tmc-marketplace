@@ -1,6 +1,7 @@
 ---
 name: plan-review
-description: This skill should be used when the user says "review the plan", "review the PRD", "check the PRD", "critique the plan", "give feedback on the plan", "what's wrong with this plan", or wants feedback on a planning or design document. Also triggered after writing a PRD or tech plan, or when invoked by brainstorming or tech-planning skills.
+description: >
+  Review PRDs, brainstorm docs, tech plans, design docs, specs, or any planning document for issues. This skill should be used whenever the user wants feedback, critique, or a quality check on an existing planning or requirements document — even if they don't use the word "review." Common triggers include: "review the plan", "check the PRD", "critique my tech plan", "what's wrong with this plan", "poke holes in the requirements", "is this plan solid", "take a look at this spec", "give feedback on the brainstorm", or pointing to a doc file and asking if anything is off. Also triggers after writing a PRD or tech plan (to review what was just created), or when invoked by brainstorming or tech-planning skills. Do NOT trigger for code review (PRs, diffs, source files), writing/creating new plans, debugging, or reviewing non-planning documents (READMEs, CLAUDE.md, test coverage).
 ---
 
 # Plan Review
@@ -103,8 +104,9 @@ Convert multiple reviewer JSON payloads into one deduplicated, confidence-gated 
 1. **Validate.** Check each output against the schema. Drop malformed findings (missing required fields). Record the drop count.
 2. **Confidence gate.** Suppress findings below 0.50 confidence. Record the suppressed count.
 3. **Deduplicate.** Compute fingerprint: `normalize(section) + line_bucket(line, ±5) + normalize(title)`. When fingerprints match, merge: keep highest priority, keep highest confidence with strongest evidence, union evidence, note which reviewers flagged it.
-4. **Sort.** Order by priority (HIGH first) → confidence (descending) → document order.
-5. **Collect coverage data.** Union residual_concerns across reviewers.
+4. **Promote residual concerns.** Scan residual_concerns for issues that overlap with findings from other reviewers or that describe concrete blocking risks (missing dependencies, unowned prerequisites, timeline impossibilities). Promote these to MEDIUM findings with confidence 0.55-0.65. A residual concern that corroborates an existing finding strengthens the case; one that identifies a distinct blocking risk deserves to be surfaced rather than buried.
+5. **Sort.** Order by priority (HIGH first) → confidence (descending) → document order.
+6. **Collect coverage data.** Union remaining (non-promoted) residual_concerns across reviewers.
 
 ### Stage 5: Synthesize and present
 
