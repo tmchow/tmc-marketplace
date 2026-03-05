@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.15.0] - 2026-03-05
+
+### Changed
+
+- **Plan review coverage and calibration** — improved prd-reviewer with critical missing details hunting target and brainstorm-specific calibration, added unresolved dependency detection to coherence-reviewer, added infrastructure dependency target to scope-guardian-reviewer. Added residual concern promotion step to merge pipeline. ([#85](https://github.com/tmchow/tmc-marketplace/pull/85))
+- **Design exploration skill description** — broadened trigger description from exact phrases to intent-based pattern matching with explicit exclusions for adjacent tasks. ([#85](https://github.com/tmchow/tmc-marketplace/pull/85))
+
+---
+
 ## [1.14.0] - 2026-03-04
 
 ### Changed
@@ -377,6 +386,7 @@ Initial release — 11 skills, 13 agents. ([#10](https://github.com/tmchow/tmc-m
 Core workflow: brainstorming → research → spike → tech planning → implementing, with multi-agent reviews at each stage.
 
 <!-- Version comparison links -->
+[1.15.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.14.0...v1.15.0
 [1.14.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.13.0...v1.14.0
 [1.13.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.12.0...v1.13.0
 [1.12.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.11.0...v1.12.0
