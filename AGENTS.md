@@ -82,9 +82,10 @@ Releases are automated via [release-please](https://github.com/googleapis/releas
 **How it works:**
 
 1. Merge PRs to `main` using [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, etc.)
-2. release-please automatically opens a release PR per plugin when unreleased changes exist
+2. release-please automatically opens a single release PR when unreleased changes exist (covers all plugins with changes)
 3. The release PR contains auto-generated changelog entries and version bumps
-4. Merge the release PR to create the scoped tag (`<plugin-name>/v<version>`)
+4. Merge the release PR to create scoped tags (`<plugin-name>/v<version>`)
+5. A follow-up PR is auto-created to sync `marketplace.json` versions — merge it to complete the release
 
 **Commit routing:** Commits are attributed to plugins by file path. A commit touching `plugins/iterative-engineering/**` appears in that plugin's release PR.
 
