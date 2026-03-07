@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.16.1](https://github.com/tmchow/tmc-marketplace/compare/iterative-engineering/v1.16.0...iterative-engineering/v1.16.1) (2026-03-07)
+
+
+### Bug Fixes
+
+* trim design-exploration skill description to fit 1024 char limit ([#97](https://github.com/tmchow/tmc-marketplace/issues/97)) ([45cdd91](https://github.com/tmchow/tmc-marketplace/commit/45cdd91e36135868361bf294cc8206488671c740))
+
 ## [1.16.0](https://github.com/tmchow/tmc-marketplace/compare/iterative-engineering/v1.15.0...iterative-engineering/v1.16.0) (2026-03-07)
 
 
