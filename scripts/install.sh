@@ -231,7 +231,7 @@ install_codex_skills() {
         rm -rf "$dest"
         cp -r "$skill_dir" "$dest"
         installed_skills+=("$skill_name")
-        ((count++))
+        count=$((count + 1))
     done
 
     # Write manifest for clean uninstall
@@ -297,7 +297,7 @@ do_uninstall() {
                 local skill_dir="${skills_dir}/${skill_name}"
                 if [ -d "$skill_dir" ]; then
                     rm -rf "$skill_dir"
-                    ((removed++))
+                    removed=$((removed + 1))
                 fi
             done < "$manifest"
 
