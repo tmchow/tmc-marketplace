@@ -1,17 +1,28 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Usage: ./scripts/release.sh <major|minor|patch>
+# Usage: ./scripts/release.sh <plugin-name> <major|minor|patch>
 # Bumps plugin version in plugin.json and marketplace.json plugin entry.
 # Changelog entry should be written before running this script.
 
-BUMP_TYPE="${1:-}"
-PLUGIN="iterative-engineering"
+PLUGIN="${1:-}"
+BUMP_TYPE="${2:-}"
+
+if [[ -z "$PLUGIN" ]] || [[ -z "$BUMP_TYPE" ]] || [[ ! "$BUMP_TYPE" =~ ^(major|minor|patch)$ ]]; then
+  echo "Usage: ./scripts/release.sh <plugin-name> <major|minor|patch>"
+  echo ""
+  echo "Available plugins:"
+  for dir in plugins/*/; do
+    [ -d "$dir" ] && echo "  $(basename "$dir")"
+  done
+  exit 1
+fi
+
 PLUGIN_JSON="plugins/$PLUGIN/.claude-plugin/plugin.json"
 MARKETPLACE_JSON=".claude-plugin/marketplace.json"
 
-if [[ -z "$BUMP_TYPE" ]] || [[ ! "$BUMP_TYPE" =~ ^(major|minor|patch)$ ]]; then
-  echo "Usage: ./scripts/release.sh <major|minor|patch>"
+if [[ ! -f "$PLUGIN_JSON" ]]; then
+  echo "Error: Plugin not found: $PLUGIN (no $PLUGIN_JSON)"
   exit 1
 fi
 
@@ -34,7 +45,7 @@ esac
 
 NEW_VERSION="$MAJOR.$MINOR.$PATCH"
 
-echo "Bumping $CURRENT_VERSION → $NEW_VERSION ($BUMP_TYPE)"
+echo "[$PLUGIN] Bumping $CURRENT_VERSION → $NEW_VERSION ($BUMP_TYPE)"
 
 # Update plugin.json
 python3 -c "
@@ -68,4 +79,4 @@ echo "  1. Verify CHANGELOG.md has an entry for $NEW_VERSION"
 echo "  2. Commit: git add -A && git commit -m 'chore(release): $NEW_VERSION'"
 echo "  3. Push and open a PR"
 echo ""
-echo "Tag v$NEW_VERSION is created automatically when the PR merges."
+echo "Tag $PLUGIN/v$NEW_VERSION is created automatically when the PR merges."

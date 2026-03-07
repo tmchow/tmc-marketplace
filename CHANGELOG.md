@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.15.0] - 2026-03-05
+## [iterative-engineering/v1.15.0] - 2026-03-05
 
 ### Changed
 
@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.14.0] - 2026-03-04
+## [iterative-engineering/v1.14.0] - 2026-03-04
 
 ### Changed
 
@@ -26,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.13.0] - 2026-03-03
+## [iterative-engineering/v1.13.0] - 2026-03-03
 
 ### Changed
 
@@ -35,7 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.12.0] - 2026-03-02
+## [iterative-engineering/v1.12.0] - 2026-03-02
 
 ### Added
 
@@ -58,7 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.11.0] - 2026-03-01
+## [iterative-engineering/v1.11.0] - 2026-03-01
 
 ### Added
 
@@ -76,7 +76,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.10.0] - 2026-02-20
+## [iterative-engineering/v1.10.0] - 2026-02-20
 
 ### Added
 
@@ -95,7 +95,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.9.2] - 2026-02-19
+## [iterative-engineering/v1.9.2] - 2026-02-19
 
 ### Fixed
 
@@ -103,7 +103,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.9.1] - 2026-02-19
+## [iterative-engineering/v1.9.1] - 2026-02-19
 
 ### Changed
 
@@ -119,7 +119,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.9.0] - 2026-02-19
+## [iterative-engineering/v1.9.0] - 2026-02-19
 
 ### Changed
 
@@ -140,7 +140,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.8.0] - 2026-02-17
+## [iterative-engineering/v1.8.0] - 2026-02-17
 
 ### Added
 
@@ -156,7 +156,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.7.5] - 2026-02-15
+## [iterative-engineering/v1.7.5] - 2026-02-15
 
 ### Fixed
 
@@ -164,7 +164,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.7.4] - 2026-02-14
+## [iterative-engineering/v1.7.4] - 2026-02-14
 
 ### Changed
 
@@ -172,7 +172,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.7.3] - 2026-02-13
+## [iterative-engineering/v1.7.3] - 2026-02-13
 
 ### Fixed
 
@@ -181,7 +181,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.7.2] - 2026-02-13
+## [iterative-engineering/v1.7.2] - 2026-02-13
 
 ### Changed
 
@@ -189,7 +189,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.7.1] - 2026-02-13
+## [iterative-engineering/v1.7.1] - 2026-02-13
 
 ### Fixed
 
@@ -198,7 +198,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.7.0] - 2026-02-11
+## [iterative-engineering/v1.7.0] - 2026-02-11
 
 ### Added
 
@@ -210,7 +210,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.6.0] - 2026-02-10
+## [iterative-engineering/v1.6.0] - 2026-02-10
 
 ### Added
 
@@ -229,7 +229,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.5.0] - 2026-02-10
+## [iterative-engineering/v1.5.0] - 2026-02-10
 
 ### Changed
 
@@ -245,7 +245,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.4.2] - 2026-02-10
+## [iterative-engineering/v1.4.2] - 2026-02-10
 
 ### Fixed
 
@@ -260,7 +260,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.4.1] - 2026-02-10
+## [iterative-engineering/v1.4.1] - 2026-02-10
 
 ### Fixed
 
@@ -270,7 +270,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.4.0] - 2026-02-09
+## [iterative-engineering/v1.4.0] - 2026-02-09
 
 ### Added
 
@@ -285,7 +285,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.3.5] - 2026-02-09
+## [iterative-engineering/v1.3.5] - 2026-02-09
 
 ### Fixed
 
@@ -298,7 +298,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.3.4] - 2026-02-09
+## [iterative-engineering/v1.3.4] - 2026-02-09
 
 ### Fixed
 
@@ -309,7 +309,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.3.3] - 2026-02-09
+## [iterative-engineering/v1.3.3] - 2026-02-09
 
 ### Fixed
 
@@ -325,7 +325,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.3.2] - 2026-02-08
+## [iterative-engineering/v1.3.2] - 2026-02-08
 
 ### Fixed
 
@@ -333,7 +333,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.3.1] - 2026-02-08
+## [iterative-engineering/v1.3.1] - 2026-02-08
 
 ### Changed
 
@@ -345,7 +345,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.3.0] - 2026-02-08
+## [iterative-engineering/v1.3.0] - 2026-02-08
 
 ### Added
 
@@ -354,7 +354,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.2.0] - 2026-02-08
+## [iterative-engineering/v1.2.0] - 2026-02-08
 
 ### Added
 
@@ -371,7 +371,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.1.0] - 2026-02-08
+## [iterative-engineering/v1.1.0] - 2026-02-08
 
 ### Added
 
@@ -379,40 +379,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.0.0] - 2026-02-08
+## [iterative-engineering/v1.0.0] - 2026-02-08
 
 Initial release — 11 skills, 13 agents. ([#10](https://github.com/tmchow/tmc-marketplace/pull/10))
 
 Core workflow: brainstorming → research → spike → tech planning → implementing, with multi-agent reviews at each stage.
 
 <!-- Version comparison links -->
-[1.15.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.14.0...v1.15.0
-[1.14.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.13.0...v1.14.0
-[1.13.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.12.0...v1.13.0
-[1.12.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.11.0...v1.12.0
-[1.11.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.10.0...v1.11.0
-[1.10.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.9.2...v1.10.0
-[1.9.2]: https://github.com/tmchow/tmc-marketplace/compare/v1.9.1...v1.9.2
-[1.9.1]: https://github.com/tmchow/tmc-marketplace/compare/v1.9.0...v1.9.1
-[1.9.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.8.0...v1.9.0
-[1.8.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.7.5...v1.8.0
-[1.7.5]: https://github.com/tmchow/tmc-marketplace/compare/v1.7.4...v1.7.5
-[1.7.4]: https://github.com/tmchow/tmc-marketplace/compare/v1.7.3...v1.7.4
-[1.7.3]: https://github.com/tmchow/tmc-marketplace/compare/v1.7.2...v1.7.3
-[1.7.2]: https://github.com/tmchow/tmc-marketplace/compare/v1.7.1...v1.7.2
-[1.7.1]: https://github.com/tmchow/tmc-marketplace/compare/v1.7.0...v1.7.1
-[1.7.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.6.0...v1.7.0
-[1.6.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.5.0...v1.6.0
-[1.5.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.4.2...v1.5.0
-[1.4.2]: https://github.com/tmchow/tmc-marketplace/compare/v1.4.1...v1.4.2
-[1.4.1]: https://github.com/tmchow/tmc-marketplace/compare/v1.4.0...v1.4.1
-[1.4.0]: https://github.com/tmchow/tmc-marketplace/compare/v1.3.5...v1.4.0
-[1.3.5]: https://github.com/tmchow/tmc-marketplace/compare/v1.3.4...v1.3.5
-[1.3.4]: https://github.com/tmchow/tmc-marketplace/compare/v1.3.3...v1.3.4
-[1.3.3]: https://github.com/tmchow/tmc-marketplace/compare/v1.3.2...v1.3.3
-[1.3.2]: https://github.com/tmchow/tmc-marketplace/compare/v1.3.1...v1.3.2
-[1.3.1]: https://github.com/tmchow/tmc-marketplace/compare/v1.3.0...v1.3.1
-[1.3.0]: https://github.com/tmchow/tmc-marketplace/releases/tag/v1.3.0
-[1.2.0]: https://github.com/tmchow/tmc-marketplace/compare/438b3a4...e83aba2
-[1.1.0]: https://github.com/tmchow/tmc-marketplace/compare/cca60ff...438b3a4
-[1.0.0]: https://github.com/tmchow/tmc-marketplace/compare/88dcd58...cca60ff
+[iterative-engineering/v1.15.0]: https://github.com/tmchow/tmc-marketplace/compare/iterative-engineering/v1.14.0...iterative-engineering/v1.15.0
+[iterative-engineering/v1.14.0]: https://github.com/tmchow/tmc-marketplace/compare/iterative-engineering/v1.13.0...iterative-engineering/v1.14.0
+[iterative-engineering/v1.13.0]: https://github.com/tmchow/tmc-marketplace/compare/iterative-engineering/v1.12.0...iterative-engineering/v1.13.0
+[iterative-engineering/v1.12.0]: https://github.com/tmchow/tmc-marketplace/compare/iterative-engineering/v1.11.0...iterative-engineering/v1.12.0
+[iterative-engineering/v1.11.0]: https://github.com/tmchow/tmc-marketplace/compare/iterative-engineering/v1.10.0...iterative-engineering/v1.11.0
+[iterative-engineering/v1.10.0]: https://github.com/tmchow/tmc-marketplace/compare/iterative-engineering/v1.9.2...iterative-engineering/v1.10.0
+[iterative-engineering/v1.9.2]: https://github.com/tmchow/tmc-marketplace/compare/iterative-engineering/v1.9.1...iterative-engineering/v1.9.2
+[iterative-engineering/v1.9.1]: https://github.com/tmchow/tmc-marketplace/compare/iterative-engineering/v1.9.0...iterative-engineering/v1.9.1
+[iterative-engineering/v1.9.0]: https://github.com/tmchow/tmc-marketplace/compare/iterative-engineering/v1.8.0...iterative-engineering/v1.9.0
+[iterative-engineering/v1.8.0]: https://github.com/tmchow/tmc-marketplace/compare/iterative-engineering/v1.7.5...iterative-engineering/v1.8.0
+[iterative-engineering/v1.7.5]: https://github.com/tmchow/tmc-marketplace/compare/iterative-engineering/v1.7.4...iterative-engineering/v1.7.5
+[iterative-engineering/v1.7.4]: https://github.com/tmchow/tmc-marketplace/compare/iterative-engineering/v1.7.3...iterative-engineering/v1.7.4
+[iterative-engineering/v1.7.3]: https://github.com/tmchow/tmc-marketplace/compare/iterative-engineering/v1.7.2...iterative-engineering/v1.7.3
+[iterative-engineering/v1.7.2]: https://github.com/tmchow/tmc-marketplace/compare/iterative-engineering/v1.7.1...iterative-engineering/v1.7.2
+[iterative-engineering/v1.7.1]: https://github.com/tmchow/tmc-marketplace/compare/iterative-engineering/v1.7.0...iterative-engineering/v1.7.1
+[iterative-engineering/v1.7.0]: https://github.com/tmchow/tmc-marketplace/compare/iterative-engineering/v1.6.0...iterative-engineering/v1.7.0
+[iterative-engineering/v1.6.0]: https://github.com/tmchow/tmc-marketplace/compare/iterative-engineering/v1.5.0...iterative-engineering/v1.6.0
+[iterative-engineering/v1.5.0]: https://github.com/tmchow/tmc-marketplace/compare/iterative-engineering/v1.4.2...iterative-engineering/v1.5.0
+[iterative-engineering/v1.4.2]: https://github.com/tmchow/tmc-marketplace/compare/iterative-engineering/v1.4.1...iterative-engineering/v1.4.2
+[iterative-engineering/v1.4.1]: https://github.com/tmchow/tmc-marketplace/compare/iterative-engineering/v1.4.0...iterative-engineering/v1.4.1
+[iterative-engineering/v1.4.0]: https://github.com/tmchow/tmc-marketplace/compare/iterative-engineering/v1.3.5...iterative-engineering/v1.4.0
+[iterative-engineering/v1.3.5]: https://github.com/tmchow/tmc-marketplace/compare/iterative-engineering/v1.3.4...iterative-engineering/v1.3.5
+[iterative-engineering/v1.3.4]: https://github.com/tmchow/tmc-marketplace/compare/iterative-engineering/v1.3.3...iterative-engineering/v1.3.4
+[iterative-engineering/v1.3.3]: https://github.com/tmchow/tmc-marketplace/compare/iterative-engineering/v1.3.2...iterative-engineering/v1.3.3
+[iterative-engineering/v1.3.2]: https://github.com/tmchow/tmc-marketplace/compare/iterative-engineering/v1.3.1...iterative-engineering/v1.3.2
+[iterative-engineering/v1.3.1]: https://github.com/tmchow/tmc-marketplace/compare/iterative-engineering/v1.3.0...iterative-engineering/v1.3.1
+[iterative-engineering/v1.3.0]: https://github.com/tmchow/tmc-marketplace/releases/tag/iterative-engineering/v1.3.0
+[iterative-engineering/v1.2.0]: https://github.com/tmchow/tmc-marketplace/compare/438b3a4...e83aba2
+[iterative-engineering/v1.1.0]: https://github.com/tmchow/tmc-marketplace/compare/cca60ff...438b3a4
+[iterative-engineering/v1.0.0]: https://github.com/tmchow/tmc-marketplace/compare/88dcd58...cca60ff

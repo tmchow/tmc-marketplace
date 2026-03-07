@@ -84,18 +84,18 @@ When asked to "cut a release" or "release a new version":
    - `minor` — new skills, agents, or significant behavior changes
    - `patch` — bug fixes, doc updates, minor improvements
 
-2. **Write the changelog entry** in `CHANGELOG.md` (repo root). Keep it scannable. Link each line to its PR with inline markdown links (e.g., `([#27](https://github.com/tmchow/tmc-marketplace/pull/27))`). Add a version comparison link reference at the bottom of the file (e.g., `[1.3.5]: https://github.com/tmchow/tmc-marketplace/compare/v1.3.4...v1.3.5`). Make the version header a link using the reference (e.g., `## [1.3.5]`).
+2. **Write the changelog entry** in `CHANGELOG.md` (repo root). Keep it scannable. Use scoped version headers: `## [<plugin-name>/v<version>]`. Link each line to its PR with inline markdown links (e.g., `([#27](https://github.com/tmchow/tmc-marketplace/pull/27))`). Add a version comparison link reference at the bottom of the file (e.g., `[iterative-engineering/v1.3.5]: https://github.com/tmchow/tmc-marketplace/compare/iterative-engineering/v1.3.4...iterative-engineering/v1.3.5`). Make the version header a link using the reference.
 
-3. **Run the release script** — bumps version in both `plugins/iterative-engineering/.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` (plugin entry only, not marketplace metadata):
+3. **Run the release script** — bumps version in both `plugins/<plugin-name>/.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` (plugin entry only, not marketplace metadata):
    ```bash
-   ./scripts/release.sh <major|minor|patch>
+   ./scripts/release.sh <plugin-name> <major|minor|patch>
    ```
 
 4. **Commit and open a PR:**
    ```bash
    git add -A && git commit -m "chore(release): <version>"
    ```
-   Push the branch and open a PR. The `v<version>` tag is created automatically when the PR merges (via `.github/workflows/auto-tag.yml`).
+   Push the branch and open a PR. A scoped tag (`<plugin-name>/v<version>`) is created automatically when the PR merges (via `.github/workflows/auto-tag.yml`).
 
 ## Commit and PR Conventions
 
@@ -185,14 +185,14 @@ This keeps orchestrator prompts lean (the rules live in the skill) and agent def
 ## Installation (for users)
 
 ```bash
-# Install both (default)
+# Interactive menu (default)
 curl -fsSL "https://raw.githubusercontent.com/tmchow/tmc-marketplace/main/scripts/install.sh?$(date +%s)" | bash
 
-# Codex skills only
-curl -fsSL "https://raw.githubusercontent.com/tmchow/tmc-marketplace/main/scripts/install.sh?$(date +%s)" | bash -s -- --codex-only
+# All plugins, no menu
+curl -fsSL "https://raw.githubusercontent.com/tmchow/tmc-marketplace/main/scripts/install.sh?$(date +%s)" | bash -s -- --all
 
-# Claude Code plugin only
-curl -fsSL "https://raw.githubusercontent.com/tmchow/tmc-marketplace/main/scripts/install.sh?$(date +%s)" | bash -s -- --claude-only
+# Single plugin
+curl -fsSL "https://raw.githubusercontent.com/tmchow/tmc-marketplace/main/scripts/install.sh?$(date +%s)" | bash -s -- --plugin image-sprout
 ```
 
 Or install manually:

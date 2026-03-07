@@ -10,9 +10,19 @@ Plugins for Claude Code and Codex by Trevin Chow.
 curl -fsSL "https://raw.githubusercontent.com/tmchow/tmc-marketplace/main/scripts/install.sh?$(date +%s)" | bash
 ```
 
-Installs the Claude Code plugin and Codex skills. Safe to re-run (idempotent). Skips anything not detected (e.g., no Codex installed).
+Shows an interactive menu to choose which plugins to install. Safe to re-run (idempotent). Skips anything not detected (e.g., no Codex installed).
 
-Install only one target:
+Install without the menu:
+
+```bash
+# All plugins at once
+curl -fsSL "https://raw.githubusercontent.com/tmchow/tmc-marketplace/main/scripts/install.sh?$(date +%s)" | bash -s -- --all
+
+# Just one plugin
+curl -fsSL "https://raw.githubusercontent.com/tmchow/tmc-marketplace/main/scripts/install.sh?$(date +%s)" | bash -s -- --plugin image-sprout
+```
+
+Install only one target (Claude Code or Codex):
 
 ```bash
 # Codex skills only
@@ -20,6 +30,13 @@ curl -fsSL "https://raw.githubusercontent.com/tmchow/tmc-marketplace/main/script
 
 # Claude Code plugin only
 curl -fsSL "https://raw.githubusercontent.com/tmchow/tmc-marketplace/main/scripts/install.sh?$(date +%s)" | bash -s -- --claude-only
+```
+
+Combine flags to narrow both axes:
+
+```bash
+# Single plugin, Claude Code only
+curl -fsSL "https://raw.githubusercontent.com/tmchow/tmc-marketplace/main/scripts/install.sh?$(date +%s)" | bash -s -- --plugin iterative-engineering --claude-only
 ```
 
 To uninstall:
@@ -35,6 +52,7 @@ curl -fsSL "https://raw.githubusercontent.com/tmchow/tmc-marketplace/main/script
 ```
 /plugin marketplace add tmchow/tmc-marketplace
 /plugin install iterative-engineering@tmc-marketplace
+/plugin install image-sprout@tmc-marketplace
 ```
 
 Verify with `/plugin list`.
@@ -56,6 +74,7 @@ This extracts all skills (with their reference files) to `~/.codex/skills/`.
 | Plugin | Description |
 |--------|-------------|
 | [iterative-engineering](./plugins/iterative-engineering) | Iterative development workflow — brainstorming → tech planning → implementing with multi-agent reviews, dependency-aware execution, and severity-based acceptance |
+| [image-sprout](./plugins/image-sprout) | Generate and iterate on images with consistent style and subject identity using the [image-sprout](https://github.com/tmchow/image-sprout) CLI |
 
 ## Changelog
 
