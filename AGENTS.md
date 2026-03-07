@@ -77,25 +77,24 @@ See the [skills documentation](https://code.claude.com/docs/en/skills) for more 
 
 ## Releasing a New Version
 
-When asked to "cut a release" or "release a new version":
+Releases are automated via [release-please](https://github.com/googleapis/release-please). No local steps required.
 
-1. **Determine bump type** from changes since last tag (`git log --oneline $(git describe --tags --abbrev=0 2>/dev/null || echo HEAD~10)..HEAD`):
-   - `major` — breaking changes, major reorganization
-   - `minor` — new skills, agents, or significant behavior changes
-   - `patch` — bug fixes, doc updates, minor improvements
+**How it works:**
 
-2. **Write the changelog entry** in `CHANGELOG.md` (repo root). Keep it scannable. Use scoped version headers: `## [<plugin-name>/v<version>]`. Link each line to its PR with inline markdown links (e.g., `([#27](https://github.com/tmchow/tmc-marketplace/pull/27))`). Add a version comparison link reference at the bottom of the file (e.g., `[iterative-engineering/v1.3.5]: https://github.com/tmchow/tmc-marketplace/compare/iterative-engineering/v1.3.4...iterative-engineering/v1.3.5`). Make the version header a link using the reference.
+1. Merge PRs to `main` using [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, etc.)
+2. release-please automatically opens a release PR per plugin when unreleased changes exist
+3. The release PR contains auto-generated changelog entries and version bumps
+4. Merge the release PR to create the scoped tag (`<plugin-name>/v<version>`)
 
-3. **Run the release script** — bumps version in both `plugins/<plugin-name>/.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` (plugin entry only, not marketplace metadata):
-   ```bash
-   ./scripts/release.sh <plugin-name> <major|minor|patch>
-   ```
+**Commit routing:** Commits are attributed to plugins by file path. A commit touching `plugins/iterative-engineering/**` appears in that plugin's release PR.
 
-4. **Commit and open a PR:**
-   ```bash
-   git add -A && git commit -m "chore(release): <version>"
-   ```
-   Push the branch and open a PR. A scoped tag (`<plugin-name>/v<version>`) is created automatically when the PR merges (via `.github/workflows/auto-tag.yml`).
+**Changelogs:** Per-plugin at `plugins/<name>/CHANGELOG.md`, managed by release-please.
+
+**Marketplace version:** Bumped manually when the marketplace structure changes (new plugins, schema changes). Plugin version sync in `marketplace.json` happens automatically via the release workflow.
+
+**Configuration files:**
+- `release-please-config.json` — plugin package definitions
+- `.release-please-manifest.json` — current version tracking
 
 ## Commit and PR Conventions
 

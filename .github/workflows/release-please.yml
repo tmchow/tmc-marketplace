@@ -1,0 +1,35 @@
+name: Release Please
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/checkout@v4
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
+
+      - name: Sync marketplace.json
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
+        run: |
+          ./scripts/sync-marketplace.sh
+          if git diff --quiet .claude-plugin/marketplace.json; then
+            echo "marketplace.json already in sync"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add .claude-plugin/marketplace.json
+            git commit -m "chore: sync marketplace.json versions"
+            git push
+          fi
