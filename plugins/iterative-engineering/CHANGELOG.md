@@ -1,5 +1,43 @@
 # Changelog
 
+## [1.16.0](https://github.com/tmchow/tmc-marketplace/compare/iterative-engineering/v1.15.0...iterative-engineering/v1.16.0) (2026-03-07)
+
+
+### Features
+
+* add design exploration skill, replace spike ([#62](https://github.com/tmchow/tmc-marketplace/issues/62)) ([9a0da5c](https://github.com/tmchow/tmc-marketplace/commit/9a0da5cd8b801b2d7884c4ab7512516dc2739f6f))
+* add external model reviewers to plan-review skill ([#45](https://github.com/tmchow/tmc-marketplace/issues/45)) ([27a0017](https://github.com/tmchow/tmc-marketplace/commit/27a00173b98ea877e5e4fc9bdaee23bcc69a6931))
+* add install target options for codex and claude ([#70](https://github.com/tmchow/tmc-marketplace/issues/70)) ([be2aa1d](https://github.com/tmchow/tmc-marketplace/commit/be2aa1de3ab7ffcdc6def03bd91920ea7bcb20a2))
+* add model-diverse external reviewers and diff-anchored scoping ([#35](https://github.com/tmchow/tmc-marketplace/issues/35)) ([61366e8](https://github.com/tmchow/tmc-marketplace/commit/61366e8b14b7998c314e755b745d2b234e03a0e1))
+* add standalone fix loops to code-review and plan-review skills ([#48](https://github.com/tmchow/tmc-marketplace/issues/48)) ([9fbf4f0](https://github.com/tmchow/tmc-marketplace/commit/9fbf4f0a0b18de134e063b858ad9f80fab81ffd4))
+* automate releases with release-please ([#88](https://github.com/tmchow/tmc-marketplace/issues/88)) ([1d13fee](https://github.com/tmchow/tmc-marketplace/commit/1d13feec2d3f958f8d2a398771536c1d48ac8573))
+* design controls reframe, reload button, and sleep-polling fix ([#65](https://github.com/tmchow/tmc-marketplace/issues/65)) ([9524ea9](https://github.com/tmchow/tmc-marketplace/commit/9524ea914932d920a35b823cfef736f683612765))
+* feedback-driven iteration planning and exploration fixes ([#77](https://github.com/tmchow/tmc-marketplace/issues/77)) ([5d93acf](https://github.com/tmchow/tmc-marketplace/commit/5d93acf569381cdb7869e1330f845949b9399814))
+* improve plan-review and design-exploration skill quality ([#85](https://github.com/tmchow/tmc-marketplace/issues/85)) ([ea2517d](https://github.com/tmchow/tmc-marketplace/commit/ea2517da08263b3a084c80933a0591a9eb46b696))
+* overhaul code-review skill with dynamic persona selection ([#79](https://github.com/tmchow/tmc-marketplace/issues/79)) ([34319f2](https://github.com/tmchow/tmc-marketplace/commit/34319f2506fd1a7f79800ad5a89ce3ac68ac3e97))
+* overhaul plan-review skill with dynamic persona selection ([#80](https://github.com/tmchow/tmc-marketplace/issues/80)) ([42a9323](https://github.com/tmchow/tmc-marketplace/commit/42a9323fa18ea2cc64f583323092e1ce750a9691))
+* restructure brainstorming with scope-first routing and adaptive depth ([#63](https://github.com/tmchow/tmc-marketplace/issues/63)) ([3d29810](https://github.com/tmchow/tmc-marketplace/commit/3d298102f1b13701d84d1c69f2b78a6fb33bea81))
+* scope-aware brainstorming and complexity reviewer recalibration ([#60](https://github.com/tmchow/tmc-marketplace/issues/60)) ([46ab75f](https://github.com/tmchow/tmc-marketplace/commit/46ab75f8ec4ceefc6e1c9475676b4087180371d8))
+* simplify severity acceptance UX in review fixes ([#83](https://github.com/tmchow/tmc-marketplace/issues/83)) ([215d6c5](https://github.com/tmchow/tmc-marketplace/commit/215d6c5623fddebcdb9fd94a322a68b5a0a39079))
+* single-file variation architecture with html-prototyper agent ([#68](https://github.com/tmchow/tmc-marketplace/issues/68)) ([db80374](https://github.com/tmchow/tmc-marketplace/commit/db80374e30790efa46ee04b7a4a2f7d225b20449))
+* unified external reviewer prompt with inline diff and CLI-correct invocations ([#43](https://github.com/tmchow/tmc-marketplace/issues/43)) ([fd4fc86](https://github.com/tmchow/tmc-marketplace/commit/fd4fc865dd39548dd0362c842f9c7d1924d5604e))
+
+
+### Bug Fixes
+
+* design exploration controls, simplifier cleanup, and HZL removal ([#72](https://github.com/tmchow/tmc-marketplace/issues/72)) ([70f735d](https://github.com/tmchow/tmc-marketplace/commit/70f735d1b6144f58209b58927c1320e991e8bf78))
+* enforce interactive question tool and review fix strategy ([#36](https://github.com/tmchow/tmc-marketplace/issues/36)) ([b91dc17](https://github.com/tmchow/tmc-marketplace/commit/b91dc17f1d4d9d7685000c5e61c3676b1d051857))
+* exclude placeholder findings from section review severity acceptance ([#82](https://github.com/tmchow/tmc-marketplace/issues/82)) ([8f53b20](https://github.com/tmchow/tmc-marketplace/commit/8f53b20aa50ac818c02f480ddb6c12e565f46a5a))
+* external reviewer UX, CLI corrections, and per-CLI opt-in ([#40](https://github.com/tmchow/tmc-marketplace/issues/40)) ([1be5ee6](https://github.com/tmchow/tmc-marketplace/commit/1be5ee62ec1a054bec9be7284bf257e5c5e22a10))
+* inline external reviewer CLI calls to fix Bash permission errors ([#38](https://github.com/tmchow/tmc-marketplace/issues/38)) ([6f28b10](https://github.com/tmchow/tmc-marketplace/commit/6f28b1007fe566a97b09a4dee244f6b2ca646536))
+* mark external reviewers as experimental and enforce interactive prompts ([#41](https://github.com/tmchow/tmc-marketplace/issues/41)) ([c1aaf65](https://github.com/tmchow/tmc-marketplace/commit/c1aaf6548aaee460098e162ae6f2b778d38613de))
+* pass file paths to external CLIs and prevent fix loop step collapsing ([#50](https://github.com/tmchow/tmc-marketplace/issues/50)) ([c572b79](https://github.com/tmchow/tmc-marketplace/commit/c572b795c9e2885e749038a121f67fb6c97bb951))
+* pass task ID to workers regardless of task system and clarify subagent rationale ([#54](https://github.com/tmchow/tmc-marketplace/issues/54)) ([3037f96](https://github.com/tmchow/tmc-marketplace/commit/3037f96a8ea8a29f3fc4ed0ebcbb5bb627cb3ff8))
+* quote skill descriptions to repair YAML frontmatter parsing ([#71](https://github.com/tmchow/tmc-marketplace/issues/71)) ([9eaa5a2](https://github.com/tmchow/tmc-marketplace/commit/9eaa5a269e1f4212d47078c4f471b06c6755642b))
+* redesign severity acceptance as two-path flow ([#29](https://github.com/tmchow/tmc-marketplace/issues/29)) ([7268a83](https://github.com/tmchow/tmc-marketplace/commit/7268a839b765aaa4d3ede4ba59577a3fff0f2749))
+* remove invalid --sandbox flag from codex review ([#47](https://github.com/tmchow/tmc-marketplace/issues/47)) ([d393a6d](https://github.com/tmchow/tmc-marketplace/commit/d393a6dc4ff79701fe990e94bfad0223e0d423c1))
+* switch external CLIs from inline diff to file-based input ([#58](https://github.com/tmchow/tmc-marketplace/issues/58)) ([e6f388c](https://github.com/tmchow/tmc-marketplace/commit/e6f388c45f0dab37ddc1b33fe4a2c4eafbfba823))
+
 ## [iterative-engineering/v1.15.0] - 2026-03-05
 
 ### Changed
