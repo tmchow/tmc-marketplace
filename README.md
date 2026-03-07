@@ -76,9 +76,12 @@ This extracts all skills (with their reference files) to `~/.codex/skills/`.
 | [iterative-engineering](./plugins/iterative-engineering) | Iterative development workflow — brainstorming → tech planning → implementing with multi-agent reviews, dependency-aware execution, and severity-based acceptance |
 | [image-sprout](./plugins/image-sprout) | Generate and iterate on images with consistent style and subject identity using the [image-sprout](https://github.com/tmchow/image-sprout) CLI |
 
-## Changelog
+## Changelogs
 
-See [CHANGELOG.md](./CHANGELOG.md) for a detailed history of all changes, new features, and fixes across releases.
+Each plugin maintains its own changelog, managed by [release-please](https://github.com/googleapis/release-please):
+
+- [iterative-engineering](./plugins/iterative-engineering/CHANGELOG.md)
+- [image-sprout](./plugins/image-sprout/CHANGELOG.md)
 
 ## License
 

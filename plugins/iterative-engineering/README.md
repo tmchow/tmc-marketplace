@@ -285,7 +285,7 @@ For deeper rationale behind each skill's design:
 
 ## Changelog
 
-See [CHANGELOG.md](../../CHANGELOG.md) for a detailed history of all changes, new features, and fixes across releases.
+See [CHANGELOG.md](./CHANGELOG.md) for release history.
 
 ## Credits
 
