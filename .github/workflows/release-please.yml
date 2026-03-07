@@ -17,3 +17,32 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - uses: actions/checkout@v4
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
+
+      - name: Sync marketplace.json versions
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
+        run: |
+          changed=false
+          for plugin_dir in plugins/*/; do
+            plugin_name=$(basename "$plugin_dir")
+            plugin_json="$plugin_dir.claude-plugin/plugin.json"
+            if [ -f "$plugin_json" ]; then
+              version=$(jq -r '.version' "$plugin_json")
+              current=$(jq -r --arg name "$plugin_name" '.plugins[] | select(.name==$name) | .version' .claude-plugin/marketplace.json)
+              if [ "$version" != "$current" ]; then
+                jq --arg name "$plugin_name" --arg ver "$version" \
+                  '(.plugins[] | select(.name==$name)).version = $ver' \
+                  .claude-plugin/marketplace.json > tmp.json && mv tmp.json .claude-plugin/marketplace.json
+                changed=true
+              fi
+            fi
+          done
+          if [ "$changed" = true ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add .claude-plugin/marketplace.json
+            git commit -m "chore: sync marketplace.json versions"
+            git push
+          fi
+
