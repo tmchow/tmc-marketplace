@@ -15,32 +15,35 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Read version from plugin.json
-        id: version
+      - name: Detect changed plugins and create tags
         run: |
-          VERSION=$(python3 -c "import json; print(json.load(open('plugins/iterative-engineering/.claude-plugin/plugin.json'))['version'])")
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          # Find plugin.json files changed in this push
+          CHANGED_PLUGINS=$(git diff --name-only HEAD~1 HEAD -- 'plugins/*/.claude-plugin/plugin.json' || true)
 
-      - name: Check tag and changelog
-        id: check
-        run: |
-          TAG="v${{ steps.version.outputs.version }}"
-          VERSION="${{ steps.version.outputs.version }}"
-
-          if git rev-parse "$TAG" >/dev/null 2>&1; then
-            echo "Tag $TAG already exists, skipping"
-            echo "should_tag=false" >> "$GITHUB_OUTPUT"
-          elif ! grep -q "\[${VERSION}\]" CHANGELOG.md; then
-            echo "No changelog entry for $VERSION, skipping"
-            echo "should_tag=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "should_tag=true" >> "$GITHUB_OUTPUT"
+          if [ -z "$CHANGED_PLUGINS" ]; then
+            echo "No plugin.json files changed, skipping"
+            exit 0
           fi
 
-      - name: Create tag
-        if: steps.check.outputs.should_tag == 'true'
-        run: |
-          TAG="v${{ steps.version.outputs.version }}"
-          git tag "$TAG"
-          git push origin "$TAG"
-          echo "Created tag $TAG"
+          for plugin_json in $CHANGED_PLUGINS; do
+            # Extract plugin name from path: plugins/<name>/.claude-plugin/plugin.json
+            PLUGIN=$(echo "$plugin_json" | cut -d'/' -f2)
+            VERSION=$(python3 -c "import json; print(json.load(open('$plugin_json'))['version'])")
+            TAG="${PLUGIN}/v${VERSION}"
+
+            echo "Checking $PLUGIN v$VERSION..."
+
+            if git rev-parse "$TAG" >/dev/null 2>&1; then
+              echo "  Tag $TAG already exists, skipping"
+              continue
+            fi
+
+            if ! grep -q "\[${PLUGIN}/v${VERSION}\]" CHANGELOG.md; then
+              echo "  No changelog entry for $VERSION, skipping"
+              continue
+            fi
+
+            git tag "$TAG"
+            git push origin "$TAG"
+            echo "  Created tag $TAG"
+          done

@@ -3,20 +3,24 @@ set -euo pipefail
 
 # TMC Marketplace Installer
 # Usage:
-#   Install:   curl -fsSL "https://raw.githubusercontent.com/tmchow/tmc-marketplace/main/scripts/install.sh?$(date +%s)" | bash
-#   Codex only:  curl -fsSL "https://raw.githubusercontent.com/tmchow/tmc-marketplace/main/scripts/install.sh?$(date +%s)" | bash -s -- --codex-only
-#   Claude only: curl -fsSL "https://raw.githubusercontent.com/tmchow/tmc-marketplace/main/scripts/install.sh?$(date +%s)" | bash -s -- --claude-only
-#   Uninstall: curl -fsSL "https://raw.githubusercontent.com/tmchow/tmc-marketplace/main/scripts/install.sh?$(date +%s)" | bash -s -- --uninstall
+#   Interactive:     curl -fsSL "https://raw.githubusercontent.com/tmchow/tmc-marketplace/main/scripts/install.sh?$(date +%s)" | bash
+#   All plugins:     curl -fsSL "https://raw.githubusercontent.com/tmchow/tmc-marketplace/main/scripts/install.sh?$(date +%s)" | bash -s -- --all
+#   Single plugin:   curl -fsSL "https://raw.githubusercontent.com/tmchow/tmc-marketplace/main/scripts/install.sh?$(date +%s)" | bash -s -- --plugin image-sprout
+#   Codex only:      curl -fsSL "https://raw.githubusercontent.com/tmchow/tmc-marketplace/main/scripts/install.sh?$(date +%s)" | bash -s -- --codex-only
+#   Claude only:     curl -fsSL "https://raw.githubusercontent.com/tmchow/tmc-marketplace/main/scripts/install.sh?$(date +%s)" | bash -s -- --claude-only
+#   Uninstall:       curl -fsSL "https://raw.githubusercontent.com/tmchow/tmc-marketplace/main/scripts/install.sh?$(date +%s)" | bash -s -- --uninstall
 
 # --- Constants ---
-VERSION="1.0.0"
+VERSION="2.0.0"
 REPO="tmchow/tmc-marketplace"
-PLUGIN_NAME="iterative-engineering"
 MARKETPLACE_NAME="tmc-marketplace"
 ARCHIVE_URL="https://github.com/${REPO}/archive/refs/heads/main.tar.gz"
 ARCHIVE_PREFIX="tmc-marketplace-main"
 MAX_RETRIES=3
 RETRY_DELAY=2
+
+# All available plugins in the marketplace
+ALL_PLUGINS=("iterative-engineering" "image-sprout")
 
 # --- Colors ---
 RED='\033[0;31m'
@@ -31,6 +35,8 @@ UNINSTALL=false
 INSTALL_CLAUDE=true
 INSTALL_CODEX=true
 INSTALL_TARGET="both"
+INSTALL_ALL=false
+SELECTED_PLUGINS=()
 LAST_DOWNLOAD_ERROR=""
 
 # --- Utility functions ---
@@ -85,6 +91,49 @@ download_with_retry() {
     return 1
 }
 
+# --- Plugin selection ---
+
+prompt_plugin_selection() {
+    # When piped via curl | bash, stdin is the pipe. Read from /dev/tty for user input.
+    if ! [ -t 0 ] && ! [ -e /dev/tty ]; then
+        log_warn "No interactive terminal available, installing all plugins"
+        SELECTED_PLUGINS=("${ALL_PLUGINS[@]}")
+        return
+    fi
+
+    echo "" >&2
+    echo -e "${BOLD}Available plugins:${NC}" >&2
+    echo "" >&2
+
+    local i=1
+    for plugin in "${ALL_PLUGINS[@]}"; do
+        echo -e "  ${BOLD}${i})${NC} ${plugin}" >&2
+        ((i++))
+    done
+
+    echo "" >&2
+    echo -e "Enter plugin numbers separated by spaces (e.g. ${BOLD}1 2${NC}), or ${BOLD}a${NC} for all:" >&2
+    read -r selection < /dev/tty
+
+    if [[ "$selection" == "a" || "$selection" == "A" || -z "$selection" ]]; then
+        SELECTED_PLUGINS=("${ALL_PLUGINS[@]}")
+        return
+    fi
+
+    SELECTED_PLUGINS=()
+    for num in $selection; do
+        if [[ "$num" =~ ^[0-9]+$ ]] && [ "$num" -ge 1 ] && [ "$num" -le ${#ALL_PLUGINS[@]} ]; then
+            SELECTED_PLUGINS+=("${ALL_PLUGINS[$((num - 1))]}")
+        else
+            die "Invalid selection: $num"
+        fi
+    done
+
+    if [ ${#SELECTED_PLUGINS[@]} -eq 0 ]; then
+        die "No plugins selected"
+    fi
+}
+
 # --- Core functions ---
 
 print_banner() {
@@ -96,7 +145,8 @@ print_banner() {
 }
 
 install_claude_plugin() {
-    log_info "Installing Claude Code plugin..."
+    local plugin_name="$1"
+    log_info "Installing Claude Code plugin: ${plugin_name}..."
 
     if ! command -v claude &>/dev/null; then
         log_warn "Claude Code CLI not found, skipping plugin install"
@@ -107,23 +157,44 @@ install_claude_plugin() {
     # Add marketplace (idempotent; may return non-zero if already added)
     local marketplace_output
     if ! marketplace_output=$(claude plugin marketplace add "${REPO}" 2>&1); then
-        log_warn "Failed to add marketplace (may already exist), continuing"
-        print_details "$marketplace_output"
+        # Ignore — marketplace may already exist
+        true
     fi
 
     # Install plugin (idempotent - reinstalls/updates if exists)
     local install_output
-    if ! install_output=$(claude plugin install "${PLUGIN_NAME}@${MARKETPLACE_NAME}" 2>&1); then
-        log_warn "Failed to install plugin"
+    if ! install_output=$(claude plugin install "${plugin_name}@${MARKETPLACE_NAME}" 2>&1); then
+        log_warn "Failed to install ${plugin_name}"
         print_details "$install_output"
         return 0
     fi
 
-    log_success "Installed ${PLUGIN_NAME}@${MARKETPLACE_NAME} plugin"
+    log_success "Installed ${plugin_name}@${MARKETPLACE_NAME} plugin"
+}
+
+download_and_extract_archive() {
+    CODEX_EXTRACT_DIR=$(mktemp -d)
+    local archive_path="${CODEX_EXTRACT_DIR}/archive.tar.gz"
+
+    if ! download_with_retry "$ARCHIVE_URL" "$archive_path"; then
+        rm -rf "$CODEX_EXTRACT_DIR"
+        CODEX_EXTRACT_DIR=""
+        log_warn "Failed to download archive after $MAX_RETRIES attempts"
+        if [ -n "$LAST_DOWNLOAD_ERROR" ]; then
+            print_details "$LAST_DOWNLOAD_ERROR"
+        fi
+        return 1
+    fi
+
+    tar xzf "$archive_path" -C "$CODEX_EXTRACT_DIR"
+    rm -f "$archive_path"
+    return 0
 }
 
 install_codex_skills() {
-    log_info "Installing Codex skills..."
+    local plugin_name="$1"
+    local extract_dir="$2"
+    log_info "Installing Codex skills for ${plugin_name}..."
 
     local codex_home="${CODEX_HOME:-$HOME/.codex}"
 
@@ -139,34 +210,15 @@ install_codex_skills() {
 
     local skills_dir="${codex_home}/skills"
     mkdir -p "$skills_dir"
-    local tmp_dir
-    tmp_dir=$(mktemp -d)
 
-    # Download archive
-    local archive_path="${tmp_dir}/archive.tar.gz"
-    if ! download_with_retry "$ARCHIVE_URL" "$archive_path"; then
-        rm -rf "$tmp_dir"
-        log_warn "Failed to download skills after $MAX_RETRIES attempts"
-        if [ -n "$LAST_DOWNLOAD_ERROR" ]; then
-            print_details "$LAST_DOWNLOAD_ERROR"
-        fi
-        return 0
-    fi
-
-    # Extract
-    local extract_dir="${tmp_dir}/extracted"
-    mkdir -p "$extract_dir"
-    tar xzf "$archive_path" -C "$extract_dir"
-
-    local source_skills="${extract_dir}/${ARCHIVE_PREFIX}/plugins/${PLUGIN_NAME}/skills"
+    local source_skills="${extract_dir}/${ARCHIVE_PREFIX}/plugins/${plugin_name}/skills"
     if [ ! -d "$source_skills" ]; then
-        rm -rf "$tmp_dir"
-        log_warn "Skills directory not found in archive"
+        log_warn "Skills directory not found in archive for ${plugin_name}"
         return 0
     fi
 
     # Copy each skill and record in manifest
-    local manifest="${skills_dir}/.tmc-marketplace"
+    local manifest="${skills_dir}/.tmc-marketplace-${plugin_name}"
     local count=0
     local installed_skills=()
 
@@ -183,10 +235,11 @@ install_codex_skills() {
     done
 
     # Write manifest for clean uninstall
-    printf '%s\n' "${installed_skills[@]}" > "$manifest"
+    if [ ${#installed_skills[@]} -gt 0 ]; then
+        printf '%s\n' "${installed_skills[@]}" > "$manifest"
+    fi
 
-    rm -rf "$tmp_dir"
-    log_success "Installed ${count} skills to ${skills_dir}/"
+    log_success "Installed ${count} skills for ${plugin_name} to ${skills_dir}/"
 }
 
 print_success() {
@@ -201,17 +254,19 @@ do_uninstall() {
     log_info "Uninstalling TMC Marketplace..."
     echo ""
 
-    # Remove Claude Code plugin
+    # Remove Claude Code plugins
     if command -v claude &>/dev/null; then
-        log_info "Removing Claude Code plugin..."
+        for plugin_name in "${ALL_PLUGINS[@]}"; do
+            log_info "Removing Claude Code plugin: ${plugin_name}..."
 
-        local uninstall_output
-        if uninstall_output=$(claude plugin uninstall "${PLUGIN_NAME}@${MARKETPLACE_NAME}" 2>&1); then
-            log_success "Removed Claude Code plugin"
-        else
-            log_warn "Claude Code plugin not found or failed to remove"
-            print_details "$uninstall_output"
-        fi
+            local uninstall_output
+            if uninstall_output=$(claude plugin uninstall "${plugin_name}@${MARKETPLACE_NAME}" 2>&1); then
+                log_success "Removed ${plugin_name}"
+            else
+                log_warn "${plugin_name} not found or failed to remove"
+                print_details "$uninstall_output"
+            fi
+        done
 
         local remove_output
         if remove_output=$(claude plugin marketplace remove "${REPO}" 2>&1); then
@@ -225,24 +280,35 @@ do_uninstall() {
     # Remove Codex skills
     local codex_home="${CODEX_HOME:-$HOME/.codex}"
     local skills_dir="${codex_home}/skills"
-    local manifest="${skills_dir}/.tmc-marketplace"
 
-    if [ -f "$manifest" ]; then
-        log_info "Removing Codex skills..."
-        local removed=0
+    for plugin_name in "${ALL_PLUGINS[@]}"; do
+        local manifest="${skills_dir}/.tmc-marketplace-${plugin_name}"
+        # Also check legacy manifest name
+        if [[ "$plugin_name" == "iterative-engineering" ]] && [ ! -f "$manifest" ]; then
+            manifest="${skills_dir}/.tmc-marketplace"
+        fi
 
-        while IFS= read -r skill_name; do
-            [ -z "$skill_name" ] && continue
-            local skill_dir="${skills_dir}/${skill_name}"
-            if [ -d "$skill_dir" ]; then
-                rm -rf "$skill_dir"
-                ((removed++))
-            fi
-        done < "$manifest"
+        if [ -f "$manifest" ]; then
+            log_info "Removing Codex skills for ${plugin_name}..."
+            local removed=0
 
-        rm -f "$manifest"
-        log_success "Removed ${removed} Codex skills"
-    fi
+            while IFS= read -r skill_name; do
+                [ -z "$skill_name" ] && continue
+                local skill_dir="${skills_dir}/${skill_name}"
+                if [ -d "$skill_dir" ]; then
+                    rm -rf "$skill_dir"
+                    ((removed++))
+                fi
+            done < "$manifest"
+
+            rm -f "$manifest"
+            log_success "Removed ${removed} Codex skills for ${plugin_name}"
+        fi
+    done
+
+    # Clean up legacy manifest if it exists
+    local legacy_manifest="${skills_dir}/.tmc-marketplace"
+    [ -f "$legacy_manifest" ] && rm -f "$legacy_manifest"
 
     echo ""
 }
@@ -255,6 +321,27 @@ parse_args() {
             --uninstall)
                 UNINSTALL=true
                 shift
+                ;;
+            --all)
+                INSTALL_ALL=true
+                shift
+                ;;
+            --plugin)
+                if [[ $# -lt 2 ]]; then
+                    die "--plugin requires a plugin name"
+                fi
+                local valid=false
+                for p in "${ALL_PLUGINS[@]}"; do
+                    if [[ "$p" == "$2" ]]; then
+                        valid=true
+                        break
+                    fi
+                done
+                if [[ "$valid" != "true" ]]; then
+                    die "Unknown plugin: $2. Available: ${ALL_PLUGINS[*]}"
+                fi
+                SELECTED_PLUGINS+=("$2")
+                shift 2
                 ;;
             --claude-only)
                 if [[ "$INSTALL_TARGET" == "codex" ]]; then
@@ -274,16 +361,22 @@ parse_args() {
                 echo "TMC Marketplace Installer v${VERSION}"
                 echo ""
                 echo "Usage:"
-                echo "  Install:   curl -fsSL \"https://raw.githubusercontent.com/${REPO}/main/scripts/install.sh?\$(date +%s)\" | bash"
-                echo "  Codex:     curl -fsSL \"https://raw.githubusercontent.com/${REPO}/main/scripts/install.sh?\$(date +%s)\" | bash -s -- --codex-only"
-                echo "  Claude:    curl -fsSL \"https://raw.githubusercontent.com/${REPO}/main/scripts/install.sh?\$(date +%s)\" | bash -s -- --claude-only"
-                echo "  Uninstall: curl -fsSL \"https://raw.githubusercontent.com/${REPO}/main/scripts/install.sh?\$(date +%s)\" | bash -s -- --uninstall"
+                echo "  Install:       curl -fsSL \"https://raw.githubusercontent.com/${REPO}/main/scripts/install.sh?\$(date +%s)\" | bash"
+                echo "  Install all:   curl -fsSL \"https://raw.githubusercontent.com/${REPO}/main/scripts/install.sh?\$(date +%s)\" | bash -s -- --all"
+                echo "  One plugin:    curl -fsSL \"https://raw.githubusercontent.com/${REPO}/main/scripts/install.sh?\$(date +%s)\" | bash -s -- --plugin <name>"
+                echo "  Codex:         curl -fsSL \"https://raw.githubusercontent.com/${REPO}/main/scripts/install.sh?\$(date +%s)\" | bash -s -- --codex-only"
+                echo "  Claude:        curl -fsSL \"https://raw.githubusercontent.com/${REPO}/main/scripts/install.sh?\$(date +%s)\" | bash -s -- --claude-only"
+                echo "  Uninstall:     curl -fsSL \"https://raw.githubusercontent.com/${REPO}/main/scripts/install.sh?\$(date +%s)\" | bash -s -- --uninstall"
                 echo ""
                 echo "Options:"
-                echo "  --uninstall    Remove plugin and skills"
+                echo "  --all          Install all plugins (non-interactive)"
+                echo "  --plugin NAME  Install a specific plugin (repeatable)"
+                echo "  --uninstall    Remove all plugins and skills"
                 echo "  --codex-only   Install Codex skills only"
                 echo "  --claude-only  Install Claude Code plugin only"
                 echo "  --help, -h     Show this help message"
+                echo ""
+                echo "Available plugins: ${ALL_PLUGINS[*]}"
                 exit 0
                 ;;
             *)
@@ -320,15 +413,44 @@ main() {
 
     if [[ "$UNINSTALL" == "true" ]]; then
         do_uninstall
-    else
+        return
+    fi
+
+    # Determine which plugins to install
+    if [[ "$INSTALL_ALL" == "true" ]]; then
+        SELECTED_PLUGINS=("${ALL_PLUGINS[@]}")
+    elif [ ${#SELECTED_PLUGINS[@]} -eq 0 ]; then
+        # Default: interactive selection
+        prompt_plugin_selection
+    fi
+
+    log_info "Installing plugins: ${SELECTED_PLUGINS[*]}"
+    echo ""
+
+    # Download archive once if Codex install is needed
+    CODEX_EXTRACT_DIR=""
+    if [[ "$INSTALL_CODEX" == "true" ]]; then
+        if ! download_and_extract_archive; then
+            INSTALL_CODEX=false
+        fi
+    fi
+
+    for plugin_name in "${SELECTED_PLUGINS[@]}"; do
         if [[ "$INSTALL_CLAUDE" == "true" ]]; then
-            install_claude_plugin
+            install_claude_plugin "$plugin_name"
         fi
         if [[ "$INSTALL_CODEX" == "true" ]]; then
-            install_codex_skills
+            install_codex_skills "$plugin_name" "$CODEX_EXTRACT_DIR"
         fi
-        print_success
+        echo ""
+    done
+
+    # Clean up extracted archive
+    if [ -n "$CODEX_EXTRACT_DIR" ] && [ -d "$CODEX_EXTRACT_DIR" ]; then
+        rm -rf "$CODEX_EXTRACT_DIR"
     fi
+
+    print_success
 }
 
 main "$@"
