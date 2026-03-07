@@ -13,13 +13,13 @@
       "name": "iterative-engineering",
       "source": "./plugins/iterative-engineering",
       "description": "Iterative development workflow - brainstorming, planning, multi-agent reviews, TDD execution, and PR feedback resolution",
-      "version": "1.15.0"
+      "version": "1.16.0"
     },
     {
       "name": "image-sprout",
       "source": "./plugins/image-sprout",
       "description": "Skill for generating and iterating on images with consistent style and subject identity using the image-sprout CLI",
-      "version": "1.0.2"
+      "version": "1.1.0"
     }
   ]
 }
