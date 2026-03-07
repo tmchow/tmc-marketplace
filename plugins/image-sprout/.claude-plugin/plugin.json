@@ -1,6 +1,6 @@
 {
   "name": "image-sprout",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "Skill for generating and iterating on images with consistent style and subject identity using the image-sprout CLI.",
   "author": {
     "name": "Trevin Chow",
